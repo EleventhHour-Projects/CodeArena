@@ -1,0 +1,9 @@
+{
+    "id": 1,
+    "slug": "remove-until-sort",
+    "title": "Remove Until Sort",
+    "difficulty": "Easy",
+    "tags": ["array", "greedy", "sorting"],
+    "time_limit": 1,
+    "memory_limit": 256
+}
