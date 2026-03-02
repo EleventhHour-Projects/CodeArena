@@ -7,6 +7,8 @@ export type SubmissionType = "Run" | "Submit";
 
 export interface Submission {
     _id: Types.ObjectId;
+    code: string;
+    language?: string;
     userId: Types.ObjectId;
     battleId: Types.ObjectId;
     problemId: Types.ObjectId;
