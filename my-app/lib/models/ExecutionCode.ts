@@ -18,6 +18,6 @@ executionCodeSchema.index({ problemId: 1 });
 executionCodeSchema.index({ status: 1 });
 
 // set the name of collection to executionCodes
-const ExecutionCodeModel = mongoose.model<ExecutionCode>("ExecutionCode", executionCodeSchema, "executionCodes");
+const ExecutionCodeModel = mongoose.models.ExecutionCode || mongoose.model<ExecutionCode>("ExecutionCode", executionCodeSchema, "executionCodes");
 
 export default ExecutionCodeModel; 

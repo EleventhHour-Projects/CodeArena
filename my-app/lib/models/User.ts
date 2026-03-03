@@ -5,8 +5,8 @@ const userSchema = new mongoose.Schema<User>({
     username: { type: String, required: true, unique: true, default: "" },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    createdAt: { type: Date, required: true, default: new Date() },
-    lastActive: { type: Date, required: true, default: new Date() },
+    createdAt: { type: Date, required: true, default: Date.now },
+    lastActive: { type: Date, required: true, default: Date.now },
     role: { type: String, required: true, default: "EndUser" },
     battlesPlayed: { type: Number, required: true, default: 0 },
     battlesWon: { type: Number, required: true, default: 0 },
@@ -20,4 +20,4 @@ const userSchema = new mongoose.Schema<User>({
 })
 
 // set the name of collection to users
-export const UserModel = mongoose.model<User>("User", userSchema, "users");
+export const UserModel = mongoose.models.User || mongoose.model<User>("User", userSchema, "users");

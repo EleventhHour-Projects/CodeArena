@@ -17,6 +17,6 @@ const battleSchema = new mongoose.Schema<Battle>({
 })
 
 // set the name of collection to battles
-const BattleModel = mongoose.model<Battle>("Battle", battleSchema, "battles");
+const BattleModel = mongoose.models.Battle || mongoose.model<Battle>("Battle", battleSchema, "battles");
 
 export default BattleModel;

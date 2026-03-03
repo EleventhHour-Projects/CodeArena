@@ -25,6 +25,6 @@ submissionSchema.index({ problemId: 1 });
 submissionSchema.index({ status: 1 });
 
 // set the name of collection to submissions
-const SubmissionModel = mongoose.model<Submission>("Submission", submissionSchema, "submissions");
+const SubmissionModel = mongoose.models.Submission || mongoose.model<Submission>("Submission", submissionSchema, "submissions");
 
 export default SubmissionModel; 
