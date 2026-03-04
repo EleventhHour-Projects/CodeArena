@@ -29,7 +29,7 @@ export default function AuthDialog({ open, onClose }: Props) {
         </button>
 
         <h2 className="text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100">
-          Create an account
+          Sign in
         </h2>
 
         <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center mt-1">

@@ -18,10 +18,10 @@ export const authOptions = {
                     await dbConnect();
                     const existingUser = await UserModel.findOne({ email: user.email });
                     if (!existingUser) {
-                        // Generate a unique username for Google sign-in users
-                        const baseUsername = user.email ? user.email.split('@')[0] : "user";
+                        // Generate a unique username for Google sign-in users with only letters, numbers and underscore
+                        const baseUsername = user.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, "") : "user";
                         const uniqueUsername = `${baseUsername}${Math.floor(Math.random() * 10000)}`;
-                        
+
                         await UserModel.create({
                             username: uniqueUsername,
                             name: user.name,
@@ -51,6 +51,9 @@ export const authOptions = {
         async redirect({ baseUrl }: { baseUrl: string }) {
             return baseUrl;
         }
+    },
+    pages: {
+        signIn: '/login',
     }
 }
 

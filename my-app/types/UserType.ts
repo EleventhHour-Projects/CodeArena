@@ -6,6 +6,7 @@ export interface User{
     // Personal Info
     _id: Types.ObjectId;
     username?: string;
+    usernameChangeCount: number;
     name: string; // fetch from google auth
     email: string; // fetch from google auth
     createdAt: Date;

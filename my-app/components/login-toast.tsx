@@ -16,10 +16,10 @@ export function LoginToast() {
       const authState = sessionStorage.getItem("authState")
 
       if (status === "authenticated" && authState !== "loggedIn") {
-        toast.success("Login Successful!", { position: "top-center" })
+        toast.success("Welcome to the Arena!", { position: "top-center" })
         sessionStorage.setItem("authState", "loggedIn")
       } else if (status === "unauthenticated" && authState === "loggedIn") {
-        toast.success("Logout Successful!", { position: "top-center" })
+        toast.success("See you again!", { position: "top-center" })
         sessionStorage.setItem("authState", "loggedOut")
       }
     }, 150)
