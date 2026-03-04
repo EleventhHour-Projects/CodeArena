@@ -1,4 +1,4 @@
-import { Home, Trophy, Code2, Settings, User2, ChevronUp } from "lucide-react"
+import { Home, Trophy, Code2, User2, ChevronUp } from "lucide-react"
 import { getServerSession } from "next-auth"
 import Link from "next/link"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -9,7 +9,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -48,12 +47,12 @@ export async function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <span className="flex aspect-square size-8 items-center justify-center rounded-lg  bg-black text-sidebar-primary-foreground">
                 <Image src={logo} alt="Logo" width={42} height={42} />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              </span>
+              <span className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold text-lg">CodeArena</span>
-              </div>
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -104,14 +103,14 @@ export async function AppSidebar() {
                       <User2 className="size-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
                       {session?.user?.name || "Guest"}
                     </span>
                     <span className="truncate text-xs">
                       {session?.user?.email || "Not logged in"}
                     </span>
-                  </div>
+                  </span>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
