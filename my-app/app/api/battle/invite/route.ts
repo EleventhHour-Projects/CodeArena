@@ -71,6 +71,23 @@ export async function POST(req: NextRequest) {
         // Create a document in BattleInvite with expiration date (Date.now() + 3 minutes)
         const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
 
+        // if a document already exists with player1Id = curUserId and player2Id = opponentUserId and has not expired
+        const existingInvite = await BattleInviteModel.findOne({
+            $or: [
+                { player1: curUser._id, player2: opponentUser._id },
+                { player1: opponentUser._id, player2: curUser._id }
+            ],
+            status: "Pending",
+            expiresAt: { $gt: Date.now() }
+        });
+
+        if (existingInvite) {
+            return NextResponse.json(
+                { success: false, message: "Invite already sent" },
+                { status: 400 }
+            );
+        }
+
         const newInvite = await BattleInviteModel.create({
             player1: curUser._id,
             player2: opponentUser._id,

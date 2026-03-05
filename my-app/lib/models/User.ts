@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema<User>({
     createdAt: { type: Date, required: true, default: Date.now },
     lastActive: { type: Date, required: true, default: Date.now },
     role: { type: String, required: true, default: "EndUser" },
-    currentBattleId: { type: mongoose.Schema.Types.ObjectId, required: true, default: null },
+    currentBattleId: { type: mongoose.Schema.Types.ObjectId, default: null },
     // Battle Stats
     battlesPlayed: { type: Number, required: true, default: 0 },
     battlesWon: { type: Number, required: true, default: 0 },

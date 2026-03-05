@@ -38,8 +38,8 @@ const navItems = [
 export async function AppSidebar() {
   const session = await getServerSession(authOptions)
   
-  // Placeholder for rating logic
-  const userRating = 1200 
+  // fetch rating from database using getServerSession
+  const userRating = session?.user?.rating || "Unable to fetch rating" 
 
   return (
     <Sidebar collapsible="icon">

@@ -7,7 +7,17 @@ const BattleInviteSchema = new mongoose.Schema({
     status: { type: String, required: true, default: "Pending" },
     createdAt: { type: Date, required: true, default: Date.now() },
     difficulty: { type: String, required: true },
-    expiresAt: { type: Date, required: true },
+    expiresAt: {
+        type: Date,
+        required: true,
+        index: { expires: 0 }
+    }
+});
+
+BattleInviteSchema.index({
+    player2: 1,
+    status: 1,
+    expiresAt: 1
 });
 
 const BattleInviteModel = mongoose.models.BattleInvite || mongoose.model<Invitation>("BattleInvite", BattleInviteSchema, "battleInvites");
