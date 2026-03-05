@@ -12,7 +12,8 @@ export interface User{
     createdAt: Date;
     lastActive: Date;
     role: UserRole;
-    
+    currentBattleId: Types.ObjectId | null;
+
     // Battle Stats - by deafult all will be 0
     battlesPlayed: number;
     battlesWon: number;

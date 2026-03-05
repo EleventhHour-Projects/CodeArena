@@ -4,8 +4,8 @@ import { Battle } from "@/types/BattleType";
 const battleSchema = new mongoose.Schema<Battle>({
     player1: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     player2: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    status: { type: String, required: true, default: "Pending" },
-    createdAt: { type: Date, required: true, default: new Date() },
+    status: { type: String, required: true, default: "Active" },
+    createdAt: { type: Date, required: true, default: Date.now() },
     difficulty: { type: String, required: true },
     type: { type: String, required: true },
     winner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

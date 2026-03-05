@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema<User>({
     createdAt: { type: Date, required: true, default: Date.now },
     lastActive: { type: Date, required: true, default: Date.now },
     role: { type: String, required: true, default: "EndUser" },
-
+    currentBattleId: { type: mongoose.Schema.Types.ObjectId, required: true, default: null },
     // Battle Stats
     battlesPlayed: { type: Number, required: true, default: 0 },
     battlesWon: { type: Number, required: true, default: 0 },
@@ -21,9 +21,6 @@ const userSchema = new mongoose.Schema<User>({
     totalTimeSpentInBattles: { type: Object, required: true, default: { hours: 0, minutes: 0, seconds: 0 } },
     totalProblemsSolved: { type: Object, required: true, default: { easy: 0, medium: 0, hard: 0 } },
 })
-
-// index for unique username
-userSchema.index({ username: 1 }, { unique: true });
 
 // set the name of collection to users
 export const UserModel = mongoose.models.User || mongoose.model<User>("User", userSchema, "users");

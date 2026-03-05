@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { User } from "./UserType";
 
-export type BattleStatus = "Pending" | "Active" | "Completed" | "Cancelled";
+export type BattleStatus = "Active" | "Completed";
 export type BattleDifficulty = "Easy" | "Medium" | "Hard";
 export type BattleType = "1v1" | "2v2";
 export type ProblemRef = { id: number };
