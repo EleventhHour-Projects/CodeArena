@@ -47,7 +47,9 @@ INFO Code Executor Service started on: http://127.0.0.1:6969
 INFO Total handlers:            %d
 INFO PID:                       %d
 INFO Total process count:       1
-`, len(app.Stack()), os.Getpid())
+INFO Worker pool size:          %d
+--------------------------------------------------
+`, utils.WORKER_POOL_SIZE, os.Getpid(), utils.WORKER_POOL_SIZE)
 	app.Post("/go/api/queue", AddToQueue)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

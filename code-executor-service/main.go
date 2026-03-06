@@ -19,8 +19,6 @@ func main() {
 	go api.StartService()
 	time.Sleep(1 * time.Second)
 	go worker.SpawnWorkers(ctx)
-
-	// Wait for shutdown signal
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
