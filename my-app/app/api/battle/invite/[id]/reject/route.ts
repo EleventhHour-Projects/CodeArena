@@ -7,7 +7,7 @@ import BattleInviteModel from "@/lib/models/BattleInvite";
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export async function POST(
             );
         }
 
-        const inviteId = params.id;
+        const { id: inviteId } = await params;
 
         if (!inviteId) {
             return NextResponse.json(

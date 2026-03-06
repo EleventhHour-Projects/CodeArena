@@ -33,6 +33,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) 
   const [difficulty, setDifficulty] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "sending" | "waiting">("idle");
   const [timeLeft, setTimeLeft] = useState(180);
+  const [inviteId, setInviteId] = useState<string | null>(null);
 
   // Send Invitation Request
   const handleSendInvite = async () => {
@@ -67,6 +68,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) 
       }
 
       toast.success("Invitation sent successfully!");
+      setInviteId(data.inviteId);
       setStatus("waiting");
       setTimeLeft(180);
 
@@ -99,16 +101,28 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) 
 
   // Polling Effect
   useEffect(() => {
-    if (status !== "waiting") return;
+    if (status !== "waiting" || !inviteId) return;
 
     const pollId = setInterval(async () => {
       try {
-        const res = await fetch("/api/user/active-battle");
+        const res = await fetch(`/api/battle/invite/${inviteId}`);
         const data = await res.json();
         
-        if (data.success && data.battleId) {
-          toast.success("Battle Accepted!");
-          router.push(`/battle/${data.battleId}`);
+        if (data.success) {
+          if (data.status === "Accepted" && data.battleId) {
+            toast.success("Battle Accepted!");
+            router.push(`/battle/${data.battleId}`);
+          } else if (data.status === "Rejected") {
+            toast.error("Invitation rejected by opponent.");
+            setStatus("idle");
+            setInviteId(null);
+            onOpenChange(false);
+          } else if (data.status === "Expired") {
+             toast.error("Invitation expired.");
+             setStatus("idle");
+             setInviteId(null);
+             onOpenChange(false);
+          }
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -116,7 +130,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) 
     }, 2000);
 
     return () => clearInterval(pollId);
-  }, [status, router]);
+  }, [status, inviteId, router, onOpenChange]);
 
   // Handle modal close
   const handleOpenChange = (newOpen: boolean) => {
@@ -137,6 +151,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) 
         setStatus("idle");
         setOpponentUsername("");
         setDifficulty("");
+        setInviteId(null);
       }, 300);
       
       return () => clearTimeout(resetTimer);

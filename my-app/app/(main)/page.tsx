@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CodeBackground } from "@/components/code-background";
 import { BattleModal } from "@/components/battle-modal";
+import { ActivityDashboard } from "@/components/activity-dashboard";
 import { Button } from "@/components/ui/button";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 
@@ -81,9 +82,7 @@ export default function Home() {
       <aside className="hidden lg:flex flex-[3] bg-white dark:bg-zinc-950 flex-col p-8 z-10 relative border-l border-zinc-200 dark:border-zinc-900 shadow-xl transition-colors duration-300">
         <div className="flex flex-col gap-4 h-full">
           <h2 className="text-2xl font-bold border-b border-zinc-200 dark:border-zinc-800 pb-4 tracking-tight transition-colors duration-300">Activity Dashboard</h2>
-          <div className="flex-1 flex items-center justify-center text-zinc-500 dark:text-zinc-600 font-medium">
-            <p className="text-center px-8">Your recent invites and battle activity will appear here.</p>
-          </div>
+          <ActivityDashboard />
         </div>
       </aside>
 
