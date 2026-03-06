@@ -2,9 +2,9 @@ import { Types } from "mongoose";
 import { User } from "./UserType";
 
 export type BattleStatus = "Active" | "Completed";
-export type BattleDifficulty = "Easy" | "Medium" | "Hard";
+export type BattleDifficulty = "easy" | "medium" | "hard";
 export type BattleType = "1v1" | "2v2";
-export type ProblemRef = { id: number };
+export type ProblemRef = { difficulty: BattleDifficulty; id: number };
 
 export interface Battle {
     _id: Types.ObjectId;
