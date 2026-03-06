@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	WORKER_POOL_SIZE = 5
+	WORKER_POOL_SIZE = 7
 )
 
 var REDIS_ADDR string
@@ -14,10 +14,10 @@ var REDIS_PASSWORD string
 var MONGO_URI string
 
 type CodeConfig struct {
-	TaskID    string
-	Code      string
-	Language  string
-	TestCases map[any]any
+	TaskID    string            `json:"task_id,omitempty"`
+	Code      string            `json:"code,omitempty"`
+	Language  string            `json:"language,omitempty"`
+	TestCases map[string]string `json:"test_cases,omitempty"`
 }
 
 type WorkerPool struct {

@@ -1,24 +1,100 @@
 package worker
 
 import (
+	"bytes"
 	"context"
 	"executor-service/utils"
 	"fmt"
+	"strings"
+	"time"
 
+	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 )
 
-func RunTask(ctx context.Context) error {
+func execCommand(ctx context.Context, cli *client.Client, containerID string, cmd []string, input string) (string, error) {
+
+	execResp, err := cli.ExecCreate(ctx, containerID, client.ExecCreateOptions{
+		Cmd:          cmd,
+		AttachStdout: true,
+		AttachStderr: true,
+		AttachStdin:  true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	attachResp, err := cli.ExecAttach(ctx, execResp.ID, client.ExecAttachOptions{})
+	if err != nil {
+		return "", err
+	}
+	defer attachResp.Close()
+
+	if input != "" {
+		attachResp.Conn.Write([]byte(input))
+		attachResp.CloseWrite()
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	_, err = stdcopy.StdCopy(&stdout, &stderr, attachResp.Reader)
+	if err != nil {
+		return "", err
+	}
+
+	return stdout.String(), nil
+}
+
+func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
+
+	writeCmd := []string{
+		"sh",
+		"-c",
+		"cat > /tmp/main.cpp",
+	}
+
+	_, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
+
+	if err != nil {
+		return err
+	}
+
+	compileCmd := []string{
+		"g++", "/tmp/main.cpp", "-o", "/tmp/a.out",
+	}
+
+	_, err = execCommand(ctx, cli, containerID, compileCmd, "")
+
+	if err != nil {
+		return err
+	}
+
+	for input, expected := range task.TestCases {
+
+		runCmd := []string{"/tmp/a.out"}
+
+		output, err := execCommand(ctx, cli, containerID, runCmd, input+"\n")
+		if err != nil {
+			return err
+		}
+
+		actual := strings.TrimSpace(output)
+		exp := strings.TrimSpace(fmt.Sprint(expected))
+
+		if actual != exp {
+			fmt.Println("Testcase failed", "Input:", input, "Output:", actual, "Expected:", exp)
+		} else {
+			fmt.Println("Testcase passed", "Input:", input, "Output:", actual, "Expected:", exp)
+		}
+	}
 
 	return nil
 }
 
 func worker(ctx context.Context) {
-
 	utils.WorkerPoolData.Increment()
-	defer utils.WorkerPoolData.Decrement()
-	fmt.Println("Worker started - Active Workers:", utils.WorkerPoolData.GetCount())
+	containerName := fmt.Sprintf("code-executor-worker-%d", time.Now().UnixNano())
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -29,40 +105,47 @@ func worker(ctx context.Context) {
 	}
 	defer apiClient.Close()
 	PidL := int64(64)
+	t := true
 	imageName := "gcc:13"
 	resp, err := apiClient.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Image: imageName,
+		Name:  containerName,
 		HostConfig: &container.HostConfig{
+			Init: &t,
 			Resources: container.Resources{
-				Memory:    256 * 1024 * 1024, // 256MB
-				NanoCPUs:  1e9,               // 1 CPU
+				Memory:    256 * 1024 * 1024,
+				NanoCPUs:  1e9,
 				PidsLimit: &PidL,
 			},
 			NetworkMode:    "none",
 			ReadonlyRootfs: true,
+			Tmpfs: map[string]string{
+				"/tmp": "rw,exec,nosuid,size=64m",
+			},
 		},
 		Config: &container.Config{Cmd: []string{"tail", "-f", "/dev/null"}},
 	})
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println("Worker started - Active Workers:", utils.WorkerPoolData.GetCount(), "Container ID:", containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
-
-	fmt.Println(resp.ID)
 	for {
 		task := utils.WorkerPoolData.GetTask()
 		fmt.Println("Worker received task:", task.TaskID)
-		runCtx := context.Background()
-		err := RunTask(runCtx)
+		runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
 			fmt.Println("Worker failed task:", task.TaskID, "Error:", err, "Spawning new worker")
+			utils.WorkerPoolData.Decrement()
 			SpawnWorkerFailed(ctx)
+			utils.WorkerPoolData.AddTask(task)
 			break
 		} else {
-			fmt.Println("Worker completed task:", task.TaskID)
+			fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
 		}
 	}
 }
