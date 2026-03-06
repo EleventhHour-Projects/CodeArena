@@ -94,8 +94,7 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 
 func worker(ctx context.Context) {
 	utils.WorkerPoolData.Increment()
-	containerName := fmt.Sprintf("code-executor-worker-%d", utils.WorkerPoolData.GetCount())
-	defer utils.WorkerPoolData.Decrement()
+	containerName := fmt.Sprintf("code-executor-worker-%d", time.Now().UnixNano())
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -141,8 +140,9 @@ func worker(ctx context.Context) {
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
 			fmt.Println("Worker failed task:", task.TaskID, "Error:", err, "Spawning new worker")
-			SpawnWorkerFailed(ctx)
 			utils.WorkerPoolData.Decrement()
+			SpawnWorkerFailed(ctx)
+			utils.WorkerPoolData.AddTask(task)
 			break
 		} else {
 			fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
