@@ -1,4 +1,4 @@
-import { Home, Trophy, Code2, User2, ChevronUp } from "lucide-react"
+import { Home, Trophy, Code2, User2, ChevronUp, History } from "lucide-react"
 import { getServerSession } from "next-auth"
 import Link from "next/link"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -31,8 +31,9 @@ import { ThemeToggleSidebarItem } from "@/components/theme-toggle-sidebar-item"
 
 const navItems = [
   { title: "Home", url: "/", icon: Home },
-  { title: "Leaderboard", url: "#leaderboard", icon: Trophy },
+  { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "My Statistics", url: "/user-stats", icon: Code2 },
+  { title: "Battle History", url: "/battle-history", icon: History }
 ]
 
 export async function AppSidebar() {
