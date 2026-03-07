@@ -14,6 +14,7 @@ const battleSchema = new mongoose.Schema<Battle>({
     endTime: { type: Date },
     duration: { type: Object },
     problems: { type: [{ difficulty: { type: String, required: true }, id: { type: Number, required: true } }], required: true },
+    problemResults: { type: [{ problem: { type: { difficulty: { type: String, required: true }, id: { type: Number, required: true } }, required: true }, player1SolveTime: { type: Number, required: true }, player2SolveTime: { type: Number, required: true } }], required: true },
 })
 
 // set the name of collection to battles
