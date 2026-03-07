@@ -4,6 +4,7 @@ import { User } from "./UserType";
 export type BattleStatus = "Active" | "Completed";
 export type BattleDifficulty = "easy" | "medium" | "hard";
 export type BattleType = "1v1" | "2v2";
+export type BattleResult = "player1" | "player2" | "draw";
 export type ProblemRef = { difficulty: BattleDifficulty; id: number };
 
 export interface Battle {
@@ -15,8 +16,8 @@ export interface Battle {
     difficulty: BattleDifficulty; 
     type: BattleType; // default 1v1 for MVP
 
-    winner?: User;
-    loser?: User;
+    winner?: BattleResult;
+    loser?: BattleResult;
 
     // time
     startTime?: Date;
@@ -29,4 +30,11 @@ export interface Battle {
 
     // problems stored in an array, each problem has id
     problems: ProblemRef[];
+
+    // playerResults
+    problemResults: {
+        problem: ProblemRef;
+        player1SolveTime?: number // default 0
+        player2SolveTime?: number // default 0
+    }[]
 }
