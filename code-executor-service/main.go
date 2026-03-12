@@ -1,8 +1,18 @@
+// Copyright (c) 2026 EleventhHour. All rights reserved.
+//
+// This code is licensed under the MIT License. You may obtain a copy of the License at
+//
+//	https://opensource.org/licenses/MIT
+//
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
+// limitations under the License.
 package main
 
 import (
 	"context"
 	"executor-service/api"
+	"executor-service/database"
 	"executor-service/worker"
 	"fmt"
 	"io"
@@ -38,6 +48,8 @@ func checkImage() error {
 	return fmt.Errorf("no gcc:13 found")
 }
 
+// installImage pulls the specified Docker image from the registry, allowing the code executor service to use it for executing code tasks in containers
+// The function creates a Docker client, pulls the image, and discards the output to ensure that the image is available for use by the worker containers
 func installImage(img string) error {
 	fmt.Println("Pulling Image - ", img)
 	apiClient, err := client.NewClientWithOpts(
@@ -61,6 +73,10 @@ func main() {
 	if err != nil {
 		installImage("gcc:13")
 	}
+	database.InitMongoDB()
+	// Uncomment the following lines to enable Redis queue functionality
+	//queue.InitRedis()
+	//go queue.ListenForTasks(ctx)
 	go api.StartService()
 	time.Sleep(1 * time.Second)
 	go worker.SpawnWorkers(ctx)

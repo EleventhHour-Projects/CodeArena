@@ -11,6 +11,11 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// Temporary function to add tasks to the queue, can be removed when the frontend is ready
+// AddToQueue is a handler function that receives a code execution task in the request body, unmarshals it into a CodeConfig struct, and adds it to the worker pool's channel for processing by workers
+// The function expects the request body to contain a JSON representation of a CodeConfig struct, which includes the code to be executed and any relevant configuration for the task
+// If the request body is invalid or cannot be unmarshaled into a CodeConfig struct, the function returns a 400 Bad Request response with an error message
+// If the task is successfully added to the worker pool, the function returns a success message indicating that the task has been added to the queue
 func AddToQueue(c fiber.Ctx) error {
 	var task utils.CodeConfig
 	b := c.Body()
@@ -23,6 +28,9 @@ func AddToQueue(c fiber.Ctx) error {
 	return c.SendString("Task added to queue")
 }
 
+// StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
+// The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
+// The server listens on port 6969 and is configured to disable the startup message for a cleaner output
 func StartService() {
 	os.Setenv("FIBER_NO_BANNER", "true")
 	app := fiber.New(fiber.Config{
