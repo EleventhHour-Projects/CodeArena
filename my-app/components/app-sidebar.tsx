@@ -66,7 +66,7 @@ export async function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -106,7 +106,7 @@ export async function AppSidebar() {
                   </Avatar>
                   <span className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {session?.user?.name || "Guest"}
+                      {session?.user?.username || "Guest"}
                     </span>
                     <span className="truncate text-xs">
                       {session?.user?.email || "Not logged in"}
