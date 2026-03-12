@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v3 v3.1.0
-	github.com/moby/moby/api v1.53.0
+	github.com/moby/moby/api v1.54.0
 	github.com/moby/moby/client v0.2.2
 	github.com/redis/go-redis/v9 v9.18.0
 	go.mongodb.org/mongo-driver/v2 v2.5.0
