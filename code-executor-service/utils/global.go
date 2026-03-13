@@ -39,6 +39,9 @@ type CodeConfig struct {
 	Language    string                 `json:"language,omitempty"`
 	TestCases   map[string]string      `json:"test_cases,omitempty"`
 	Constraints *CodeConfigConstraints `json:"constraints,omitempty"`
+	UserID      string                 `json:"user_id,omitempty"`
+	BattleID    string                 `json:"battle_id,omitempty"`
+	ProblemID   string                 `json:"problem_id,omitempty"`
 }
 
 // WorkerPool is a struct that manages the worker pool for executing code tasks
