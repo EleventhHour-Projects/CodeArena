@@ -51,13 +51,13 @@ func StartService() {
 \____/\____/\__,_/\___/  /_____/_/ /_/\____/\___/\__/\____/_/     
 
 --------------------------------------------------
-INFO Code Executor Service started on: http://127.0.0.1:6969
-INFO Total handlers:            %d
-INFO PID:                       %d
-INFO Total process count:       1
-INFO Worker pool size:          %d
+`+utils.Lime+`INFO`+utils.Reset+` Code Executor Service started on:`+utils.Blue+` http://127.0.0.1:6969`+utils.Reset+`
+`+utils.Lime+`INFO`+utils.Reset+` Total handlers:            %d
+`+utils.Lime+`INFO`+utils.Reset+` PID:                       %d
+`+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
+`+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.WORKER_POOL_SIZE, os.Getpid(), utils.WORKER_POOL_SIZE)
+`, utils.CustomWorkerPoolSize+1, os.Getpid(), utils.CustomWorkerPoolSize)
 	app.Post("/go/api/queue", AddToQueue)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

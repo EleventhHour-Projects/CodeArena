@@ -9,6 +9,7 @@ package utils
 
 import (
 	"errors"
+	"flag"
 	"sync"
 	"time"
 )
@@ -20,7 +21,30 @@ const (
 	// WORKER_POOL_SIZE is a constant that defines the number of worker goroutines that will be spawned to process code execution tasks from the worker pool
 	// This constant allows for easy configuration of the worker pool size based on the needs of the application and available resources, enabling efficient processing of code execution tasks while managing system resources effectively
 	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
-	WORKER_POOL_SIZE = 3
+	WORKER_POOL_SIZE = 10
+)
+
+// Color constants for terminal output, providing a convenient way to format and colorize log messages and output in the terminal for better readability and visual distinction of different types of messages (e.g., errors, warnings, informational messages)
+const (
+	Green   = "\033[32m"
+	Reset   = "\033[0m"
+	Red     = "\033[31m"
+	Blue    = "\033[34m"
+	Cyan    = "\033[36m"
+	Gray    = "\033[90m"
+	White   = "\033[97m"
+	Yellow  = "\033[33m"
+	Magenta = "\033[35m"
+	Purple  = "\033[35m"
+	Orange  = "\033[33m"
+	Pink    = "\033[35m"
+	Brown   = "\033[33m"
+	Teal    = "\033[36m"
+	Indigo  = "\033[34m"
+	Lime    = "\033[32m"
+	Navy    = "\033[34m"
+	Olive   = "\033[33m"
+	Maroon  = "\033[31m"
 )
 
 // Global variables for configuration and shared data
@@ -150,4 +174,10 @@ func ErrorHandler(err error) {
 
 func FakeError() error {
 	return errors.New("fake error")
+}
+
+// FlagUsage is a function that prints the usage information for the command-line flags of the application, providing users with guidance on how to run the application and what options are available for configuration
+// It displays the usage syntax, available options, and examples of how to run the application with different configurations, helping users understand how to use the command-line flags effectively when starting the code executor service
+var FlagUsage = func() {
+	flag.PrintDefaults()
 }
