@@ -3,19 +3,47 @@ package database
 import (
 	"context"
 	"executor-service/utils"
+	"fmt"
+	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // This file contains utility functions for interacting with the MongoDB database, specifically for fetching execution code data and updating execution code status
 func (m *MongoDBClient) GetExecutionCodeData(id string) (*utils.ExecutionCode, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var codeData *utils.ExecutionCode
-	err := m.ExecutionCode.FindOne(context.Background(), map[string]string{"_id": id}).Decode(&codeData)
+	id = strings.TrimSpace(id)
+
+	// 1. Validate the ID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+		return nil, fmt.Errorf("conversion failed for id %s: %v", id, err)
+	}
+
+	var codeData utils.ExecutionCode
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancel()
+	cur, err := m.ExecutionCode.Find(ctx, bson.D{}, nil)
+	for cur.Next(ctx) {
+		if err := cur.Decode(&codeData); err != nil {
+			return nil, err
+		}
+		if codeData.ID == objID {
+			break
+		}
+	}
+	err = cur.Err()
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("no document found with _id: %s", id)
+		}
 		return nil, err
 	}
-	return codeData, nil
+
+	return &codeData, nil
 }
 
 // GetProblemTestCases is a function that fetches the test cases for a given problem ID
@@ -66,8 +94,8 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 	if err != nil {
 		return err
 	}
-	_, err = m.ExecutionCode.UpdateOne(context.Background(), map[string]string{"_id": task.TaskID}, map[string]interface{}{
-		"$set": map[string]interface{}{
+	_, err = m.ExecutionCode.UpdateOne(context.TODO(), bson.M{"_id": task.TaskID}, bson.M{
+		"$set": bson.M{
 			"status": passString,
 		},
 	})

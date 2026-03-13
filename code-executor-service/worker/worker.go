@@ -48,76 +48,98 @@ func execCommand(ctx context.Context, cli *client.Client, containerID string, cm
 
 func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
 
-	writeCmd := []string{
-		"sh",
-		"-c",
-		"cat > /tmp/main.cpp",
-	}
+	writeCmd := []string{"sh", "-c", "cat > /tmp/main.cpp"}
 
 	_, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
 	if err != nil {
 		return err
 	}
 
-	compileCmd := []string{
-		"g++", "/tmp/main.cpp", "-o", "/tmp/a.out",
-	}
+	compileCmd := []string{"g++", "/tmp/main.cpp", "-o", "/tmp/a.out"}
 
 	_, err = execCommand(ctx, cli, containerID, compileCmd, "")
 	if err != nil {
 		return err
 	}
+
 	var totalTime time.Duration
 	var failedInfo FailedInfo
 
 	for input, expected := range task.TestCases {
-		runCmd := []string{"/tmp/a.out"}
+
+		ectx, cancel := context.WithTimeout(ctx, time.Second)
+
+		runCmd := []string{"timeout", "1s", "/tmp/a.out"}
+
 		start := time.Now()
-		output, err := execCommand(ctx, cli, containerID, runCmd, input+"\n")
+
+		output, err := execCommand(ectx, cli, containerID, runCmd, input+"\n")
+
 		elapsed := time.Since(start)
 		totalTime += elapsed
+
+		cancel()
+
+		// timeout handling (infinite loop protection)
+		if ectx.Err() == context.DeadlineExceeded {
+
+			fmt.Println("Testcase timeout:", input)
+
+			// kill container to stop infinite loop
+			cli.ContainerKill(context.Background(), containerID, client.ContainerKillOptions{Signal: "SIGKILL"})
+
+			failedInfo = FailedInfo{
+				isFailed:     true,
+				ErrorMessage: "Time Limit Exceeded (>1s)",
+				TestCase:     input,
+			}
+
+			break
+		}
+
 		if err != nil {
 			return err
 		}
+
 		actual := strings.TrimSpace(output)
 		exp := strings.TrimSpace(fmt.Sprint(expected))
+
 		if actual != exp {
+
 			fmt.Println("Testcase failed",
 				"Input:", input,
 				"Output:", actual,
 				"Expected:", exp,
 				"Time:", elapsed)
+
 			failedInfo = FailedInfo{
 				isFailed:     true,
-				ErrorMessage: "Testcase failed",
+				ErrorMessage: "Wrong Answer",
 				TestCase:     input,
 			}
+
 			break
-		} else {
-			fmt.Println("Testcase passed",
-				"Input:", input,
-				"Output:", actual,
-				"Expected:", exp,
-				"Time:", elapsed)
 		}
+
+		fmt.Println("Testcase passed",
+			"Input:", input,
+			"Output:", actual,
+			"Expected:", exp,
+			"Time:", elapsed)
 	}
+
 	fmt.Println("Total Execution Time:", totalTime)
 
-	select {
-	case <-ctx.Done():
-		failedInfo = FailedInfo{
-			isFailed:     true,
-			ErrorMessage: "Execution timed out > 2 seconds",
-		}
-	default:
-	}
 	if !failedInfo.isFailed {
 		failedInfo = FailedInfo{
 			isFailed: false,
 		}
 	}
+
 	memory := 0
+
 	SaveSubmissionResult(task, totalTime, memory, &failedInfo)
+
 	return nil
 }
 
