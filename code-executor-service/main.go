@@ -25,7 +25,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -66,12 +65,12 @@ func checkImage() error {
 func loadEnv() {
 	if _, err := os.Stat(".env"); err == nil {
 		if err := godotenv.Load(); err != nil {
-			log.Println("Warning: Could not load .env file:", err)
+			fmt.Println("Warning: Could not load .env file:", err)
 		} else {
-			log.Println(utils.Green + "Loaded environment variables from .env done" + utils.Reset)
+			fmt.Println(utils.Green + "Loaded environment variables from .env done" + utils.Reset)
 		}
 	} else {
-		log.Println(utils.Red+"Warning:"+utils.Reset, ".env file not found, assuming environment variables are set by the host")
+		fmt.Println(utils.Red+"Warning:"+utils.Reset, ".env file not found, assuming environment variables are set by the host")
 	}
 }
 
