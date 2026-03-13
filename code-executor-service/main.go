@@ -68,17 +68,17 @@ func loadEnv() {
 		if err := godotenv.Load(); err != nil {
 			log.Println("Warning: Could not load .env file:", err)
 		} else {
-			log.Println("Loaded environment variables from .env done")
+			log.Println(utils.Green + "Loaded environment variables from .env done" + utils.Reset)
 		}
 	} else {
-		log.Println(".env file not found, assuming environment variables are set by the host")
+		log.Println(utils.Red+"Warning:"+utils.Reset, ".env file not found, assuming environment variables are set by the host")
 	}
 }
 
 // installImage pulls the specified Docker image from the registry, allowing the code executor service to use it for executing code tasks in containers
 // The function creates a Docker client, pulls the image, and discards the output to ensure that the image is available for use by the worker containers
 func installImage(img string) error {
-	fmt.Println("Pulling Image - ", img)
+	fmt.Println(utils.Green+"Pulling Image - "+utils.Reset, img)
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -101,12 +101,25 @@ func installImage(img string) error {
 func main() {
 	// Parse command-line flags for worker pool size, allowing users to specify the number of worker goroutines to spawn for processing code execution tasks.
 	// If the flag is not provided or is set to a non-positive value, the application will default to using the WORKER_POOL_SIZE constant defined in the utils package.
-	workerCount := flag.Int("worker", 1, "number of workers to spawn (optional)")
+	workerCount := flag.Int("worker", 0, "number of workers to spawn (optional)")
+	flag.Usage = utils.FlagUsage
 	flag.Parse()
 	utils.CustomWorkerPoolSize = *workerCount
 
 	if utils.CustomWorkerPoolSize <= 0 {
 		utils.CustomWorkerPoolSize = utils.WORKER_POOL_SIZE
+	}
+	if utils.CustomWorkerPoolSize > 100 {
+		fmt.Printf("\033[31m⚠ WARNING:\033[0m Worker count (%d) is very high and may exhaust system resources.\n", utils.CustomWorkerPoolSize)
+		fmt.Print("Do you want to continue? (y/N): ")
+
+		var input string
+		fmt.Scanln(&input)
+
+		if input != "y" && input != "Y" {
+			fmt.Println(utils.Red + "Aborting startup." + utils.Reset)
+			os.Exit(1)
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -132,14 +145,14 @@ func main() {
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	<-sigCh
-	fmt.Println("Shutting down gracefully...")
-	fmt.Println("Stopping all workers and cleaning up containers...")
+	fmt.Println(utils.Cyan + "Shutting down gracefully..." + utils.Reset)
+	fmt.Println(utils.Cyan + "Stopping all workers and cleaning up containers..." + utils.Reset)
 	err = worker.KillAllContainers(ctx)
 	if err != nil {
-		fmt.Println("Error occurred while shutting down:", err)
+		fmt.Println(utils.Red+"Error occurred while shutting down:"+utils.Reset, err)
 		cancel()
 		return
 	}
-	fmt.Println("Shutdown complete.")
+	fmt.Println(utils.Yellow + "Shutdown complete." + utils.Reset)
 	cancel()
 }

@@ -33,14 +33,14 @@ var MongoDB *MongoDBClient
 func InitMongoDB() {
 	client, err := mongo.Connect(options.Client().ApplyURI(utils.MONGO_URI))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(utils.Red + "Failed to connect to MongoDB!" + utils.Reset)
 	}
 	err = client.Ping(context.Background(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(utils.Red + "Failed to ping MongoDB!" + utils.Reset)
 		return
 	}
-	fmt.Println("Pinged your deployment. Successfully connected to MongoDB!")
+	fmt.Println(utils.Green + "Pinged your deployment. Successfully connected to MongoDB!" + utils.Reset)
 
 	MongoDB = &MongoDBClient{
 		Client:               client,

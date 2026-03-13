@@ -21,7 +21,7 @@ var Queue *RedisQueue
 // InitRedis initializes the Redis client and sets up the queue
 func InitRedis() {
 	Queue = NewRedisQueue(utils.REDIS_ADDR)
-	fmt.Println("Redis Queue initialized with address:", utils.REDIS_ADDR)
+	fmt.Println(utils.Green+"Redis Queue initialized with address:"+utils.Reset, utils.REDIS_ADDR)
 }
 
 func NewRedisQueue(addr string) *RedisQueue {
@@ -60,23 +60,23 @@ func ListenForTasks(ctx context.Context) {
 				if err == redis.Nil {
 					continue
 				}
-				fmt.Println("Error popping task:", err)
+				fmt.Println(utils.Red+"Error popping task:"+utils.Reset, err)
 				continue
 			}
 			fmt.Println("Received task:", task)
 			data, err := database.MongoDB.GetExecutionCodeData(task)
 			if err != nil {
-				fmt.Println("Error fetching execution code data:", err)
+				fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
 				continue
 			}
 			testCases, err := database.GetProblemTestCases(data.ProblemID)
 			if err != nil {
-				fmt.Println("Error fetching problem test cases:", err)
+				fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
 				continue
 			}
 			maxTime, maxMemory, err := database.GetProblemConstraints(data.ProblemID)
 			if err != nil {
-				fmt.Println("Error fetching problem constraints:", err)
+				fmt.Println(utils.Red+"Error fetching problem constraints:"+utils.Reset, err)
 				continue
 			}
 			utils.WorkerPoolData.AddTask(utils.CodeConfig{

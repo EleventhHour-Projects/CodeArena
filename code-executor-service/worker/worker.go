@@ -151,7 +151,7 @@ func worker(ctx context.Context) {
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		fmt.Println("Docker client error:", err)
+		fmt.Println(utils.Red+"Docker client error:"+utils.Reset, err)
 		return
 	}
 	defer apiClient.Close()
@@ -177,10 +177,10 @@ func worker(ctx context.Context) {
 		Config: &container.Config{Cmd: []string{"tail", "-f", "/dev/null"}},
 	})
 	if err != nil {
-		fmt.Println("Error creating container L129 :", err)
+		fmt.Println(utils.Red+"Error creating container L129 :"+utils.Reset, err)
 		return
 	}
-	fmt.Println("Worker started - Active Workers:", utils.WorkerPoolData.GetCount(), "Container ID:", containerName)
+	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
@@ -191,7 +191,7 @@ func worker(ctx context.Context) {
 		defer cancel()
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
-			fmt.Println("Worker failed task:", task.TaskID, "Error:", err, "Spawning new worker")
+			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
 			utils.WorkerPoolData.Decrement()
 			SpawnWorkerFailed(ctx)
 			utils.WorkerPoolData.AddTask(task)
