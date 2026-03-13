@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v3 v3.1.0
+	github.com/joho/godotenv v1.5.1
 	github.com/moby/moby/api v1.54.0
 	github.com/moby/moby/client v0.3.0
 	github.com/redis/go-redis/v9 v9.18.0

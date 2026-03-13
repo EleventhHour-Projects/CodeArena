@@ -13,17 +13,23 @@ import (
 	"context"
 	"executor-service/api"
 	"executor-service/database"
+	"executor-service/queue"
+	"executor-service/utils"
 	"executor-service/worker"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/moby/moby/client"
 )
 
+// checkImage checks if the required Docker image (gcc:13) is available locally, ensuring that the worker containers can use it for executing code tasks
+// If the image is not found, it returns an error, prompting the main function to pull the image from the registry
 func checkImage() error {
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
@@ -48,6 +54,20 @@ func checkImage() error {
 	return fmt.Errorf("no gcc:13 found")
 }
 
+// loadEnv loads environment variables from a .env file if it exists, allowing the application to use configuration values defined in the file for connecting to services like MongoDB and Redis
+// If the .env file is not found, it assumes that the necessary environment variables are set by the host environment and logs a warning message
+func loadEnv() {
+	if _, err := os.Stat(".env"); err == nil {
+		if err := godotenv.Load(); err != nil {
+			log.Println("Warning: Could not load .env file:", err)
+		} else {
+			log.Println("Loaded environment variables from .env done")
+		}
+	} else {
+		log.Println(".env file not found, assuming environment variables are set by the host")
+	}
+}
+
 // installImage pulls the specified Docker image from the registry, allowing the code executor service to use it for executing code tasks in containers
 // The function creates a Docker client, pulls the image, and discards the output to ensure that the image is available for use by the worker containers
 func installImage(img string) error {
@@ -60,6 +80,10 @@ func installImage(img string) error {
 		return err
 	}
 	reader, err := apiClient.ImagePull(context.Background(), img, client.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+
 	defer reader.Close()
 
 	io.Copy(io.Discard, reader)
@@ -68,16 +92,22 @@ func installImage(img string) error {
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+	loadEnv()
+
+	utils.REDIS_ADDR = os.Getenv("REDIS_ADDR")
+	utils.MONGO_URI = os.Getenv("MONGO_URI")
+
 	defer cancel()
 	err := checkImage()
 	if err != nil {
 		installImage("gcc:13")
 	}
 	database.InitMongoDB()
-	// Uncomment the following lines to enable Redis queue functionality
-	//queue.InitRedis()
-	//go queue.ListenForTasks(ctx)
+	queue.InitRedis()
+
+	go queue.ListenForTasks(ctx)
 	go api.StartService()
+
 	time.Sleep(1 * time.Second)
 	go worker.SpawnWorkers(ctx)
 	sigCh := make(chan os.Signal, 1)

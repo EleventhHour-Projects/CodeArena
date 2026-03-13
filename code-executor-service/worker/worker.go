@@ -126,7 +126,8 @@ func worker(ctx context.Context) {
 		Config: &container.Config{Cmd: []string{"tail", "-f", "/dev/null"}},
 	})
 	if err != nil {
-		panic(err)
+		fmt.Println("Error creating container L129 :", err)
+		return
 	}
 	fmt.Println("Worker started - Active Workers:", utils.WorkerPoolData.GetCount(), "Container ID:", containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {

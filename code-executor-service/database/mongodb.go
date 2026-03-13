@@ -31,7 +31,6 @@ var MongoDB *MongoDBClient
 
 // InitMongoDB initializes the MongoDB client and collections
 func InitMongoDB() {
-	utils.MONGO_URI = "todo : get from env"
 	client, err := mongo.Connect(options.Client().ApplyURI(utils.MONGO_URI))
 	if err != nil {
 		log.Fatal(err)
