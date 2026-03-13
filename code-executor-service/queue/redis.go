@@ -38,17 +38,18 @@ func (r *RedisQueue) Push(ctx context.Context, key string, value interface{}) er
 }
 
 // Pop removes and returns a task from the "tasks" queue
-func (r *RedisQueue) Pop(ctx context.Context, key string) (interface{}, error) {
-	result, err := r.client.RPop(ctx, key).Result()
+func (r *RedisQueue) Pop(ctx context.Context, key string) (string, error) {
+	result, err := r.client.BRPop(ctx, 0, key).Result()
 	if err != nil {
-		return nil, fmt.Errorf("failed to pop from queue: %w", err)
+		return "", err
 	}
-	return result, nil
+
+	// BRPop returns [key, value]
+	return result[1], nil
 }
 
 // ListenForTasks continuously listens for tasks on the "tasks" queue and adds them to the worker pool
 func ListenForTasks(ctx context.Context) {
-	var dbClient *database.MongoDBClient
 	for {
 		select {
 		case <-ctx.Done():
@@ -63,7 +64,7 @@ func ListenForTasks(ctx context.Context) {
 				continue
 			}
 			fmt.Println("Received task:", task)
-			data, err := dbClient.GetExecutionCodeData((task.(string)))
+			data, err := database.MongoDB.GetExecutionCodeData(task)
 			if err != nil {
 				fmt.Println("Error fetching execution code data:", err)
 				continue

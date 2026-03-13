@@ -32,6 +32,9 @@ func KillAllContainers(ctx context.Context) error {
 	}
 
 	for _, container := range containers.Items {
+		if container.Image != "gcc:13" {
+			continue
+		}
 		_, err := apiClient.ContainerStop(ctx, container.ID, client.ContainerStopOptions{})
 		apiClient.ContainerRemove(ctx, container.ID, client.ContainerRemoveOptions{Force: true})
 		if err != nil {
