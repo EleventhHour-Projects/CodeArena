@@ -17,13 +17,19 @@ import (
 // It includes the configuration for the worker pool, global variables for Redis and MongoDB connections, and utility functions for error handling and task management
 // The constants defined in this file include the size of the worker pool, which determines how many concurrent workers can process code execution tasks
 const (
-	WORKER_POOL_SIZE = 1
+	// WORKER_POOL_SIZE is a constant that defines the number of worker goroutines that will be spawned to process code execution tasks from the worker pool
+	// This constant allows for easy configuration of the worker pool size based on the needs of the application and available resources, enabling efficient processing of code execution tasks while managing system resources effectively
+	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
+	WORKER_POOL_SIZE = 3
 )
 
 // Global variables for configuration and shared data
 var REDIS_ADDR string
 var REDIS_PASSWORD string
 var MONGO_URI string
+
+// CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
+var CustomWorkerPoolSize int
 
 type CodeConfigConstraints struct {
 	MaxTime   int `json:"max_time,omitempty"`

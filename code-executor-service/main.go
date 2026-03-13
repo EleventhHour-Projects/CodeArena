@@ -7,6 +7,12 @@
 // Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
+
+// To run the code executor service, use the command: `go run main.go -worker=5
+// The -worker flag allows you to specify the number of worker goroutines to spawn for processing code execution tasks. If not provided, it defaults to 3.
+//
+// The main function initializes the code executor service by loading environment variables, checking for the required Docker image, initializing database and queue connections, and starting the API service and worker pool.
+// It also sets up a signal handler to gracefully shut down the service when an interrupt signal is received, ensuring that all worker containers are stopped and cleaned up properly.
 package main
 
 import (
@@ -16,6 +22,7 @@ import (
 	"executor-service/queue"
 	"executor-service/utils"
 	"executor-service/worker"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -90,7 +97,18 @@ func installImage(img string) error {
 	return nil
 }
 
+// To run the code executor service, use the command: `go run main.go -worker=5`
 func main() {
+	// Parse command-line flags for worker pool size, allowing users to specify the number of worker goroutines to spawn for processing code execution tasks.
+	// If the flag is not provided or is set to a non-positive value, the application will default to using the WORKER_POOL_SIZE constant defined in the utils package.
+	workerCount := flag.Int("worker", 1, "number of workers to spawn (optional)")
+	flag.Parse()
+	utils.CustomWorkerPoolSize = *workerCount
+
+	if utils.CustomWorkerPoolSize <= 0 {
+		utils.CustomWorkerPoolSize = utils.WORKER_POOL_SIZE
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	loadEnv()
 

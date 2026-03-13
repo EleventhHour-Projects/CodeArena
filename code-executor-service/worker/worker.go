@@ -106,11 +106,11 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 
 		if actual != exp {
 
-			fmt.Println("Testcase failed",
-				"Input:", input,
-				"Output:", actual,
-				"Expected:", exp,
-				"Time:", elapsed)
+			// fmt.Println("Testcase failed",
+			// 	"Input:", input,
+			// 	"Output:", actual,
+			// 	"Expected:", exp,
+			// 	"Time:", elapsed)
 
 			failedInfo = FailedInfo{
 				isFailed:     true,
@@ -121,14 +121,14 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 			break
 		}
 
-		fmt.Println("Testcase passed",
-			"Input:", input,
-			"Output:", actual,
-			"Expected:", exp,
-			"Time:", elapsed)
+		// fmt.Println("Testcase passed",
+		// 	"Input:", input,
+		// 	"Output:", actual,
+		// 	"Expected:", exp,
+		// 	"Time:", elapsed)
 	}
 
-	fmt.Println("Total Execution Time:", totalTime)
+	// fmt.Println("Total Execution Time:", totalTime)
 
 	if !failedInfo.isFailed {
 		failedInfo = FailedInfo{
