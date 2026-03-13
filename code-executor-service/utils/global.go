@@ -17,7 +17,7 @@ import (
 // It includes the configuration for the worker pool, global variables for Redis and MongoDB connections, and utility functions for error handling and task management
 // The constants defined in this file include the size of the worker pool, which determines how many concurrent workers can process code execution tasks
 const (
-	WORKER_POOL_SIZE = 7
+	WORKER_POOL_SIZE = 1
 )
 
 // Global variables for configuration and shared data
@@ -62,7 +62,7 @@ type WorkerPool struct {
 // It contains fields for the code to be executed, programming language, user ID, status, battle ID, problem ID, and creation timestamp
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type ExecutionCode struct {
-	ID        string    `bson:"_id"`
+	ID        any       `bson:"_id"`
 	Code      string    `bson:"code"`
 	Language  string    `bson:"language"`
 	UserID    string    `bson:"userId"`
@@ -85,7 +85,7 @@ type Result struct {
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type Submission struct {
-	ID        string    `bson:"_id"`
+	ID        any       `bson:"_id"`
 	Code      string    `bson:"code"`
 	Language  string    `bson:"language"`
 	UserID    string    `bson:"userId"`
