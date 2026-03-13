@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"executor-service/utils"
+	"time"
 )
 
 // This file contains utility functions for interacting with the MongoDB database, specifically for fetching execution code data and updating execution code status
@@ -41,14 +42,33 @@ func GetProblemConstraints(problemID string) (int, int, error) {
 	return maxTime, maxMemory, nil
 }
 
-// UpdateExecutionCodeStatus is a function that updates the status of an execution code document in the MongoDB collection
+// UpdateExecutionCodeStatus is a function that updates the status of an submission document in the MongoDB collection
 // It takes the ID of the execution code document and the new status as parameters, and updates the document in the database accordingly
-func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result) error {
+func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result, task utils.CodeConfig, pass bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	_, err := m.ExecutionCode.UpdateOne(context.Background(), map[string]string{"_id": id}, map[string]interface{}{
+	var passString string
+	if pass {
+		passString = "Accepted"
+	} else {
+		passString = "Rejected"
+	}
+	_, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
+		Code:      task.Code,
+		Language:  task.Language,
+		Result:    &status,
+		CreatedAt: time.Now(),
+		UserID:    task.UserID,
+		BattleID:  task.BattleID,
+		ProblemID: task.ProblemID,
+		Status:    &passString,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = m.ExecutionCode.UpdateOne(context.Background(), map[string]string{"_id": task.TaskID}, map[string]interface{}{
 		"$set": map[string]interface{}{
-			"status": status,
+			"status": passString,
 		},
 	})
 	return err

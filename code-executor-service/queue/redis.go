@@ -80,9 +80,13 @@ func ListenForTasks(ctx context.Context) {
 				continue
 			}
 			utils.WorkerPoolData.AddTask(utils.CodeConfig{
+				TaskID:    task,
 				Code:      data.Code,
 				Language:  data.Language,
 				TestCases: testCases,
+				UserID:    data.UserID,
+				BattleID:  data.BattleID,
+				ProblemID: data.ProblemID,
 				Constraints: &utils.CodeConfigConstraints{
 					MaxTime:   maxTime,
 					MaxMemory: maxMemory,
