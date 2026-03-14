@@ -28,6 +28,17 @@ func AddToQueue(c fiber.Ctx) error {
 	return c.SendString("Task added to queue")
 }
 
+// GetTaskInfo is a handler function that retrieves information about the task execution, such as the average execution time and total number of tasks processed, and returns it as a JSON response
+// The function accesses the TaskInfo struct from the utils package, which contains methods to calculate the average execution time and track the total number of tasks processed by the worker pool
+// The response includes the average execution time and total task count, allowing clients to monitor the performance of the task execution service
+func GetTaskInfo(c fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"average_time": utils.TaskInfo.GetAverageTime(),
+		"total_tasks":  utils.TaskInfo.GetTotalTasks(),
+		"total_time":   utils.TaskInfo.GetTotalTime(),
+	})
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -57,7 +68,8 @@ func StartService() {
 `+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
 `+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.CustomWorkerPoolSize+1, os.Getpid(), utils.CustomWorkerPoolSize)
+`, utils.CustomWorkerPoolSize+2, os.Getpid(), utils.CustomWorkerPoolSize)
 	app.Post("/go/api/queue", AddToQueue)
+	app.Get("/info", GetTaskInfo)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

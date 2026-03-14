@@ -9,37 +9,25 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // This file contains utility functions for interacting with the MongoDB database, specifically for fetching execution code data and updating execution code status
 func (m *MongoDBClient) GetExecutionCodeData(id string) (*utils.ExecutionCode, error) {
 	id = strings.TrimSpace(id)
 
-	// 1. Validate the ID
-	objID, err := primitive.ObjectIDFromHex(id)
+	// Debug: count documents in collection
+	count, _ := m.ExecutionCode.CountDocuments(context.Background(), bson.M{})
+	fmt.Println("Total docs in execution_code:", count)
+
+	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, fmt.Errorf("conversion failed for id %s: %v", id, err)
+		return nil, err
 	}
 
 	var codeData utils.ExecutionCode
-	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
-	defer cancel()
-	cur, err := m.ExecutionCode.Find(ctx, bson.D{}, nil)
-	for cur.Next(ctx) {
-		if err := cur.Decode(&codeData); err != nil {
-			return nil, err
-		}
-		if codeData.ID == objID {
-			break
-		}
-	}
-	err = cur.Err()
-
+	filter := bson.M{"_id": objID}
+	err = m.ExecutionCode.FindOne(context.Background(), filter).Decode(&codeData)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, fmt.Errorf("no document found with _id: %s", id)
-		}
 		return nil, err
 	}
 
@@ -81,20 +69,28 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 	} else {
 		passString = "Rejected"
 	}
+	objId, _ := primitive.ObjectIDFromHex(id)
+	//fmt.Println(objId)
 	_, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
-		Code:      task.Code,
-		Language:  task.Language,
-		Result:    &status,
-		CreatedAt: time.Now(),
-		UserID:    task.UserID,
-		BattleID:  task.BattleID,
-		ProblemID: task.ProblemID,
-		Status:    &passString,
+		ExecutionCodeID: objId.String(),
+		Code:            task.Code,
+		Language:        task.Language,
+		Result:          &status,
+		CreatedAt:       time.Now(),
+		UserID:          task.UserID,
+		BattleID:        task.BattleID,
+		ProblemID:       task.ProblemID,
+		Status:          &passString,
 	})
 	if err != nil {
 		return err
 	}
-	_, err = m.ExecutionCode.UpdateOne(context.TODO(), bson.M{"_id": task.TaskID}, bson.M{
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"_id": objID}
+	_, err = m.ExecutionCode.UpdateOne(context.TODO(), filter, bson.M{
 		"$set": bson.M{
 			"status": passString,
 		},

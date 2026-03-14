@@ -51,3 +51,21 @@ func KillAllContainers(ctx context.Context) error {
 	}
 	return nil
 }
+
+// KillContainerByID kill a particular container in case of any failiar
+func KillContainerByID(ctx context.Context, containerID string) error {
+	apiClient, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = apiClient.ContainerStop(ctx, containerID, client.ContainerStopOptions{})
+	apiClient.ContainerRemove(ctx, containerID, client.ContainerRemoveOptions{Force: true})
+	if err != nil {
+		return err
+	}
+	return nil
+}

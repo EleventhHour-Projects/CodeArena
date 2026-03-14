@@ -137,9 +137,8 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 	}
 
 	memory := 0
-
 	SaveSubmissionResult(task, totalTime, memory, &failedInfo)
-
+	utils.TaskInfo.IncrementTime(totalTime)
 	return nil
 }
 
@@ -192,6 +191,7 @@ func worker(ctx context.Context) {
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
 			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
+			KillContainerByID(ctx, containerName)
 			utils.WorkerPoolData.Decrement()
 			SpawnWorkerFailed(ctx)
 			utils.WorkerPoolData.AddTask(task)
