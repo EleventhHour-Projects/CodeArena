@@ -8,7 +8,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-// To run the code executor service, use the command: `go run main.go -worker=5
+// To run the code executor service, use the command: `go run main.go -worker=5`
 // The -worker flag allows you to specify the number of worker goroutines to spawn for processing code execution tasks. If not provided, it defaults to 3.
 //
 // The main function initializes the code executor service by loading environment variables, checking for the required Docker image, initializing database and queue connections, and starting the API service and worker pool.
@@ -108,6 +108,8 @@ func main() {
 	if utils.CustomWorkerPoolSize <= 0 {
 		utils.CustomWorkerPoolSize = utils.WORKER_POOL_SIZE
 	}
+	// WARING if Worker Pool Size set above 100
+	// As it can result in high resourse usage
 	if utils.CustomWorkerPoolSize > 100 {
 		fmt.Printf("\033[31m⚠ WARNING:\033[0m Worker count (%d) is very high and may exhaust system resources.\n", utils.CustomWorkerPoolSize)
 		fmt.Print("Do you want to continue? (y/N): ")
@@ -115,31 +117,41 @@ func main() {
 		var input string
 		fmt.Scanln(&input)
 
+		// Confirmation Prompt for proceeding ahead
 		if input != "y" && input != "Y" {
 			fmt.Println(utils.Red + "Aborting startup." + utils.Reset)
 			os.Exit(1)
 		}
 	}
-
+	// Context for whole service
 	ctx, cancel := context.WithCancel(context.Background())
-	loadEnv()
 
+	// Loading environment variables
+	loadEnv()
 	utils.REDIS_ADDR = os.Getenv("REDIS_ADDR")
 	utils.MONGO_URI = os.Getenv("MONGO_URI")
 
 	defer cancel()
 	err := checkImage()
 	if err != nil {
+		// Pulling gcc image (for c++)
 		installImage("gcc:13")
 	}
+
+	// MongoDB and Redis initilization
 	database.InitMongoDB()
 	queue.InitRedis()
 
+	// Listing for data in redis queue
 	go queue.ListenForTasks(ctx)
+	// API service starting
 	go api.StartService()
 
+	// Give a buffer time to start process of spawing workers
 	time.Sleep(1 * time.Second)
 	go worker.SpawnWorkers(ctx)
+
+	// Exit Process (Ctrl + C)
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
