@@ -12,6 +12,8 @@ import (
 	"flag"
 	"sync"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // This file contains global variables and utility functions that are used throughout the code executor service
@@ -22,29 +24,6 @@ const (
 	// This constant allows for easy configuration of the worker pool size based on the needs of the application and available resources, enabling efficient processing of code execution tasks while managing system resources effectively
 	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
 	WORKER_POOL_SIZE = 10
-)
-
-// Color constants for terminal output, providing a convenient way to format and colorize log messages and output in the terminal for better readability and visual distinction of different types of messages (e.g., errors, warnings, informational messages)
-const (
-	Green   = "\033[32m"
-	Reset   = "\033[0m"
-	Red     = "\033[31m"
-	Blue    = "\033[34m"
-	Cyan    = "\033[36m"
-	Gray    = "\033[90m"
-	White   = "\033[97m"
-	Yellow  = "\033[33m"
-	Magenta = "\033[35m"
-	Purple  = "\033[35m"
-	Orange  = "\033[33m"
-	Pink    = "\033[35m"
-	Brown   = "\033[33m"
-	Teal    = "\033[36m"
-	Indigo  = "\033[34m"
-	Lime    = "\033[32m"
-	Navy    = "\033[34m"
-	Olive   = "\033[33m"
-	Maroon  = "\033[31m"
 )
 
 // Global variables for configuration and shared data
@@ -92,14 +71,14 @@ type WorkerPool struct {
 // It contains fields for the code to be executed, programming language, user ID, status, battle ID, problem ID, and creation timestamp
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type ExecutionCode struct {
-	ID        any       `bson:"_id"`
-	Code      string    `bson:"code"`
-	Language  string    `bson:"language"`
-	UserID    string    `bson:"userId"`
-	Status    *string   `bson:"status,omitempty"`
-	BattleID  string    `bson:"battleId"`
-	ProblemID string    `bson:"problemId"`
-	CreatedAt time.Time `bson:"createdAt,omitzero"`
+	ID        bson.ObjectID `bson:"_id"`
+	Code      string        `bson:"code"`
+	Language  string        `bson:"language"`
+	UserID    string        `bson:"userId"`
+	Status    *string       `bson:"status,omitempty"`
+	BattleID  string        `bson:"battleId"`
+	ProblemID string        `bson:"problemId"`
+	CreatedAt time.Time     `bson:"createdAt,omitzero"`
 }
 
 // Result is a struct that represents the result of a code execution task, including whether it resulted in a time limit exceeded (TLE) or memory limit exceeded (MLE), the failed test case number if applicable, and the runtime and memory usage
@@ -115,15 +94,16 @@ type Result struct {
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type Submission struct {
-	ID        any       `bson:"_id"`
-	Code      string    `bson:"code"`
-	Language  string    `bson:"language"`
-	UserID    string    `bson:"userId"`
-	Status    *string   `bson:"status,omitempty"`
-	BattleID  string    `bson:"battleId"`
-	ProblemID string    `bson:"problemId"`
-	CreatedAt time.Time `bson:"createdAt,omitzero"`
-	Result    *Result   `bson:"result,omitempty"`
+	ID              bson.ObjectID `bson:"_id,omitempty"`
+	ExecutionCodeID string        `bson:"executionCodeId"`
+	Code            string        `bson:"code"`
+	Language        string        `bson:"language"`
+	UserID          string        `bson:"userId"`
+	Status          *string       `bson:"status,omitempty"`
+	BattleID        string        `bson:"battleId"`
+	ProblemID       string        `bson:"problemId"`
+	CreatedAt       time.Time     `bson:"createdAt,omitzero"`
+	Result          *Result       `bson:"result,omitempty"`
 }
 
 var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig)}
@@ -181,3 +161,44 @@ func FakeError() error {
 var FlagUsage = func() {
 	flag.PrintDefaults()
 }
+
+// TaskProcessingInfo is a struct that keeps track of the total number of tasks processed and the total time taken for processing those tasks, providing a way to monitor and analyze the performance of the code execution service
+// TotalTaskDone is an integer that counts the total number of tasks that have been processed, TotalTime is a time.Duration that accumulates the total time taken for processing tasks, and mu is a mutex to ensure thread-safe access to these fields when updating and retrieving performance metrics
+type TaskProcessingInfo struct {
+	TotalTaskDone int
+	TotalTime     time.Duration
+	mu            sync.Mutex
+}
+
+// IncrementTime increments the total time taken for processing tasks by the given duration in a thread-safe manner, allowing for accurate tracking of the time spent on processing code execution tasks
+func (t *TaskProcessingInfo) IncrementTime(duration time.Duration) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.TotalTime += duration
+	t.TotalTaskDone++
+}
+
+// GetAverageTime calculates and returns the average time taken for processing tasks by dividing the total time by the total number of tasks done, providing insights into the performance of the code execution service and allowing for analysis of how long tasks are taking on average
+func (t *TaskProcessingInfo) GetAverageTime() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.TotalTaskDone == 0 {
+		return 0
+	}
+	return int(t.TotalTime / time.Duration(t.TotalTaskDone))
+}
+
+func (t *TaskProcessingInfo) GetTotalTime() float64 {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.TotalTime.Seconds()
+}
+
+func (t *TaskProcessingInfo) GetTotalTasks() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.TotalTaskDone
+}
+
+// Global variable to keep track of task processing information, allowing for monitoring and analysis of the performance of the code execution service by tracking the total number of tasks processed and the total time taken for processing those tasks in a thread-safe manner
+var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, mu: sync.Mutex{}}
