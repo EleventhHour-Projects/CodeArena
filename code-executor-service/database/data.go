@@ -2,8 +2,11 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"executor-service/utils"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,17 +37,37 @@ func (m *MongoDBClient) GetExecutionCodeData(id string) (*utils.ExecutionCode, e
 	return &codeData, nil
 }
 
+type ProblemJSON struct {
+	Testcases []struct {
+		Input  string `json:"input"`
+		Output string `json:"output"`
+	} `json:"testcases"`
+}
+
 // GetProblemTestCases is a function that fetches the test cases for a given problem ID
 func GetProblemTestCases(problemID string) (map[string]string, error) {
-	var testCases map[string]string
-	// Fetch test cases from ./.../problems/{problemID}/testcases.json
-	// For the sake of this example, we'll return a hardcoded test case
-	testCases = map[string]string{
-		"1 2": "3",
-		"4 5": "9",
-		"6 7": "13",
-		"8 9": "17",
+	// Let's assume the executable is run from the `code-executor-service` directory
+	// so the `questions` directory is at `../questions`
+	questionsDir := filepath.Join("..", "questions")
+	filePath := filepath.Join(questionsDir, problemID+".json")
+
+	fileBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Printf("Error reading problem file: %s, %v\n", filePath, err)
+		return nil, fmt.Errorf("could not read problem file for ID %s", problemID)
 	}
+
+	var problem ProblemJSON
+	if err := json.Unmarshal(fileBytes, &problem); err != nil {
+		fmt.Printf("Error unmarshalling problem JSON: %v\n", err)
+		return nil, fmt.Errorf("invalid json in problem file for ID %s", problemID)
+	}
+
+	testCases := make(map[string]string)
+	for _, tc := range problem.Testcases {
+		testCases[tc.Input] = tc.Output
+	}
+
 	return testCases, nil
 }
 

@@ -1,0 +1,23 @@
+{
+    "id": 2,
+    "slug": "reverse-string",
+    "tags": ["Two Pointers", "String"],
+    "title": "2. Reverse String",
+    "difficulty": "Easy",
+    "description": "Write a function that reverses a string. The input string is given as an array of characters `s`.\n\nYou must do this by modifying the input array in-place with O(1) extra memory.",
+    "examples": [
+        {
+            "input": "s = [\"h\",\"e\",\"l\",\"l\",\"o\"]",
+            "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+        },
+        {
+            "input": "s = [\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]",
+            "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
+        }
+    ],
+    "constraints": "1 <= s.length <= 10^5\ns[i] is a printable ascii character.",
+    "testcases": [
+        { "input": "s = [\"h\",\"e\",\"l\",\"l\",\"o\"]", "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]" },
+        { "input": "s = [\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]", "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]" }
+    ]
+}
