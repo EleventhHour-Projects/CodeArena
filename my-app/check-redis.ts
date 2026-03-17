@@ -9,12 +9,25 @@ async function checkRedis() {
         }
 
         const keys = await redisClient.keys('executionCode:*');
-        console.log(`Found ${keys.length} executionCode keys:`);
+        console.log(`\n--- Redis Keys (executionCode:*) ---`);
+        console.log(`Found ${keys.length} execution record keys.`);
         
         for (const key of keys) {
             const val = await redisClient.get(key);
-            console.log(`\nKey: ${key}`);
-            console.log(`Value: ${val}`);
+            console.log(`  Key: ${key}`);
+            // console.log(`  Value: ${val}`); // Uncomment if you want to see the full record
+        }
+
+        const queueLength = await redisClient.lLen('tasks');
+        console.log(`\n--- Redis Queue (tasks) ---`);
+        console.log(`Current Queue Length: ${queueLength}`);
+        
+        if (queueLength > 0) {
+            const queueItems = await redisClient.lRange('tasks', 0, -1);
+            console.log(`Items in Queue (MongoDB IDs):`);
+            queueItems.forEach((item, index) => {
+                console.log(`  [${index}] ID: ${item}`);
+            });
         }
         
         process.exit(0);

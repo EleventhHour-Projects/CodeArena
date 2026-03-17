@@ -29,7 +29,13 @@ export async function POST(req: NextRequest) {
         });
         await executionCode.save();
         console.log("Execution Code document created in DB:", executionCode._id);
+
+        // 1. Store the full record for tracking/polling
         await redisClient.set(`executionCode:${executionCode._id}`, JSON.stringify(executionCode));
+        
+        // 2. Push to the queue for a worker to process
+        await redisClient.rPush('tasks', executionCode._id.toString());
+
         return NextResponse.json({ success: true, executionCode });
     } catch (error) {
         console.error("[ERROR] Couldn't create execution code:", error);
