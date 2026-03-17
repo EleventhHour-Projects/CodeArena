@@ -2,7 +2,9 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import { Clock, Handshake, Flag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 interface PageProps {
   params: Promise<{
@@ -35,6 +37,7 @@ interface Problem {
 }
 
 export default function BattlePage({ params }: PageProps) {
+  const { data: session } = useSession();
   const resolvedParams = use(params);
   const battleID = resolvedParams.battleID;
 
@@ -85,6 +88,50 @@ export default function BattlePage({ params }: PageProps) {
   const [code, setCode] = useState("#include<bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Write your code here\n    return 0;\n}");
   const [language, setLanguage] = useState("cpp");
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  const handleExecute = async (type: "Run" | "Submit") => {
+    if (!session?.user) {
+      toast.error("Please log in to execute code");
+      return;
+    }
+    if (!problem || !problem.id) {
+      toast.error("Problem not loaded properly.");
+      return;
+    }
+
+    setIsExecuting(true);
+    setPanelTab("result");
+    
+    try {
+      const response = await fetch('/api/battle/exec-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          language,
+          userId: (session.user as { id: string }).id,
+          battleId: battleID,
+          difficulty: problem.difficulty.toLowerCase(),
+          problemId: problem.id,
+          type
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`${type} initiated successfully!`);
+        // We will likely poll for results here later
+      } else {
+        toast.error(data.error || `Failed to ${type} code`);
+      }
+    } catch (err) {
+      console.error(`Error during ${type}:`, err);
+      toast.error(`A network error occurred during ${type}`);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   // Resizable Panes State
   const [leftWidth, setLeftWidth] = useState(45); // percentage
@@ -337,11 +384,18 @@ export default function BattlePage({ params }: PageProps) {
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                  <button className="flex items-center gap-1.5 bg-zinc-800 text-zinc-200 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-zinc-700 hover:text-white transition-all border border-white/5 active:scale-95">
-                    <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.24182 2.32181C3.3919 2.23132 3.5784 2.22601 3.73338 2.30781L12.7334 7.04468C12.8935 7.12902 12.9934 7.29544 12.9934 7.47672C12.9934 7.658 12.8935 7.82442 12.7334 7.90875L3.73338 12.6456C3.5784 12.7274 3.3919 12.7221 3.24182 12.6316C3.09175 12.5411 3 12.3769 3 12.2001V2.7533C3 2.5765 3.09175 2.41224 3.24182 2.32181ZM4 3.58231V11.3711L11.3853 7.47672L4 3.58231Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
+                  <button 
+                    onClick={() => handleExecute("Run")}
+                    disabled={isExecuting}
+                    className="flex items-center gap-1.5 bg-zinc-800 text-zinc-200 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-zinc-700 hover:text-white transition-all border border-white/5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Play className={`w-3.5 h-3.5 ${isExecuting ? 'animate-pulse' : ''}`} />
                     Run
                   </button>
-                  <button className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-5 py-1.5 rounded-lg text-sm font-medium hover:bg-emerald-500/20 border border-emerald-500/20 transition-all shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_-3px_rgba(16,185,129,0.3)] hover:-translate-y-[0.5px] active:scale-95">
+                  <button 
+                    onClick={() => handleExecute("Submit")}
+                    disabled={isExecuting}
+                    className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-5 py-1.5 rounded-lg text-sm font-medium hover:bg-emerald-500/20 border border-emerald-500/20 transition-all shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_-3px_rgba(16,185,129,0.3)] hover:-translate-y-[0.5px] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Upload className="w-3.5 h-3.5" />
                     Submit
                   </button>
                 </div>
