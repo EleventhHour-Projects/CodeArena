@@ -69,12 +69,13 @@ func ListenForTasks(ctx context.Context) {
 				fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
 				continue
 			}
-			testCases, err := database.GetProblemTestCases(data.ProblemID)
+			//fmt.Println(data)
+			testCases, err := database.GetProblemTestCases(data.Problem.ID)
 			if err != nil {
 				fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
 				continue
 			}
-			maxTime, maxMemory, err := database.GetProblemConstraints(data.ProblemID)
+			maxTime, maxMemory, err := database.GetProblemConstraints(data.Problem.ID)
 			if err != nil {
 				fmt.Println(utils.Red+"Error fetching problem constraints:"+utils.Reset, err)
 				continue
@@ -86,7 +87,7 @@ func ListenForTasks(ctx context.Context) {
 				TestCases: testCases,
 				UserID:    data.UserID,
 				BattleID:  data.BattleID,
-				ProblemID: data.ProblemID,
+				Problem:   data.Problem,
 				Constraints: &utils.CodeConfigConstraints{
 					MaxTime:   maxTime,
 					MaxMemory: maxMemory,

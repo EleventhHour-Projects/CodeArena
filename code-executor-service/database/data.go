@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,22 +46,23 @@ type ProblemJSON struct {
 }
 
 // GetProblemTestCases is a function that fetches the test cases for a given problem ID
-func GetProblemTestCases(problemID string) (map[string]string, error) {
+func GetProblemTestCases(problemID int) (map[string]string, error) {
 	// Let's assume the executable is run from the `code-executor-service` directory
 	// so the `questions` directory is at `../questions`
+	p := strconv.Itoa(problemID)
 	questionsDir := filepath.Join("..", "questions")
-	filePath := filepath.Join(questionsDir, problemID+".json")
+	filePath := filepath.Join(questionsDir, p+".json")
 
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("Error reading problem file: %s, %v\n", filePath, err)
-		return nil, fmt.Errorf("could not read problem file for ID %s", problemID)
+		return nil, fmt.Errorf("could not read problem file for ID %s", p)
 	}
 
 	var problem ProblemJSON
 	if err := json.Unmarshal(fileBytes, &problem); err != nil {
 		fmt.Printf("Error unmarshalling problem JSON: %v\n", err)
-		return nil, fmt.Errorf("invalid json in problem file for ID %s", problemID)
+		return nil, fmt.Errorf("invalid json in problem file for ID %s", p)
 	}
 
 	testCases := make(map[string]string)
@@ -72,7 +74,7 @@ func GetProblemTestCases(problemID string) (map[string]string, error) {
 }
 
 // GetProblemConstraints is a function that fetches the constraints for a given problem ID, such as maximum execution time and memory limit
-func GetProblemConstraints(problemID string) (int, int, error) {
+func GetProblemConstraints(problemID int) (int, int, error) {
 	// Fetch constraints from ./.../problems/{problemID}/constraints.txt
 	// For the sake of this example, we'll return hardcoded constraints
 	maxTime := 1000  // in milliseconds
@@ -102,7 +104,7 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 		CreatedAt:       time.Now(),
 		UserID:          task.UserID,
 		BattleID:        task.BattleID,
-		ProblemID:       task.ProblemID,
+		Problem:         task.Problem,
 		Status:          &passString,
 	})
 	if err != nil {

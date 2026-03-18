@@ -48,9 +48,9 @@ type CodeConfig struct {
 	Language    string                 `json:"language,omitempty"`
 	TestCases   map[string]string      `json:"test_cases,omitempty"`
 	Constraints *CodeConfigConstraints `json:"constraints,omitempty"`
-	UserID      string                 `json:"user_id,omitempty"`
-	BattleID    string                 `json:"battle_id,omitempty"`
-	ProblemID   string                 `json:"problem_id,omitempty"`
+	UserID      bson.ObjectID          `json:"user_id,omitempty"`
+	BattleID    bson.ObjectID          `json:"battle_id,omitempty"`
+	Problem     Problem                `json:"problem,omitempty"`
 }
 
 // WorkerPool is a struct that manages the worker pool for executing code tasks
@@ -74,11 +74,16 @@ type ExecutionCode struct {
 	ID        bson.ObjectID `bson:"_id"`
 	Code      string        `bson:"code"`
 	Language  string        `bson:"language"`
-	UserID    string        `bson:"userId"`
+	UserID    bson.ObjectID `bson:"userId"`
 	Status    *string       `bson:"status,omitempty"`
-	BattleID  string        `bson:"battleId"`
-	ProblemID string        `bson:"problemId"`
+	BattleID  bson.ObjectID `bson:"battleId"`
+	Problem   Problem       `bson:"problem"`
 	CreatedAt time.Time     `bson:"createdAt,omitzero"`
+}
+
+type Problem struct {
+	Difficulty string `bson:"difficulty"`
+	ID         int    `bson:"id"`
 }
 
 // Result is a struct that represents the result of a code execution task, including whether it resulted in a time limit exceeded (TLE) or memory limit exceeded (MLE), the failed test case number if applicable, and the runtime and memory usage
@@ -98,10 +103,10 @@ type Submission struct {
 	ExecutionCodeID string        `bson:"executionCodeId"`
 	Code            string        `bson:"code"`
 	Language        string        `bson:"language"`
-	UserID          string        `bson:"userId"`
+	UserID          bson.ObjectID `bson:"userId"`
 	Status          *string       `bson:"status,omitempty"`
-	BattleID        string        `bson:"battleId"`
-	ProblemID       string        `bson:"problemId"`
+	BattleID        bson.ObjectID `bson:"battleId"`
+	Problem         Problem       `bson:"problem"`
 	CreatedAt       time.Time     `bson:"createdAt,omitzero"`
 	Result          *Result       `bson:"result,omitempty"`
 }
