@@ -69,7 +69,7 @@ func ListenForTasks(ctx context.Context) {
 				fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
 				continue
 			}
-			fmt.Println(data)
+			//fmt.Println(data)
 			testCases, err := database.GetProblemTestCases(data.Problem.ID)
 			if err != nil {
 				fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
