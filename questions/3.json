@@ -24,8 +24,8 @@
     ],
     "constraints": "-2^31 <= x <= 2^31 - 1",
     "testcases": [
-        { "input": "x = 121", "output": "true" },
-        { "input": "x = -121", "output": "false" },
-        { "input": "x = 10", "output": "false" }
+        { "input": "121", "output": "true" },
+        { "input": "-121", "output": "false" },
+        { "input": "10", "output": "false" }
     ]
 }

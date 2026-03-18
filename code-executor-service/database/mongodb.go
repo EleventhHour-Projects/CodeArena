@@ -46,7 +46,7 @@ func InitMongoDB() {
 		Client:               client,
 		SumissionsCollection: client.Database("code-arena").Collection("submissions"),
 		UsersCollection:      client.Database("code-arena").Collection("users"),
-		ExecutionCode:        client.Database("code-arena").Collection("execution_code"),
+		ExecutionCode:        client.Database("code-arena").Collection("executionCodes"),
 		mu:                   sync.RWMutex{},
 	}
 }
