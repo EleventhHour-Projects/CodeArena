@@ -18,8 +18,8 @@
     ],
     "constraints": "1 <= nums.length <= 10^4\n-10^9 <= nums[i] <= 10^9\n-10^9 <= target <= 10^9",
     "testcases": [
-        { "input": "nums = [2,7,11,15]\ntarget = 9", "output": "[0,1]" },
-        { "input": "nums = [3,2,4]\ntarget = 6", "output": "[1,2]" },
-        { "input": "nums = [3,3]\ntarget = 6", "output": "[0,1]" }
+        { "input": "4\n2 7 11 15\n9", "output": "0 1" },
+        { "input": "3\n3 2 4\n6", "output": "1 2" },
+        { "input": "2\n3 3\n6", "output": "0 1" }
     ]
 }
