@@ -1,27 +1,11 @@
 {
     "id": 5,
-    "slug": "climbing-stairs",
-    "tags": ["Math", "Dynamic Programming", "Memoization"],
-    "title": "5. Climbing Stairs",
+    "slug": "check-sorted-rotated",
+    "tags": ["Array"],
+    "title": "Check Sorted Circular Shift",
     "difficulty": "Easy",
-    "description": "You are climbing a staircase. It takes `n` steps to reach the top.\n\nEach time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
-    "examples": [
-        {
-            "input": "n = 2",
-            "output": "2",
-            "explanation": "There are two ways to climb to the top.\n1. 1 step + 1 step\n2. 2 steps"
-        },
-        {
-            "input": "n = 3",
-            "output": "3",
-            "explanation": "There are three ways to climb to the top.\n1. 1 step + 1 step + 1 step\n2. 1 step + 2 steps\n3. 2 steps + 1 step"
-        }
-    ],
-    "constraints": "1 <= n <= 45",
-    "testcases": [
-        { "input": "n = 2", "output": "2" },
-        { "input": "n = 3", "output": "3" },
-        { "input": "n = 4", "output": "5" },
-        { "input": "n = 5", "output": "8" }
-    ]
+    "description": "You are given an array of integers. Determine whether the array can be obtained by taking a non-decreasing sorted array and applying a circular shift (rotation) any number of times, including zero.\n\nIn other words, check if the array was originally sorted and then rotated.\n\nDuplicates are allowed in the array.\n\nYou must read input from standard input and print the result accordingly.",
+    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers.",
+    "output_format": "Print \"true\" if the array can be obtained by rotating a non-decreasing sorted array, otherwise print \"false\".",
+    "constraints": "1 <= n <= 100\n1 <= arr[i] <= 100"
 }

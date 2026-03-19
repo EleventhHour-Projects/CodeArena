@@ -1,0 +1,46 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "5\nabba baba bbaa cd cd",
+                "output": "abba cd",
+                "explanation": "Consecutive anagrams are removed step by step, leaving only 'abba' and 'cd'."
+            },
+            {
+                "input": "5\na b c d e",
+                "output": "a b c d e",
+                "explanation": "No adjacent strings are anagrams, so the array remains unchanged."
+            }
+        ],
+        "submit": [
+            {
+                "input": "5\nabba baba bbaa cd cd",
+                "output": "abba cd"
+            },
+            {
+                "input": "5\na b c d e",
+                "output": "a b c d e"
+            },
+            {
+                "input": "3\na b a",
+                "output": "a b a"
+            },
+            {
+                "input": "7\nz z z gsw wsg gsw krptu",
+                "output": "z gsw krptu"
+            },
+            {
+                "input": "5\nab bc cb ab bc",
+                "output": "ab bc ab bc"
+            },
+            {
+                "input": "2\nabbb aaab",
+                "output": "abbb aaab"
+            },
+            {
+                "input": "2\naz azz",
+                "output": "az azz"
+            }
+        ]
+    }
+}

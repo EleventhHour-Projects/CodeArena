@@ -1,0 +1,38 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "3\nc f j\na",
+                "output": "c",
+                "explanation": "Smallest character greater than 'a' is 'c'."
+            },
+            {
+                "input": "3\nc f j\nc",
+                "output": "f",
+                "explanation": "Next greater character after 'c' is 'f'."
+            }
+        ],
+        "submit": [
+            {
+                "input": "10\ne e e e e e n n n n\ne",
+                "output": "n"
+            },
+            {
+                "input": "3\nc f j\ng",
+                "output": "j"
+            },
+            {
+                "input": "3\nc f j\nd",
+                "output": "f"
+            },
+            {
+                "input": "6\nc f j k m p\nl",
+                "output": "m"
+            },
+            {
+                "input": "7\na b b b c c d\nb",
+                "output": "c"
+            }
+        ]
+    }
+}

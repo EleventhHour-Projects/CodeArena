@@ -1,0 +1,11 @@
+{
+    "id": 4,
+    "slug": "first-unique-even",
+    "tags": ["Array"],
+    "title": "First Non-Repeating Even Number",
+    "difficulty": "Easy",
+    "description": "You are given an array of integers. Identify the first even number (based on its position in the array) that occurs exactly once.\n\nIf multiple even numbers appear only once, return the one that appears earliest. If no such number exists, print -1.\n\nYou must read input from standard input and print the result accordingly.",
+    "input_format": "The first line contains an integer n — the size of the array.\nThe second line contains n space-separated integers.",
+    "output_format": "Print a single integer — the first even number that appears exactly once, or -1 if none exists.",
+    "constraints": "1 <= n <= 100\n1 <= arr[i] <= 100"
+}

@@ -1,0 +1,14 @@
+{
+    "id": 9,
+    "slug": "two-sum",
+    "tags": [
+        "Array",
+        "Hash Table"
+    ],
+    "title": "Two Sum",
+    "difficulty": "Easy",
+    "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n \nExample 1:\n\n\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n\n\nExample 2:\n\n\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n\n\nExample 3:\n\n\nInput: nums = [3,3], target = 6\nOutput: [0,1]\n\n\n \nConstraints:\n\n\n\t2 &lt;= nums.length &lt;= 104\n\t-109 &lt;= nums[i] &lt;= 109\n\t-109 &lt;= target &lt;= 109\n\tOnly one valid answer exists.\n\n\n \nFollow-up: Can you come up with an algorithm that is less than O(n2) time complexity?",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}

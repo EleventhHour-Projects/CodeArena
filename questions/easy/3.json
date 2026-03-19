@@ -1,31 +1,11 @@
 {
     "id": 3,
-    "slug": "palindrome-number",
-    "tags": ["Math"],
-    "title": "3. Palindrome Number",
+    "slug": "majority-frequency-element",
+    "tags": ["Array", "Binary Search"],
+    "title": "Dominant Element in Array",
     "difficulty": "Easy",
-    "description": "Given an integer `x`, return `true` if `x` is a palindrome, and `false` otherwise.",
-    "examples": [
-        {
-            "input": "x = 121",
-            "output": "true",
-            "explanation": "121 reads as 121 from left to right and from right to left."
-        },
-        {
-            "input": "x = -121",
-            "output": "false",
-            "explanation": "From left to right, it reads -121. From right to left, it becomes 121-. Therefore it is not a palindrome."
-        },
-        {
-            "input": "x = 10",
-            "output": "false",
-            "explanation": "Reads 01 from right to left. Therefore it is not a palindrome."
-        }
-    ],
-    "constraints": "-2^31 <= x <= 2^31 - 1",
-    "testcases": [
-        { "input": "x = 121", "output": "true" },
-        { "input": "x = -121", "output": "false" },
-        { "input": "x = 10", "output": "false" }
-    ]
+    "description": "You are given an array of integers of size n. Your task is to determine the element that appears more than half of the total number of elements in the array.\n\nIt is guaranteed that such an element always exists.\n\nYou must read input from standard input and print the result accordingly, following competitive programming conventions.",
+    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers representing the array.",
+    "output_format": "Print a single integer — the element that appears more than floor(n / 2) times.",
+    "constraints": "1 <= n <= 5 * 10^4\n-10^9 <= arr[i] <= 10^9\nIt is guaranteed that a majority element exists."
 }
