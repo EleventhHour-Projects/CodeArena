@@ -2,24 +2,19 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import BattleModel from "@/lib/models/Battle";
 import { UserModel } from "@/lib/models/User";
+import SubmissionModel from "@/lib/models/Submission";
 import dbConnect from "@/lib/dbConnect";
 import { BattleDifficulty, ProblemRef } from "@/types/BattleType";
-
-type ProblemResultPayload = {
-    problem: ProblemRef;
-    player1SolveTime?: number;
-    player2SolveTime?: number;
-};
 
 export async function POST(req: Request) {
     await dbConnect();
 
     try {
         const body = await req.json();
-        const { battleId, problemResults } = body;
+        const { battleId } = body;
 
-        if (!battleId || !problemResults || !Array.isArray(problemResults)) {
-            return NextResponse.json({ success: false, message: "Invalid request payload" }, { status: 400 });
+        if (!battleId) {
+            return NextResponse.json({ success: false, message: "Missing battleId" }, { status: 400 });
         }
 
         const session = await mongoose.startSession();
@@ -32,7 +27,56 @@ export async function POST(req: Request) {
             }
 
             if (battle.status !== "Active") {
-                throw new Error("Battle is already completed or inactive");
+                // Determine scores from saved problemResults
+                let sA = 0;
+                let sB = 0;
+                (battle.problemResults || []).forEach((pr: any) => {
+                    const diff = (pr.problem?.difficulty || "easy").toLowerCase() as BattleDifficulty;
+                    const max = diff === "easy" ? 100 : diff === "medium" ? 200 : 300;
+                    if (pr.player1SolveTime > 0) sA += Math.max(0, max - (pr.player1SolveTime / 20));
+                    if (pr.player2SolveTime > 0) sB += Math.max(0, max - (pr.player2SolveTime / 20));
+                });
+
+                // If rating fields are missing (battle completed before schema update), recalculate and persist
+                if (battle.ratingChangeA == null || battle.ratingChangeB == null) {
+                    const p1 = await UserModel.findById(battle.player1).session(session);
+                    const p2 = await UserModel.findById(battle.player2).session(session);
+                    if (p1 && p2) {
+                        const Ra = p1.rating ?? 0;
+                        const Rb = p2.rating ?? 0;
+                        const winResult = battle.winner
+                            ? (battle.winner.toString() === battle.player1.toString() ? "player1" : "player2")
+                            : "draw";
+                        const Ea = 1 / (1 + Math.pow(10, (Rb - Ra) / 400));
+                        const Eb = 1 / (1 + Math.pow(10, (Ra - Rb) / 400));
+                        const Sa = winResult === "player1" ? 1 : winResult === "draw" ? 0.5 : 0;
+                        const Sb = winResult === "player2" ? 1 : winResult === "draw" ? 0.5 : 0;
+                        const K = 40;
+                        const newRa = Math.round(Ra + K * (Sa - Ea));
+                        const newRb = Math.round(Rb + K * (Sb - Eb));
+                        battle.ratingChangeA = newRa - Ra;
+                        battle.ratingChangeB = newRb - Rb;
+                        battle.newRatingA = newRa;
+                        battle.newRatingB = newRb;
+                        await battle.save({ session });
+                    }
+                }
+
+                finalResponse = {
+                    success: true,
+                    message: "Battle already completed",
+                    result: battle.winner ? (battle.winner.toString() === battle.player1.toString() ? "player1" : "player2") : "draw",
+                    scoreA: sA,
+                    scoreB: sB,
+                    ratingChangeA: battle.ratingChangeA ?? 0,
+                    ratingChangeB: battle.ratingChangeB ?? 0,
+                    newRa: battle.newRatingA ?? 0,
+                    newRb: battle.newRatingB ?? 0,
+                    duration: battle.duration,
+                    problemResults: battle.problemResults,
+                    battle: battle
+                };
+                return;
             }
 
             const player1 = await UserModel.findById(battle.player1).session(session);
@@ -49,36 +93,64 @@ export async function POST(req: Request) {
             };
             const penaltyFactor = 20;
 
+            // --- Server-side Result Calculation ---
+            // Fetch all accepted submissions for this battle
+            const submissions = await SubmissionModel.find({
+                battleId: new mongoose.Types.ObjectId(battleId),
+                status: "Accepted"
+            }).sort({ createdAt: 1 }).session(session);
+
+            const battleStart = battle.startTime ? new Date(battle.startTime).getTime() : new Date(battle.createdAt).getTime();
+
+            // Store first accepted solve time (in seconds from start) per user per problem
+            const solveTimes: Record<string, Record<number, number>> = {
+                [player1._id.toString()]: {},
+                [player2._id.toString()]: {}
+            };
+
+            submissions.forEach(sub => {
+                const uid = sub.userId.toString();
+                const pid = sub.problem.id;
+                if (solveTimes[uid] && solveTimes[uid][pid] === undefined) {
+                    const solveTimeSec = Math.max(0, Math.floor((new Date(sub.createdAt).getTime() - battleStart) / 1000));
+                    solveTimes[uid][pid] = solveTimeSec;
+                }
+            });
+
             let scoreA = 0;
             let scoreB = 0;
+            const updatedProblemResults: any[] = [];
 
-            const updatedProblemResults = [];
-
-            for (const result of problemResults as ProblemResultPayload[]) {
-                const { problem, player1SolveTime, player2SolveTime } = result;
-                const difficulty = problem.difficulty as BattleDifficulty;
+            // Iterate over the problems assigned to this battle
+            for (const prob of battle.problems) {
+                const pid = prob.id;
+                const difficulty = prob.difficulty.toLowerCase() as BattleDifficulty;
                 const maxPoints = basePoints[difficulty] || 0;
+
+                const p1SolveTime = solveTimes[player1._id.toString()][pid] || 0;
+                const p2SolveTime = solveTimes[player2._id.toString()][pid] || 0;
 
                 let p1Score = 0;
                 let p2Score = 0;
 
-                if (player1SolveTime && player1SolveTime > 0) {
-                    p1Score = Math.max(0, maxPoints - (player1SolveTime / penaltyFactor));
+                if (p1SolveTime > 0) {
+                    p1Score = Math.max(0, maxPoints - (p1SolveTime / penaltyFactor));
                 }
-                if (player2SolveTime && player2SolveTime > 0) {
-                    p2Score = Math.max(0, maxPoints - (player2SolveTime / penaltyFactor));
+                if (p2SolveTime > 0) {
+                    p2Score = Math.max(0, maxPoints - (p2SolveTime / penaltyFactor));
                 }
 
                 scoreA += p1Score;
                 scoreB += p2Score;
 
                 updatedProblemResults.push({
-                    problem,
-                    player1SolveTime: player1SolveTime || 0,
-                    player2SolveTime: player2SolveTime || 0,
+                    problem: { id: prob.id, difficulty: prob.difficulty },
+                    player1SolveTime: p1SolveTime,
+                    player2SolveTime: p2SolveTime,
                 });
             }
 
+            // --- Determine Winner ---
             let result: "player1" | "player2" | "draw" = "draw";
             if (scoreA > scoreB) {
                 result = "player1";
@@ -89,34 +161,35 @@ export async function POST(req: Request) {
             // Elo Rating Update
             const Ra = player1.rating || 0;
             const Rb = player2.rating || 0;
-
             const Ea = 1 / (1 + Math.pow(10, (Rb - Ra) / 400));
             const Eb = 1 / (1 + Math.pow(10, (Ra - Rb) / 400));
-
             const Sa = result === "player1" ? 1 : result === "draw" ? 0.5 : 0;
             const Sb = result === "player2" ? 1 : result === "draw" ? 0.5 : 0;
-
             const K = 40;
-
             const newRa = Math.round(Ra + K * (Sa - Ea));
             const newRb = Math.round(Rb + K * (Sb - Eb));
+            const ratingChangeA = newRa - Ra;
+            const ratingChangeB = newRb - Rb;
 
             // Battle Duration
             const endTime = new Date();
-            const start = battle.startTime ? new Date(battle.startTime).getTime() : new Date(battle.createdAt).getTime();
-            const durationMs = endTime.getTime() - start;
+            const durationMs = endTime.getTime() - battleStart;
             const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
             
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-
             const durationObj = { hours, minutes, seconds };
 
             battle.status = "Completed";
             battle.endTime = endTime;
             battle.duration = durationObj;
             battle.problemResults = updatedProblemResults;
+            
+            battle.ratingChangeA = ratingChangeA;
+            battle.ratingChangeB = ratingChangeB;
+            battle.newRatingA = newRa;
+            battle.newRatingB = newRb;
             
             if (result === "player1") {
                 battle.winner = player1._id;
@@ -203,16 +276,16 @@ export async function POST(req: Request) {
                 player2.currentStreak = 0;
             }
 
-            // Problems Solved Stats Update
+            // --- Problems Solved Stats Update ---
             for (const res of updatedProblemResults) {
-                const diff = res.problem.difficulty;
+                const diff = (res.problem.difficulty || "easy").toLowerCase() as "easy" | "medium" | "hard";
                 if (!player1.totalProblemsSolved) player1.totalProblemsSolved = { easy: 0, medium: 0, hard: 0 };
                 if (!player2.totalProblemsSolved) player2.totalProblemsSolved = { easy: 0, medium: 0, hard: 0 };
                 
-                if (res.player1SolveTime && res.player1SolveTime > 0) {
+                if (res.player1SolveTime > 0) {
                     player1.totalProblemsSolved[diff] = (player1.totalProblemsSolved[diff] || 0) + 1;
                 }
-                if (res.player2SolveTime && res.player2SolveTime > 0) {
+                if (res.player2SolveTime > 0) {
                     player2.totalProblemsSolved[diff] = (player2.totalProblemsSolved[diff] || 0) + 1;
                 }
             }
@@ -238,6 +311,20 @@ export async function POST(req: Request) {
                 scoreB,
                 newRa,
                 newRb,
+                ratingChangeA,
+                ratingChangeB,
+                duration: durationObj,
+                player1: {
+                    username: player1.username,
+                    solvedCount: Object.values(solveTimes[player1._id.toString()]).length,
+                    solveTimes: solveTimes[player1._id.toString()]
+                },
+                player2: {
+                    username: player2.username,
+                    solvedCount: Object.values(solveTimes[player2._id.toString()]).length,
+                    solveTimes: solveTimes[player2._id.toString()]
+                },
+                problemResults: updatedProblemResults
             };
         });
 

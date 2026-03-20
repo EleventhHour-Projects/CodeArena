@@ -31,6 +31,10 @@ const battleSchema = new mongoose.Schema<Battle>({
         }], 
         default: [] 
     },
+    ratingChangeA: { type: Number },
+    ratingChangeB: { type: Number },
+    newRatingA: { type: Number },
+    newRatingB: { type: Number },
 })
 
 // set the name of collection to battles

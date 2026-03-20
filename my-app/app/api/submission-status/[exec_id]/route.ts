@@ -59,7 +59,7 @@ export async function GET(
             mle: submission.result?.mle,
             tle: submission.result?.tle,
             actual_output: (submission.result as any)?.actualOutput,
-            errorMsg: (submission as any).errorMsg,
+            errorMsg: (submission.result as any)?.errorMsg,
         };
 
         // Complete/terminal submissions are largely immutable, cache for longer (e.g., 5 mins)

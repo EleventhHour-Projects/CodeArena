@@ -36,5 +36,9 @@ export interface Battle {
         problem: ProblemRef;
         player1SolveTime?: number // default 0
         player2SolveTime?: number // default 0
-    }[]
+    }[];
+    ratingChangeA?: number;
+    ratingChangeB?: number;
+    newRatingA?: number;
+    newRatingB?: number;
 }

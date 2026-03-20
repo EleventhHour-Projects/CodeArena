@@ -13,7 +13,7 @@ import (
 	"github.com/moby/moby/client"
 )
 
-func execCommand(ctx context.Context, cli *client.Client, containerID string, cmd []string, input string) (string, error) {
+func execCommand(ctx context.Context, cli *client.Client, containerID string, cmd []string, input string) (string, string, error) {
 
 	execResp, err := cli.ExecCreate(ctx, containerID, client.ExecCreateOptions{
 		Cmd:          cmd,
@@ -22,12 +22,12 @@ func execCommand(ctx context.Context, cli *client.Client, containerID string, cm
 		AttachStdin:  true,
 	})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	attachResp, err := cli.ExecAttach(ctx, execResp.ID, client.ExecAttachOptions{})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer attachResp.Close()
 
@@ -40,40 +40,51 @@ func execCommand(ctx context.Context, cli *client.Client, containerID string, cm
 
 	_, err = stdcopy.StdCopy(&stdout, &stderr, attachResp.Reader)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return stdout.String(), nil
+	return stdout.String(), stderr.String(), nil
 }
 
 func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
+	var failedInfo FailedInfo
 
 	writeCmd := []string{"sh", "-c", "cat > /tmp/main.cpp"}
 
-	_, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
+	_, _, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
 	if err != nil {
 		return err
 	}
 
 	compileCmd := []string{"g++", "/tmp/main.cpp", "-o", "/tmp/a.out"}
 
-	_, err = execCommand(ctx, cli, containerID, compileCmd, "")
+	_, compErr, err := execCommand(ctx, cli, containerID, compileCmd, "")
 	if err != nil {
 		return err
 	}
 
+	// Check for compilation errors
+	if strings.Contains(compErr, "error:") {
+		failedInfo = FailedInfo{
+			isFailed:     true,
+			ErrorMessage: "Compilation Error",
+			ActualOutput: compErr,
+		}
+		SaveSubmissionResult(task, 0, 0, &failedInfo)
+		return nil
+	}
+
 	var totalTime time.Duration
-	var failedInfo FailedInfo
 
 	for input, expected := range task.TestCases {
 
-		ectx, cancel := context.WithTimeout(ctx, time.Second)
+		ectx, cancel := context.WithTimeout(ctx, time.Second*2) // Relax timeout slightly for overhead
 
 		runCmd := []string{"timeout", "1s", "/tmp/a.out"}
 
 		start := time.Now()
 
-		output, err := execCommand(ectx, cli, containerID, runCmd, input+"\n")
+		output, runStderr, err := execCommand(ectx, cli, containerID, runCmd, input+"\n")
 
 		elapsed := time.Since(start)
 		totalTime += elapsed
@@ -113,9 +124,15 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 		}
 
 		if actual != exp {
+			errorMsg := "Wrong Answer"
+			if actual == "" && runStderr != "" {
+				errorMsg = "Runtime Error / Segfault"
+				actual = runStderr
+			}
+
 			failedInfo = FailedInfo{
 				isFailed:     true,
-				ErrorMessage: "Wrong Answer",
+				ErrorMessage: errorMsg,
 				TestCase:     input,
 				ActualOutput: actual,
 			}
@@ -191,8 +208,10 @@ func worker(ctx context.Context) {
 	for {
 		task := utils.WorkerPoolData.GetTask()
 		fmt.Println("Worker received task:", task.TaskID)
-		runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-		defer cancel()
+		
+		// 10 seconds is more reasonable for compilation + multiple test cases
+		runCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
 			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
@@ -200,9 +219,11 @@ func worker(ctx context.Context) {
 			utils.WorkerPoolData.Decrement()
 			SpawnWorkerFailed(ctx)
 			utils.WorkerPoolData.AddTask(task)
+			cancel() // cancel context before breaking
 			break
 		} else {
 			fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
 		}
+		cancel() // Manual cancel to avoid defer leak in loop
 	}
 }

@@ -20,6 +20,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
         runTimeMs: { type: Number, required: true, default: 0 },
         memoryUsedMB: { type: Number, required: true, default: 0 },
         actualOutput: { type: String, required: false },
+        errorMsg: { type: String, required: false },
     },
 })
 

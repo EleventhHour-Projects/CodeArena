@@ -40,7 +40,7 @@ export async function AppSidebar() {
   const session = await getServerSession(authOptions)
   
   // fetch rating from database using getServerSession
-  const userRating = session?.user?.rating || "Unable to fetch rating" 
+  const userRating = session?.user?.rating ?? "Unable to fetch rating" 
 
   return (
     <Sidebar collapsible="icon">

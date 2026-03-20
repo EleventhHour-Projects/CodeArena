@@ -49,11 +49,40 @@ export default function BattlePage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const problem = problems[currentQuestion - 1]; // Active problem
 
-  const [timeLeft, setTimeLeft] = useState(5400); // default 90 min fallback
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [battleStats, setBattleStats] = useState<any>(null);
   
+  const [code, setCode] = useState<string>("// Loading code...");
   const [executionResult, setExecutionResult] = useState<any>(null);
+  const lastProblemIdRef = useRef<number | null>(null);
+
+  // Persistence: Restore code on problem change
+  useEffect(() => {
+    if (battleID && problem?.id) {
+       // Only restore if the problem ID actually changed to avoid cycles
+       if (lastProblemIdRef.current !== problem.id) {
+         const saved = localStorage.getItem(`code_${battleID}_${problem.id}`);
+         if (saved) {
+           setCode(saved);
+         } else {
+           setCode("#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}");
+         }
+         lastProblemIdRef.current = problem.id;
+       }
+    }
+  }, [battleID, problem?.id]);
+
+  // Persistence: Save code on change
+  useEffect(() => {
+    if (battleID && problem?.id && code && code !== "// Loading code...") {
+      // Only save if the code matches the currently active problem ID ref
+      if (lastProblemIdRef.current === problem.id) {
+        localStorage.setItem(`code_${battleID}_${problem.id}`, code);
+      }
+    }
+  }, [code, battleID, problem?.id]);
 
   useEffect(() => {
     async function fetchBattle() {
@@ -65,28 +94,32 @@ export default function BattlePage({ params }: PageProps) {
         const battle = data.battle;
         setBattleDetails(battle);
 
-        if (battle.createdAt || battle.startTime) {
+        if (battle.status === "Completed") {
+            setIsBattleOver(true);
+            const statsRes = await fetch('/api/battle/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ battleId: battleID })
+            });
+            const statsData = await statsRes.json();
+            setBattleStats(statsData);
+        }
+
+        if (battle.startTime || battle.createdAt) {
           const startTimestamp = new Date(battle.startTime || battle.createdAt).getTime();
 
-          // Compute duration based on problems: easy=10m, medium=20m, hard=40m
-          let durationSeconds = 5400; // default 90m
-          if (battle.problems && battle.problems.length > 0) {
-             durationSeconds = battle.problems.reduce((acc: number, p: any) => {
-                 const diff = (p.difficulty || "").toLowerCase();
-                 if (diff === "easy") return acc + (10 * 60);
-                 if (diff === "medium") return acc + (20 * 60);
-                 if (diff === "hard") return acc + (40 * 60);
-                 return acc + (10 * 60); // default
-             }, 0);
-          }
+           // Compute duration based on problems: each = 1m (for testing)
+           let durationSeconds = (battle.problems || []).reduce((acc: number, p: any) => {
+                  return acc + (1 * 60); 
+              }, 0);
+
+           if (durationSeconds === 0) durationSeconds = 5400; // fallback
           
           const endTimestamp = startTimestamp + (durationSeconds * 1000);
-          const tL = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+          setTargetEndTime(endTimestamp);
           
+          const tL = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
           setTimeLeft(tL);
-          if (tL === 0) {
-              handleBattleComplete(battle);
-          }
         }
         
         // Fetch specific problems
@@ -96,7 +129,7 @@ export default function BattlePage({ params }: PageProps) {
             const probData = await probRes.json();
             setProblems(probData.problems || []);
         } else {
-            toast.error("Critial Error: No problems assigned to this battle in the database.");
+            toast.error("Critical Error: No problems assigned to this battle.");
             setProblems([]);
         }
 
@@ -109,16 +142,22 @@ export default function BattlePage({ params }: PageProps) {
     fetchBattle();
   }, [battleID]);
 
-  const handleBattleComplete = async (battle: any) => {
+  const handleBattleComplete = async (currentBattle: any) => {
     if (isBattleOver) return;
     setIsBattleOver(true);
     toast.info("Battle has ended! Computing final results...");
     try {
+      // Clear localStorage for this battle
+      if (currentBattle?.problems) {
+        currentBattle.problems.forEach((p: any) => {
+           localStorage.removeItem(`code_${battleID}_${p.id}`);
+        });
+      }
+
       const res = await fetch('/api/battle/complete', {
          method: 'POST', 
          headers: { 'Content-Type': 'application/json' },
-         // We pass empty problemResults for now unless tracked specifically per player in context
-         body: JSON.stringify({ battleId: battleID, problemResults: [] }) 
+         body: JSON.stringify({ battleId: battleID }) 
       });
       const data = await res.json();
       setBattleStats(data);
@@ -128,14 +167,20 @@ export default function BattlePage({ params }: PageProps) {
   };
 
   useEffect(() => {
-    if (timeLeft <= 0 && battleDetails && !isBattleOver) {
-        handleBattleComplete(battleDetails);
-    }
     const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      if (targetEndTime) {
+          const now = Date.now();
+          const tL = Math.max(0, Math.floor((targetEndTime - now) / 1000));
+          setTimeLeft(tL);
+          
+          if (tL <= 0 && battleDetails && !isBattleOver) {
+              handleBattleComplete(battleDetails);
+              clearInterval(timer);
+          }
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, battleDetails, isBattleOver]);
+  }, [targetEndTime, battleDetails, isBattleOver]);
 
   // Editor and Panel State
   const [testcases, setTestcases] = useState<TestCase[]>([
@@ -162,7 +207,6 @@ export default function BattlePage({ params }: PageProps) {
 
   const [activeTestCaseId, setActiveTestCaseId] = useState(1);
   const [panelTab, setPanelTab] = useState("testcases"); // testcases, result
-  const [code, setCode] = useState("#include<bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Write your code here\n    return 0;\n}");
   const [language, setLanguage] = useState("cpp");
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
   const [isExecuting, setIsExecuting] = useState(false);
@@ -264,6 +308,13 @@ export default function BattlePage({ params }: PageProps) {
     }
   };
 
+  const formatSolveTime = (seconds: number) => {
+    if (!seconds || seconds <= 0) return "Not Solved";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
+
   // Resizable Panes State
   const [leftWidth, setLeftWidth] = useState(45);
   const [topHeight, setTopHeight] = useState(70);
@@ -316,38 +367,171 @@ export default function BattlePage({ params }: PageProps) {
 
   const scrollbarClasses = "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-700/50 hover:[&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full";
 
+  const isMePlayer1 = session?.user && battleDetails?.player1 && String(battleDetails.player1) === String((session.user as any).id);
+  const myStats = isMePlayer1 ? battleStats?.player1 : battleStats?.player2;
+  const opponentStats = isMePlayer1 ? battleStats?.player2 : battleStats?.player1;
+  const myScore = isMePlayer1 ? battleStats?.scoreA : battleStats?.scoreB;
+  const opponentScore = isMePlayer1 ? battleStats?.scoreB : battleStats?.scoreA;
+
+  let resultStatus = "DRAW";
+  if (battleStats) {
+      if (battleStats.result === "draw") resultStatus = "DRAW";
+      else if (battleStats.result === "player1") resultStatus = isMePlayer1 ? "VICTORY" : "DEFEAT";
+      else if (battleStats.result === "player2") resultStatus = isMePlayer1 ? "DEFEAT" : "VICTORY";
+  }
+
   return (
     <div className="h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden">
       
       {/* End of Battle Overlay */}
       {isBattleOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
-          <div className="max-w-md w-full bg-[#121214] border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="max-w-2xl w-full bg-[#121214]/80 border border-white/10 rounded-2xl p-1 shadow-2xl overflow-hidden">
              {!battleStats ? (
-               <div className="flex flex-col items-center gap-4">
-                 <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-                 <h2 className="text-xl font-bold text-white">Computing Results...</h2>
-                 <p className="text-zinc-400 text-sm text-center">Please wait while we finalize the battle scores and update ratings.</p>
-               </div>
+                <div className="flex flex-col items-center justify-center py-20 gap-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-indigo-500/20 rounded-full"></div>
+                    <div className="absolute top-0 w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Computing Battle Results</h2>
+                    <p className="text-zinc-400 text-sm max-w-[280px]">Hang tight! We're verifying submissions and calculating your new rating.</p>
+                  </div>
+                </div>
              ) : (
-               <div className="flex flex-col items-center gap-4 w-full">
-                 <h2 className="text-2xl font-bold text-white mb-2">Battle Complete!</h2>
-                 <div className="w-full bg-[#18181b] p-4 rounded-xl border border-white/5 space-y-3 mb-4">
-                   <div className="flex justify-between items-center text-sm">
-                     <span className="text-zinc-400">Winner</span>
-                     <span className="font-semibold text-emerald-400">{battleStats.result === "draw" || !battleStats.result ? "Draw / N/A" : battleStats.result}</span>
-                   </div>
-                   <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                     <span className="text-zinc-400">New Rating Approximation</span>
-                     <span className="font-bold text-indigo-400 flex items-center gap-1">
-                       {battleStats.newRa || "N/A"}
-                     </span>
-                   </div>
-                 </div>
-                 <button onClick={() => window.location.href='/leaderboard'} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2.5 rounded-lg transition-colors">
-                   View Leaderboard
-                 </button>
-               </div>
+                <div className="flex flex-col w-full h-full max-h-[90vh]">
+                  {/* Result Header */}
+                  <div className={`p-8 text-center space-y-2 border-b border-white/5 ${
+                    resultStatus === "VICTORY" ? "bg-emerald-500/10" : 
+                    resultStatus === "DEFEAT" ? "bg-red-500/10" : "bg-blue-500/10"
+                  }`}>
+                    <div className={`text-[12px] font-black uppercase tracking-[0.3em] mb-2 ${
+                        resultStatus === "VICTORY" ? "text-emerald-500" : 
+                        resultStatus === "DEFEAT" ? "text-red-500" : "text-blue-500"
+                    }`}>
+                      Battle Summary
+                    </div>
+                    <h2 className={`text-5xl font-black italic tracking-tighter ${
+                        resultStatus === "VICTORY" ? "text-emerald-400" : 
+                        resultStatus === "DEFEAT" ? "text-red-400" : "text-blue-400"
+                    }`}>
+                      {resultStatus}
+                    </h2>
+                    <p className="text-zinc-400 text-sm font-medium">
+                      {resultStatus === "VICTORY" ? "Incredible performance! You dominated the arena." : 
+                       resultStatus === "DEFEAT" ? "A tough loss, but failure is the best teacher." : 
+                       "A perfectly balanced match. You both stood your ground."}
+                    </p>
+                  </div>
+
+                  <div className="p-8 overflow-y-auto custom-scrollbar">
+                    {/* Scoreboard */}
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                       <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-5 flex flex-col items-center gap-1 shadow-inner relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest z-10">Your Score</span>
+                          <span className="text-3xl font-black text-white z-10 font-mono tracking-tighter">{Math.round(myScore || 0)}</span>
+                          <span className="text-[11px] text-zinc-400 z-10 bg-zinc-800 px-2 py-0.5 rounded-full border border-white/5">
+                            {myStats?.solvedCount || 0} Solved
+                          </span>
+                       </div>
+                       <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-5 flex flex-col items-center gap-1 shadow-inner relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-red-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest z-10">Opponent Score</span>
+                          <span className="text-3xl font-black text-white z-10 font-mono tracking-tighter">{Math.round(opponentScore || 0)}</span>
+                          <span className="text-[11px] text-zinc-400 z-10 bg-zinc-800 px-2 py-0.5 rounded-full border border-white/5">
+                            {opponentStats?.solvedCount || 0} Solved
+                          </span>
+                       </div>
+                    </div>
+
+                    {/* Problem Breakdown */}
+                    <div className="space-y-3 mb-8">
+                       <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1 mb-4 flex items-center gap-2">
+                         <div className="w-4 h-px bg-zinc-800"></div>
+                         Problem Analysis
+                         <div className="flex-1 h-px bg-zinc-800"></div>
+                       </h3>
+                       {battleStats.problemResults && battleStats.problemResults.map((pr: any, i: number) => {
+                          const p1Time = pr.player1SolveTime;
+                          const p2Time = pr.player2SolveTime;
+                          const myTime = isMePlayer1 ? p1Time : p2Time;
+                          const opTime = isMePlayer1 ? p2Time : p1Time;
+
+                          return (
+                            <div key={i} className="flex items-center justify-between p-4 bg-[#18181b] border border-white/5 rounded-xl hover:border-white/10 transition-colors">
+                               <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Problem {i + 1}</span>
+                                  <span className="text-sm font-bold text-zinc-200">
+                                    {problems.find(p => p.id === pr.problem.id)?.title || `Problem ID: ${pr.problem.id}`}
+                                  </span>
+                                  <span className={`text-[9px] font-black w-fit px-1.5 py-0.5 rounded border ${
+                                    pr.problem.difficulty.toLowerCase() === 'easy' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                    pr.problem.difficulty.toLowerCase() === 'medium' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 
+                                    'bg-red-500/10 text-red-500 border-red-500/20'
+                                  }`}>
+                                    {pr.problem.difficulty.toUpperCase()}
+                                  </span>
+                               </div>
+                               <div className="flex items-center gap-6 text-right">
+                                  <div className="flex flex-col gap-0.5">
+                                     <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">You</span>
+                                     <span className={`text-xs font-mono font-bold ${myTime > 0 ? "text-emerald-400" : "text-zinc-700"}`}>
+                                       {formatSolveTime(myTime)}
+                                     </span>
+                                  </div>
+                                  <div className="flex flex-col gap-0.5">
+                                     <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Opponent</span>
+                                     <span className={`text-xs font-mono font-bold ${opTime > 0 ? "text-amber-400" : "text-zinc-700"}`}>
+                                       {formatSolveTime(opTime)}
+                                     </span>
+                                  </div>
+                               </div>
+                            </div>
+                          )
+                       })}
+                    </div>
+
+                    {/* Rating Update */}
+                    <div className="flex items-center justify-between p-5 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl relative overflow-hidden">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-[60px] translate-x-1/2 -translate-y-1/2"></div>
+                       <div className="flex flex-col gap-1 z-10">
+                          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Global Ranking</span>
+                        <div className="flex flex-col items-center gap-1 z-10">
+                           <span className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Rating Update</span>
+                           <div className="flex flex-col items-center">
+                              <span className={`text-6xl font-black font-mono tracking-tighter drop-shadow-sm ${
+                                  (isMePlayer1 ? battleStats.ratingChangeA : battleStats.ratingChangeB) >= 0 ? "text-emerald-400" : "text-red-500"
+                              }`}>
+                                {(isMePlayer1 ? battleStats.ratingChangeA : battleStats.ratingChangeB) >= 0 ? "+" : ""}{isMePlayer1 ? battleStats.ratingChangeA : battleStats.ratingChangeB}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1">
+                                 <span className="text-sm font-bold text-zinc-400">
+                                   NEW RATING: <span className="text-white">{isMePlayer1 ? battleStats.newRa : battleStats.newRb}</span>
+                                 </span>
+                              </div>
+                           </div>
+                        </div>
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-8 pt-0 flex gap-3">
+                    <button 
+                      onClick={() => window.location.href='/leaderboard'} 
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-white/5 uppercase tracking-widest text-xs"
+                    >
+                      View Rankings
+                    </button>
+                    <button 
+                      onClick={() => window.location.href='/'} 
+                      className="flex-1 bg-zinc-800 text-white hover:bg-zinc-700 font-bold py-4 rounded-xl transition-all active:scale-[0.98] border border-white/5 uppercase tracking-widest text-xs"
+                    >
+                      Find New Battle
+                    </button>
+                  </div>
+                </div>
              )}
           </div>
         </div>
@@ -416,13 +600,13 @@ export default function BattlePage({ params }: PageProps) {
             <div className="flex border-b border-white/5 px-2 bg-[#18181b]/50 shrink-0">
               <button
                 onClick={() => setActiveTab('description')}
-                className={`px-4 py-2.5 text-sm font-medium border-b-[2px] transition-colors ${activeTab === 'description' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'}`}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === 'description' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'}`}
               >
                 Description
               </button>
               <button
                 onClick={() => setActiveTab('submissions')}
-                className={`px-4 py-2.5 text-sm font-medium border-b-[2px] transition-colors ${activeTab === 'submissions' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'}`}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === 'submissions' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'}`}
               >
                 Submissions
               </button>
