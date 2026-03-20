@@ -105,6 +105,7 @@ export async function POST(
         let problems: { difficulty: "easy" | "medium" | "hard"; id: number }[] = [];
         try {
             problems = assignBattleProblems(difficulty);
+            console.log("Assigned Problems for battle:", problems);
         } catch (error) {
             console.error("Error formatting battle problems:", error);
             return NextResponse.json(
@@ -124,7 +125,8 @@ export async function POST(
             createdAt: new Date(),
             startTime: new Date()
         });
-
+        
+        console.log("Creating Battle with problems count:", battle.problems?.length);
         await battle.save();
 
         // set currentBattleId for both users to the id of mongoDB Document created

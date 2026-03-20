@@ -65,9 +65,24 @@ export default function BattlePage({ params }: PageProps) {
         const battle = data.battle;
         setBattleDetails(battle);
 
-        // Calc initial timeLeft based on endTime
-        if (battle.endTime) {
-          const tL = Math.max(0, Math.floor((new Date(battle.endTime).getTime() - Date.now()) / 1000));
+        if (battle.createdAt || battle.startTime) {
+          const startTimestamp = new Date(battle.startTime || battle.createdAt).getTime();
+
+          // Compute duration based on problems: easy=10m, medium=20m, hard=40m
+          let durationSeconds = 5400; // default 90m
+          if (battle.problems && battle.problems.length > 0) {
+             durationSeconds = battle.problems.reduce((acc: number, p: any) => {
+                 const diff = (p.difficulty || "").toLowerCase();
+                 if (diff === "easy") return acc + (10 * 60);
+                 if (diff === "medium") return acc + (20 * 60);
+                 if (diff === "hard") return acc + (40 * 60);
+                 return acc + (10 * 60); // default
+             }, 0);
+          }
+          
+          const endTimestamp = startTimestamp + (durationSeconds * 1000);
+          const tL = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+          
           setTimeLeft(tL);
           if (tL === 0) {
               handleBattleComplete(battle);
@@ -81,10 +96,8 @@ export default function BattlePage({ params }: PageProps) {
             const probData = await probRes.json();
             setProblems(probData.problems || []);
         } else {
-            // Fallback
-            const probRes = await fetch('/api/battle/questions?count=3');
-            const probData = await probRes.json();
-            setProblems(probData.problems || []);
+            toast.error("Critial Error: No problems assigned to this battle in the database.");
+            setProblems([]);
         }
 
       } catch (err) {
@@ -131,7 +144,11 @@ export default function BattlePage({ params }: PageProps) {
 
   useEffect(() => {
     if (problem && problem.testcases) {
-      const mapped = problem.testcases.map((tc, index) => ({
+      const rawTestcases = Array.isArray(problem.testcases) 
+          ? problem.testcases 
+          : (problem.testcases as any)?.run || [];
+
+      const mapped = rawTestcases.map((tc: any, index: number) => ({
         id: index + 1,
         input: tc.input,
         output: tc.output
@@ -237,24 +254,26 @@ export default function BattlePage({ params }: PageProps) {
       if (isResizingHz && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-        if (newWidth > 20 && newWidth < 80) setLeftWidth(newWidth);
+        // Clamp between 25% and 75% for safety
+        if (newWidth >= 25 && newWidth <= 75) setLeftWidth(newWidth);
       } else if (isResizingVt && rightPaneRef.current) {
         const rect = rightPaneRef.current.getBoundingClientRect();
         const newHeight = ((e.clientY - rect.top) / rect.height) * 100;
-        if (newHeight > 20 && newHeight < 80) setTopHeight(newHeight);
+        // Clamp between 30% and 70% to prevent panels from vanishing
+        if (newHeight >= 30 && newHeight <= 70) setTopHeight(newHeight);
       }
     };
 
     const handleMouseUp = () => {
       setIsResizingHz(false);
       setIsResizingVt(false);
-      document.body.style.userSelect = 'auto'; // restore text selection
+      document.body.style.userSelect = 'auto';
     };
 
     if (isResizingHz || isResizingVt) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'none'; // prevent text selection while dragging
+      document.body.style.userSelect = 'none';
     }
 
     return () => {
@@ -274,7 +293,7 @@ export default function BattlePage({ params }: PageProps) {
   const scrollbarClasses = "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-700/50 hover:[&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full";
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 line-height-relaxed">
+    <div className="h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden">
       
       {/* End of Battle Overlay */}
       {isBattleOver && (
@@ -364,11 +383,11 @@ export default function BattlePage({ params }: PageProps) {
       </header>
 
       {/* Main Content Workspace */}
-      <div className="flex-1 overflow-hidden p-3 contain-strict">
+      <div className="flex-1 overflow-hidden p-3 min-h-0">
         <div ref={containerRef} className="flex h-full rounded-xl border border-white/5 overflow-hidden shadow-xl bg-[#09090b]">
 
           {/* Left Panel: Problem Context */}
-          <div style={{ width: `${leftWidth}%` }} className="flex flex-col bg-[#121214] shrink-0 min-w-[300px]">
+          <div style={{ width: `${leftWidth}%` }} className="h-full flex flex-col bg-[#121214] shrink-0 min-w-[300px] overflow-hidden">
             {/* Tabs */}
             <div className="flex border-b border-white/5 px-2 bg-[#18181b]/50 shrink-0">
               <button
@@ -387,7 +406,7 @@ export default function BattlePage({ params }: PageProps) {
 
             <div className={`flex-1 overflow-y-auto p-6 ${scrollbarClasses}`}>
               {activeTab === 'description' && (
-                <div className="space-y-6">
+                <div className="space-y-6 h-fit">
                   {isLoading ? (
                     <div className="flex items-center justify-center p-8">
                       <div className="text-zinc-400 font-mono animate-pulse">Loading problems...</div>
@@ -406,43 +425,66 @@ export default function BattlePage({ params }: PageProps) {
                         </div>
                       </div>
 
-                      <div className="text-[15px] text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                        {problem.description}
-                      </div>
+                      <div className="text-[15px] text-zinc-300 leading-relaxed whitespace-pre-wrap">{problem.description?.trim()}</div>
 
-                      {problem.tags && problem.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-4">
-                          {problem.tags.map((tag, i) => (
-                            <span key={i} className="px-2 py-1 text-xs font-medium text-zinc-400 bg-zinc-800/50 rounded-md border border-white/5">
-                              {tag}
-                            </span>
-                          ))}
+                      {(problem as any).input_format && (
+                        <div className="space-y-1.5 mt-4">
+                          <h3 className="text-sm font-semibold text-zinc-200">Input Format:</h3>
+                          <div className="p-3 bg-zinc-900 border border-white/5 rounded-md text-sm text-zinc-400 font-mono whitespace-pre-wrap">
+                            {(problem as any).input_format}
+                          </div>
                         </div>
                       )}
 
-                      <div className="space-y-6 mt-8">
-                        {problem.examples?.map((ex, i) => (
-                          <div key={i} className="space-y-3">
-                            <p className="text-sm font-semibold text-zinc-200">Example {i + 1}:</p>
-                            <div className="p-4 rounded-lg bg-[#09090b] border border-white/5 font-mono text-sm space-y-2.5 shadow-inner">
-                              <div>
-                                <span className="text-zinc-500 select-none">Input: </span>
-                                <span className="text-zinc-300">{ex.input}</span>
-                              </div>
-                              <div>
-                                <span className="text-zinc-500 select-none">Output: </span>
-                                <span className="text-emerald-400">{ex.output}</span>
-                              </div>
-                              {ex.explanation && (
-                                <div className="pt-2 mt-2 border-t border-white/5 text-zinc-400 font-sans text-[13px] leading-relaxed">
-                                  <span className="font-semibold text-zinc-300 text-[11px] uppercase tracking-wider mr-1">Explanation:</span>
-                                  {ex.explanation}
-                                </div>
-                              )}
-                            </div>
+                      {(problem as any).output_format && (
+                        <div className="space-y-1.5 mt-4">
+                          <h3 className="text-sm font-semibold text-zinc-200">Output Format:</h3>
+                          <div className="p-3 bg-zinc-900 border border-white/5 rounded-md text-sm text-zinc-400 font-mono whitespace-pre-wrap">
+                            {(problem as any).output_format}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
+
+                      {(problem as any).constraints && (
+                        <div className="space-y-1.5 mt-4">
+                          <h3 className="text-sm font-semibold text-zinc-200">Constraints:</h3>
+                          <div className="p-3 bg-zinc-900 border border-white/5 rounded-md text-sm text-zinc-400 font-mono whitespace-pre-wrap">
+                            {(problem as any).constraints}
+                          </div>
+                        </div>
+                      )}
+
+                      {(() => {
+                        const examplesToRender = problem.examples || (problem as any).testcases?.run;
+                        if (!examplesToRender || examplesToRender.length === 0) return null;
+                        
+                        return (
+                          <div className="space-y-6 mt-8">
+                            <h3 className="text-lg font-bold text-white mb-2 pb-2 border-b border-white/5">Examples</h3>
+                            {examplesToRender.map((ex: any, i: number) => (
+                              <div key={i} className="space-y-3">
+                                <p className="text-sm font-semibold text-zinc-200">Example {i + 1}:</p>
+                                <div className="p-4 rounded-lg bg-[#09090b] border border-white/5 font-mono text-sm space-y-2.5 shadow-inner">
+                                  <div>
+                                    <span className="text-zinc-500 select-none">Input:</span><br/>
+                                    <span className="text-zinc-300 whitespace-pre-wrap">{ex.input}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-500 select-none">Output:</span><br/>
+                                    <span className="text-emerald-400 whitespace-pre-wrap">{ex.output}</span>
+                                  </div>
+                                  {ex.explanation && (
+                                    <div className="pt-2 mt-2 border-t border-white/5 text-zinc-400 font-sans text-[13px] leading-relaxed">
+                                      <span className="font-semibold text-zinc-300 text-[11px] uppercase tracking-wider mr-1">Explanation:</span>
+                                      {ex.explanation}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </>
                   ) : (
                     <div className="flex items-center justify-center p-8">
@@ -621,6 +663,12 @@ export default function BattlePage({ params }: PageProps) {
                            <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner inline-block self-start">
                              <p className="font-semibold text-red-400 uppercase tracking-wide text-xs">Failed at Test Case: {executionResult.failed_test_case}</p>
                            </div>
+                        )}
+                        {executionResult.errorMsg && (
+                          <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner mt-2 w-full overflow-x-auto">
+                            <h4 className="text-xs font-bold text-red-500 uppercase tracking-wide mb-2">Error Log</h4>
+                            <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{executionResult.errorMsg}</pre>
+                          </div>
                         )}
                         {(executionResult.exec_time !== undefined || executionResult.memory !== undefined) && (
                           <div className="flex gap-4 text-sm font-mono text-zinc-400 bg-[#121214] p-3 rounded-md border border-white/5 w-fit">

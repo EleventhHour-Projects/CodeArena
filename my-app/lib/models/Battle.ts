@@ -5,7 +5,7 @@ const battleSchema = new mongoose.Schema<Battle>({
     player1: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     player2: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, required: true, default: "Active" },
-    createdAt: { type: Date, required: true, default: Date.now() },
+    createdAt: { type: Date, required: true, default: Date.now },
     difficulty: { type: String, required: true },
     type: { type: String, required: true },
     winner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -13,8 +13,24 @@ const battleSchema = new mongoose.Schema<Battle>({
     startTime: { type: Date },
     endTime: { type: Date },
     duration: { type: Object },
-    problems: { type: [{ difficulty: { type: String, required: true }, id: { type: Number, required: true } }], required: true },
-    problemResults: { type: [{ problem: { type: { difficulty: { type: String, required: true }, id: { type: Number, required: true } }, required: true }, player1SolveTime: { type: Number, required: true }, player2SolveTime: { type: Number, required: true } }], required: true },
+    problems: { 
+        type: [{ 
+            difficulty: { type: String, required: true }, 
+            id: { type: Number, required: true } 
+        }], 
+        default: [] 
+    },
+    problemResults: { 
+        type: [{ 
+            problem: { 
+                difficulty: { type: String, required: true }, 
+                id: { type: Number, required: true } 
+            }, 
+            player1SolveTime: { type: Number, default: 0 }, 
+            player2SolveTime: { type: Number, default: 0 } 
+        }], 
+        default: [] 
+    },
 })
 
 // set the name of collection to battles

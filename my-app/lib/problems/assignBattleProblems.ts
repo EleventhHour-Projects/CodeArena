@@ -31,34 +31,46 @@ export const assignBattleProblems = (difficulty: string): BattleProblem[] => {
     const fetchRandomProblems = (level: "easy" | "medium" | "hard", count: number): BattleProblem[] => {
         if (count === 0) return [];
         
-        const questionsDir = path.join(process.cwd(), '../questions', level);
-        
-        try {
-            // Read directories in the level folder (e.g. "1", "2")
-            if (!fs.existsSync(questionsDir)) {
-                console.warn(`Directory not found: ${questionsDir}`);
-                return [];
-            }
+        // Try multiple potential relative paths for the questions folder
+        const potentialPaths = [
+            path.resolve(process.cwd(), '..', 'questions', level),
+            path.resolve(process.cwd(), 'questions', level),
+            path.join(process.cwd(), '../questions', level)
+        ];
 
+        let questionsDir = "";
+        for (const p of potentialPaths) {
+            if (fs.existsSync(p)) {
+                questionsDir = p;
+                break;
+            }
+        }
+
+        if (!questionsDir) {
+            console.error(`ERROR: Questions directory not found for ${level}. Checked:`, potentialPaths);
+            return [];
+        }
+
+        try {
+            console.log(`Assigning problems from: ${questionsDir}`);
             const entries = fs.readdirSync(questionsDir, { withFileTypes: true });
             
-            // Filter directories and parse their names into integers
             const availableIds = entries
-                .filter(entry => entry.isDirectory())
-                .map(entry => parseInt(entry.name, 10))
+                .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
+                .map(entry => parseInt(entry.name.replace('.json', ''), 10))
                 .filter(id => !isNaN(id));
 
+            console.log(`Available ${level} problems:`, availableIds);
+
             if (availableIds.length < count) {
-                console.warn(`Not enough problems in ${level}. Requested: ${count}, Available: ${availableIds.length}`);
-                // If we don't have enough problems, just turn it back shuffled
-                return availableIds.sort(() => 0.5 - Math.random()).map(id => ({ difficulty: level, id }));
+                console.warn(`Insufficient problems in ${level}. Requested: ${count}, Found: ${availableIds.length}`);
+                return availableIds.map(id => ({ difficulty: level, id: Number(id) }));
             }
 
-            // Shuffle and pick exactly 'count' problems
-            const shuffled = availableIds.sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, count).map(id => ({ difficulty: level, id }));
+            const shuffled = [...availableIds].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count).map(id => ({ difficulty: level, id: Number(id) }));
         } catch (error) {
-            console.error(`Error reading ${level} problems directory:`, error);
+            console.error(`Fatalk error reading ${level} problems:`, error);
             return [];
         }
     };

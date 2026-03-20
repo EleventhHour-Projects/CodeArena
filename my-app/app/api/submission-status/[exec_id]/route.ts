@@ -58,6 +58,7 @@ export async function GET(
             failed_test_case: submission.result?.failedTestCaseNumber,
             mle: submission.result?.mle,
             tle: submission.result?.tle,
+            errorMsg: (submission as any).errorMsg,
         };
 
         // Complete/terminal submissions are largely immutable, cache for longer (e.g., 5 mins)
