@@ -33,11 +33,11 @@ func AddToQueue(c fiber.Ctx) error {
 // The response includes the average execution time and total task count, allowing clients to monitor the performance of the task execution service
 func GetTaskInfo(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"average_time":      utils.TaskInfo.GetAverageTime(),
-		"total_tasks":       utils.TaskInfo.GetTotalTasks(),
-		"total_time":        utils.TaskInfo.GetTotalTime(),
-		"active_worker":     utils.WorkerPoolData.GetCount(),
-		"total_active_time": time.Since(utils.StartTime).String(),
+		"average_time_to_execute_task_inSec": utils.TaskInfo.GetAverageTime(),
+		"total_tasks":                        utils.TaskInfo.GetTotalTasks(),
+		"total_time_to_execute_task_inSec":   utils.TaskInfo.GetTotalTime(),
+		"active_worker":                      utils.WorkerPoolData.GetCount(),
+		"total_active_time":                  time.Since(utils.StartTime).String(),
 	})
 }
 

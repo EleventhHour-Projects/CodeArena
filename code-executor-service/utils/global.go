@@ -186,15 +186,15 @@ func (t *TaskProcessingInfo) IncrementTime(duration time.Duration) {
 }
 
 // GetAverageTime calculates and returns the average time taken for processing tasks by dividing the total time by the total number of tasks done, providing insights into the performance of the code execution service and allowing for analysis of how long tasks are taking on average
-func (t *TaskProcessingInfo) GetAverageTime() int {
+func (t *TaskProcessingInfo) GetAverageTime() float64 {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.TotalTaskDone == 0 {
 		return 0
 	}
-	return int(t.TotalTime / time.Duration(t.TotalTaskDone))
+	avg := t.TotalTime / time.Duration(t.TotalTaskDone)
+	return avg.Seconds()
 }
-
 func (t *TaskProcessingInfo) GetTotalTime() float64 {
 	t.mu.Lock()
 	defer t.mu.Unlock()
