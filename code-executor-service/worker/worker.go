@@ -104,6 +104,14 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 		actual := strings.TrimSpace(output)
 		exp := strings.TrimSpace(fmt.Sprint(expected))
 
+		if exp == "true" || exp == "false" {
+			if actual == "0" {
+				actual = "false"
+			} else if actual == "1" {
+				actual = "true"
+			}
+		}
+
 		if actual != exp {
 			failedInfo = FailedInfo{
 				isFailed:     true,
