@@ -144,7 +144,7 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 
 func worker(ctx context.Context) {
 	utils.WorkerPoolData.Increment()
-	containerName := fmt.Sprintf("code-executor-worker-%d", time.Now().UnixNano())
+	containerName := fmt.Sprintf("code-executor-worker-%d-%v", time.Now().UnixNano(), utils.RandomString(6))
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
