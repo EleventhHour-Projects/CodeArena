@@ -20,8 +20,8 @@ func (m *MongoDBClient) GetExecutionCodeData(id string) (*utils.ExecutionCode, e
 	id = strings.TrimSpace(id)
 
 	// Debug: count documents in collection
-	count, _ := m.ExecutionCode.CountDocuments(context.Background(), bson.M{})
-	fmt.Println("Total docs in execution_code:", count)
+	//count, _ := m.ExecutionCode.CountDocuments(context.Background(), bson.M{})
+	//fmt.Println("Total docs in execution_code:", count)
 
 	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
@@ -38,19 +38,26 @@ func (m *MongoDBClient) GetExecutionCodeData(id string) (*utils.ExecutionCode, e
 	return &codeData, nil
 }
 
+// ProblemJSON or u can say testcases
 type ProblemJSON struct {
-	Testcases []struct {
-		Input  string `json:"input"`
-		Output string `json:"output"`
+	Testcases struct {
+		Run []struct {
+			Input  string `json:"input"`
+			Output string `json:"output"`
+		} `json:"run"`
+		Submit []struct {
+			Input  string `json:"input"`
+			Output string `json:"output"`
+		} `json:"submit"`
 	} `json:"testcases"`
 }
 
 // GetProblemTestCases is a function that fetches the test cases for a given problem ID
-func GetProblemTestCases(problemID int) (map[string]string, error) {
+func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
 	// Let's assume the executable is run from the `code-executor-service` directory
-	// so the `questions` directory is at `../questions`
+	// so the `questions` directory is at `../questions/testcase`
 	p := strconv.Itoa(problemID)
-	questionsDir := filepath.Join("..", "questions")
+	questionsDir := filepath.Join("..", "questions/testcase")
 	filePath := filepath.Join(questionsDir, p+".json")
 
 	fileBytes, err := os.ReadFile(filePath)
@@ -66,8 +73,15 @@ func GetProblemTestCases(problemID int) (map[string]string, error) {
 	}
 
 	testCases := make(map[string]string)
-	for _, tc := range problem.Testcases {
+
+	for _, tc := range problem.Testcases.Run {
 		testCases[tc.Input] = tc.Output
+	}
+
+	if all {
+		for _, tc := range problem.Testcases.Submit {
+			testCases[tc.Input] = tc.Output
+		}
 	}
 
 	return testCases, nil
