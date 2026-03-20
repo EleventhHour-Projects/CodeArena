@@ -12,6 +12,7 @@ type FailedInfo struct {
 	isFailed     bool
 	ErrorMessage string
 	TestCase     string
+	ActualOutput string
 }
 
 // SaveSubmissionResult is a function that saves the result of a code submission to the MongoDB database, including the execution time, memory used, and whether the submission passed or failed based on the test cases
@@ -33,6 +34,7 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		RunTimeMs:            int(timeElapsed.Milliseconds()),
 		MemoryUsedMB:         memory,
 		ErrorMSG:             failed.ErrorMessage,
+		ActualOutput:         failed.ActualOutput,
 	}
 	database.MongoDB.UpdateExecutionCodeStatus(task.TaskID, status, *task, !failed.isFailed)
 	return nil

@@ -16,6 +16,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
         failedTestCaseNumber: { type: Number, required: true, default: null },
         runTimeMs: { type: Number, required: true, default: 0 },
         memoryUsedMB: { type: Number, required: true, default: 0 },
+        actualOutput: { type: String, required: false },
     },
 })
 

@@ -105,19 +105,12 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 		exp := strings.TrimSpace(fmt.Sprint(expected))
 
 		if actual != exp {
-
-			// fmt.Println("Testcase failed",
-			// 	"Input:", input,
-			// 	"Output:", actual,
-			// 	"Expected:", exp,
-			// 	"Time:", elapsed)
-
 			failedInfo = FailedInfo{
 				isFailed:     true,
 				ErrorMessage: "Wrong Answer",
 				TestCase:     input,
+				ActualOutput: actual,
 			}
-
 			break
 		}
 

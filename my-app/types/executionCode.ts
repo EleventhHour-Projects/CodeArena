@@ -13,6 +13,7 @@ export interface ExecutionCode {
     userId: Types.ObjectId;
     battleId: Types.ObjectId;
     problem: BattleProblem;
+    testcases?: { input: string; output: string }[];
     status: executionStatus;
     type: executionType;
     createdAt: Date;

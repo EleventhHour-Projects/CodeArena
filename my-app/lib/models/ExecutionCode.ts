@@ -10,6 +10,7 @@ const executionCodeSchema = new mongoose.Schema<ExecutionCode>({
         difficulty: { type: String, required: true },
         id: { type: Number, required: true }
     },
+    testcases: { type: [{ input: String, output: String }], required: false },
     status: { type: String, required: true, default: "Pending" },
     type: { type: String, required: true, default: "Run" },
     createdAt: { type: Date, required: true, default: Date.now }

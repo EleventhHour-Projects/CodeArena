@@ -18,5 +18,6 @@ export interface Submission {
         failedTestCaseNumber: number | null;
         runTimeMs: number;
         memoryUsedMB: number;
+        actualOutput?: string;
     }
 }
