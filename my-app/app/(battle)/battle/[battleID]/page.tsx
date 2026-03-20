@@ -166,8 +166,28 @@ export default function BattlePage({ params }: PageProps) {
   const [language, setLanguage] = useState("cpp");
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
   const [isExecuting, setIsExecuting] = useState(false);
+  const [submissions, setSubmissions] = useState<any[]>([]);
 
-  const pollSubmissionStatus = async (execId: string, type: "Run" | "Submit") => {
+  const fetchSubmissions = async () => {
+    if (!session?.user || !problem?.id) return;
+    try {
+      const res = await fetch(`/api/submissions?battleId=${battleID}&problemId=${problem.id}&userId=${(session.user as any).id}`);
+      const data = await res.json();
+      if (data.success) {
+        setSubmissions(data.submissions);
+      }
+    } catch (error) {
+      console.error("Failed to fetch submissions:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'submissions') {
+      fetchSubmissions();
+    }
+  }, [activeTab, currentQuestion, problem?.id]);
+
+  const pollSubmissionStatus = async (execId: string, type: "Run" | "Submit", toastId: string | number) => {
     const pollInterval = setInterval(async () => {
       try {
         const res = await fetch(`/api/submission-status/${execId}`);
@@ -179,19 +199,20 @@ export default function BattlePage({ params }: PageProps) {
            setExecutionResult(data);
            
            if (type === "Submit") {
+             fetchSubmissions(); // Refresh submissions list
              if (data.status === "Accepted") {
-                toast.success("Submission Accepted! 🎉");
+                toast.success("Submission Accepted! 🎉", { id: toastId });
              } else {
-                toast.error(`Submission Failed: ${data.status}`);
+                toast.error(`Submission Failed: ${data.status}`, { id: toastId });
              }
            } else {
-               toast.info(`Run Completed: ${data.status}`);
+               toast.info(`Run Completed: ${data.status}`, { id: toastId });
            }
         }
       } catch (e) {
          clearInterval(pollInterval);
          setIsExecuting(false);
-         toast.error("Error checking submission status");
+         toast.error("Error checking submission status", { id: toastId });
       }
     }, 1500);
   };
@@ -209,6 +230,9 @@ export default function BattlePage({ params }: PageProps) {
     setIsExecuting(true);
     setPanelTab("result");
     setExecutionResult(null); // Clear previous results
+    
+    // Create a loading toast and capture its ID
+    const toastId = toast.loading(`${type} initiated. Polling for results...`);
     
     try {
       const response = await fetch('/api/battle/exec-code', {
@@ -228,16 +252,15 @@ export default function BattlePage({ params }: PageProps) {
 
       const data = await response.json();
       if (data.success) {
-        toast.loading(`${type} initiated. Polling for results...`, { duration: 3000 });
-        pollSubmissionStatus(data.executionCode._id || data.executionCode.id || data.executionCode, type);
+        pollSubmissionStatus(data.executionCode._id || data.executionCode.id || data.executionCode, type, toastId);
       } else {
         setIsExecuting(false);
-        toast.error(data.error || `Failed to ${type} code`);
+        toast.error(data.error || `Failed to ${type} code`, { id: toastId });
       }
     } catch (err) {
       console.error(`Error during ${type}:`, err);
       setIsExecuting(false);
-      toast.error(`A network error occurred during ${type}`);
+      toast.error(`A network error occurred during ${type}`, { id: toastId });
     }
   };
 
@@ -495,8 +518,36 @@ export default function BattlePage({ params }: PageProps) {
                 </div>
               )}
               {activeTab === 'submissions' && (
-                <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-4">
-                  <span className="text-sm">No recent submissions found.</span>
+                <div className="flex flex-col gap-3 p-4">
+                  {submissions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
+                      <span className="text-sm">No recent submissions found.</span>
+                    </div>
+                  ) : (
+                    submissions.map((sub, idx) => (
+                      <div key={sub._id || sub.id || idx} className="flex flex-col gap-2 p-3 bg-zinc-900/50 border border-white/5 rounded-xl hover:bg-zinc-800/50 transition-colors group">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${sub.status === "Accepted" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+                            {sub.status}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-mono">
+                            {new Date(sub.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-[11px] text-zinc-400 font-mono px-1">
+                           <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-zinc-600" />
+                              <span>{sub.result?.runTimeMs || 0} ms</span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
+                              <span>{sub.result?.memoryUsedMB || 0} MB</span>
+                           </div>
+                           <div className="ml-auto text-zinc-600 font-bold uppercase tracking-widest text-[9px]">{sub.language}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

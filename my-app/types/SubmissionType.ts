@@ -8,7 +8,10 @@ export interface Submission {
     language?: string;
     userId: Types.ObjectId;
     battleId: Types.ObjectId;
-    problemId: Types.ObjectId;
+    problem: {
+        difficulty: string;
+        id: number;
+    };
     execCodeId: Types.ObjectId; // Requires to be unique
     status: SubmissionStatus;
     createdAt: Date;

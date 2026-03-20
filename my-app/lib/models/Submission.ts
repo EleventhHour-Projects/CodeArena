@@ -6,7 +6,10 @@ const submissionSchema = new mongoose.Schema<Submission>({
     language: { type: String, required: false, default: "cpp" },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: true },
-    problemId: { type: mongoose.Schema.Types.ObjectId, ref: "Problem", required: true },
+    problem: {
+        difficulty: { type: String, required: true },
+        id: { type: Number, required: true }
+    },
     execCodeId: { type: mongoose.Schema.Types.ObjectId, ref: "ExecutionCode", required: true, unique: true },
     status: { type: String, required: true}, // Accepted or Rejected
     createdAt: { type: Date, required: true, default: Date.now },
@@ -23,7 +26,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
 // add indexes for better performance
 submissionSchema.index({ userId: 1, createdAt: -1 });
 submissionSchema.index({ battleId: 1 });
-submissionSchema.index({ problemId: 1 });
+submissionSchema.index({ "problem.id": 1 });
 submissionSchema.index({ status: 1 });
 
 // set the name of collection to submissions
