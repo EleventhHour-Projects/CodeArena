@@ -15,17 +15,22 @@ export async function GET(request: Request) {
     const files = await fs.readdir(questionsDir);
     
     // Filter for JSON files
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
+    let jsonFiles = files.filter(file => file.endsWith('.json'));
     
     if (jsonFiles.length === 0) {
       return NextResponse.json({ error: 'No questions found' }, { status: 404 });
     }
 
-    // Shuffle the files array to get random questions
-    const shuffledFiles = [...jsonFiles].sort(() => 0.5 - Math.random());
-    
-    // Select the requested number of questions (or all if fewer exist)
-    const selectedFiles = shuffledFiles.slice(0, Math.min(count, shuffledFiles.length));
+    const idsParam = searchParams.get('ids');
+    let selectedFiles: string[] = [];
+
+    if (idsParam) {
+      const explicitIds = idsParam.split(',').map(id => id.trim());
+      selectedFiles = jsonFiles.filter(file => explicitIds.includes(file.replace('.json', '')));
+    } else {
+      const shuffledFiles = [...jsonFiles].sort(() => 0.5 - Math.random());
+      selectedFiles = shuffledFiles.slice(0, Math.min(count, shuffledFiles.length));
+    }
     
     // Read the content of the selected files
     const problems = await Promise.all(

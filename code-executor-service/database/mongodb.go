@@ -7,6 +7,7 @@ import (
 	"log"
 	"sync"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -48,5 +49,14 @@ func InitMongoDB() {
 		UsersCollection:      client.Database("code-arena").Collection("users"),
 		ExecutionCode:        client.Database("code-arena").Collection("executionCodes"),
 		mu:                   sync.RWMutex{},
+	}
+
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{bson.E{Key: "execCodeId", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+	_, err = MongoDB.SumissionsCollection.Indexes().CreateOne(context.Background(), indexModel)
+	if err != nil {
+		log.Println(utils.Red + "Failed to create unique index for execCodeId:" + utils.Reset, err)
 	}
 }

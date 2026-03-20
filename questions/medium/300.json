@@ -1,0 +1,15 @@
+{
+    "id": 300,
+    "slug": "find-first-and-last-position-of-element-in-sorted-array",
+    "tags": [
+        "Array",
+        "Binary Search"
+    ],
+    "title": "Locate First and Last Occurrence in Sorted Array",
+    "difficulty": "Medium",
+    "description": "You are given a sorted array of integers and a target value.\n\nYour task is to determine the first (leftmost) and last (rightmost) positions where the target appears in the array.\n\nIf the target does not exist in the array, return [-1, -1].\n\nThe solution must run in logarithmic time complexity, i.e., O(log n).\n\nYou must read input from standard input and print the result accordingly.",
+    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers sorted in non-decreasing order.\nThe third line contains the target integer.",
+    "output_format": "Print two space-separated integers representing the first and last positions of the target. If not found, print -1 -1.",
+    "constraints": "0 <= n <= 100000\n-1000000000 <= nums[i] <= 1000000000\nnums is sorted in non-decreasing order\n-1000000000 <= target <= 1000000000"
+
+}

@@ -9,6 +9,7 @@ export interface Submission {
     userId: Types.ObjectId;
     battleId: Types.ObjectId;
     problemId: Types.ObjectId;
+    execCodeId: Types.ObjectId; // Requires to be unique
     status: SubmissionStatus;
     createdAt: Date;
     result: {

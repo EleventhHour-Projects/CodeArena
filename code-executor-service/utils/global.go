@@ -100,7 +100,7 @@ type Result struct {
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type Submission struct {
 	ID              bson.ObjectID `bson:"_id,omitempty"`
-	ExecutionCodeID string        `bson:"executionCodeId"`
+	ExecutionCodeID bson.ObjectID `bson:"execCodeId"`
 	Code            string        `bson:"code"`
 	Language        string        `bson:"language"`
 	UserID          bson.ObjectID `bson:"userId"`

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -94,10 +93,10 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 	} else {
 		passString = "Rejected"
 	}
-	objId, _ := primitive.ObjectIDFromHex(id)
-	//fmt.Println(objId)
+	bsonObjId, _ := bson.ObjectIDFromHex(id)
+	//fmt.Println(bsonObjId)
 	_, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
-		ExecutionCodeID: objId.String(),
+		ExecutionCodeID: bsonObjId,
 		Code:            task.Code,
 		Language:        task.Language,
 		Result:          &status,

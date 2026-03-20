@@ -7,6 +7,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: true },
     problemId: { type: mongoose.Schema.Types.ObjectId, ref: "Problem", required: true },
+    execCodeId: { type: mongoose.Schema.Types.ObjectId, ref: "ExecutionCode", required: true, unique: true },
     status: { type: String, required: true}, // Accepted or Rejected
     createdAt: { type: Date, required: true, default: Date.now },
     result: { 

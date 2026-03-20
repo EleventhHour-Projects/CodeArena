@@ -41,28 +41,88 @@ export default function BattlePage({ params }: PageProps) {
   const resolvedParams = use(params);
   const battleID = resolvedParams.battleID;
 
+  const [battleDetails, setBattleDetails] = useState<any>(null);
+
   // Problem State
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const problem = problems[currentQuestion - 1]; // Active problem
 
+  const [timeLeft, setTimeLeft] = useState(5400); // default 90 min fallback
+  const [isBattleOver, setIsBattleOver] = useState(false);
+  const [battleStats, setBattleStats] = useState<any>(null);
+  
+  const [executionResult, setExecutionResult] = useState<any>(null);
+
   useEffect(() => {
-    async function fetchProblems() {
+    async function fetchBattle() {
       setIsLoading(true);
       try {
-        const res = await fetch('/api/battle/questions?count=3');
-        if (!res.ok) throw new Error('Failed to fetch');
+        const res = await fetch(`/api/battle/${battleID}`);
+        if (!res.ok) throw new Error('Failed to fetch battle context');
         const data = await res.json();
-        setProblems(data.problems || []);
+        const battle = data.battle;
+        setBattleDetails(battle);
+
+        // Calc initial timeLeft based on endTime
+        if (battle.endTime) {
+          const tL = Math.max(0, Math.floor((new Date(battle.endTime).getTime() - Date.now()) / 1000));
+          setTimeLeft(tL);
+          if (tL === 0) {
+              handleBattleComplete(battle);
+          }
+        }
+        
+        // Fetch specific problems
+        if (battle.problems && battle.problems.length > 0) {
+            const problemIds = battle.problems.map((p: any) => p.id).join(',');
+            const probRes = await fetch(`/api/battle/questions?ids=${problemIds}`);
+            const probData = await probRes.json();
+            setProblems(probData.problems || []);
+        } else {
+            // Fallback
+            const probRes = await fetch('/api/battle/questions?count=3');
+            const probData = await probRes.json();
+            setProblems(probData.problems || []);
+        }
+
       } catch (err) {
-        console.error("Error fetching problems:", err);
+        console.error("Error fetching battle context:", err);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchProblems();
+    fetchBattle();
   }, [battleID]);
+
+  const handleBattleComplete = async (battle: any) => {
+    if (isBattleOver) return;
+    setIsBattleOver(true);
+    toast.info("Battle has ended! Computing final results...");
+    try {
+      const res = await fetch('/api/battle/complete', {
+         method: 'POST', 
+         headers: { 'Content-Type': 'application/json' },
+         // We pass empty problemResults for now unless tracked specifically per player in context
+         body: JSON.stringify({ battleId: battleID, problemResults: [] }) 
+      });
+      const data = await res.json();
+      setBattleStats(data);
+    } catch (e) {
+      toast.error("Failed to compute battle results.");
+    }
+  };
+
+  useEffect(() => {
+    if (timeLeft <= 0 && battleDetails && !isBattleOver) {
+        handleBattleComplete(battleDetails);
+    }
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, battleDetails, isBattleOver]);
 
   // Editor and Panel State
   const [testcases, setTestcases] = useState<TestCase[]>([
@@ -90,6 +150,35 @@ export default function BattlePage({ params }: PageProps) {
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
   const [isExecuting, setIsExecuting] = useState(false);
 
+  const pollSubmissionStatus = async (execId: string, type: "Run" | "Submit") => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/submission-status/${execId}`);
+        const data = await res.json();
+        
+        if (data.status !== "PENDING") {
+           clearInterval(pollInterval);
+           setIsExecuting(false);
+           setExecutionResult(data);
+           
+           if (type === "Submit") {
+             if (data.status === "Accepted") {
+                toast.success("Submission Accepted! 🎉");
+             } else {
+                toast.error(`Submission Failed: ${data.status}`);
+             }
+           } else {
+               toast.info(`Run Completed: ${data.status}`);
+           }
+        }
+      } catch (e) {
+         clearInterval(pollInterval);
+         setIsExecuting(false);
+         toast.error("Error checking submission status");
+      }
+    }, 1500);
+  };
+
   const handleExecute = async (type: "Run" | "Submit") => {
     if (!session?.user) {
       toast.error("Please log in to execute code");
@@ -102,6 +191,7 @@ export default function BattlePage({ params }: PageProps) {
 
     setIsExecuting(true);
     setPanelTab("result");
+    setExecutionResult(null); // Clear previous results
     
     try {
       const response = await fetch('/api/battle/exec-code', {
@@ -120,22 +210,22 @@ export default function BattlePage({ params }: PageProps) {
 
       const data = await response.json();
       if (data.success) {
-        toast.success(`${type} initiated successfully!`);
-        // We will likely poll for results here later
+        toast.loading(`${type} initiated. Polling for results...`, { duration: 3000 });
+        pollSubmissionStatus(data.executionCode._id || data.executionCode.id || data.executionCode, type);
       } else {
+        setIsExecuting(false);
         toast.error(data.error || `Failed to ${type} code`);
       }
     } catch (err) {
       console.error(`Error during ${type}:`, err);
-      toast.error(`A network error occurred during ${type}`);
-    } finally {
       setIsExecuting(false);
+      toast.error(`A network error occurred during ${type}`);
     }
   };
 
   // Resizable Panes State
-  const [leftWidth, setLeftWidth] = useState(45); // percentage
-  const [topHeight, setTopHeight] = useState(70); // percentage
+  const [leftWidth, setLeftWidth] = useState(45);
+  const [topHeight, setTopHeight] = useState(70);
   const [isResizingHz, setIsResizingHz] = useState(false);
   const [isResizingVt, setIsResizingVt] = useState(false);
 
@@ -147,15 +237,11 @@ export default function BattlePage({ params }: PageProps) {
       if (isResizingHz && containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-        if (newWidth > 20 && newWidth < 80) { // arbitrary min/max bounds
-          setLeftWidth(newWidth);
-        }
+        if (newWidth > 20 && newWidth < 80) setLeftWidth(newWidth);
       } else if (isResizingVt && rightPaneRef.current) {
         const rect = rightPaneRef.current.getBoundingClientRect();
         const newHeight = ((e.clientY - rect.top) / rect.height) * 100;
-        if (newHeight > 20 && newHeight < 80) {
-          setTopHeight(newHeight);
-        }
+        if (newHeight > 20 && newHeight < 80) setTopHeight(newHeight);
       }
     };
 
@@ -177,16 +263,6 @@ export default function BattlePage({ params }: PageProps) {
     };
   }, [isResizingHz, isResizingVt]);
 
-  // Timer state (e.g., 90 minutes = 5400 seconds)
-  const [timeLeft, setTimeLeft] = useState(5400);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -195,14 +271,47 @@ export default function BattlePage({ params }: PageProps) {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  // Scrollbar style utility classes
   const scrollbarClasses = "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-700/50 hover:[&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full";
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 line-height-relaxed">
+      
+      {/* End of Battle Overlay */}
+      {isBattleOver && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
+          <div className="max-w-md w-full bg-[#121214] border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+             {!battleStats ? (
+               <div className="flex flex-col items-center gap-4">
+                 <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                 <h2 className="text-xl font-bold text-white">Computing Results...</h2>
+                 <p className="text-zinc-400 text-sm text-center">Please wait while we finalize the battle scores and update ratings.</p>
+               </div>
+             ) : (
+               <div className="flex flex-col items-center gap-4 w-full">
+                 <h2 className="text-2xl font-bold text-white mb-2">Battle Complete!</h2>
+                 <div className="w-full bg-[#18181b] p-4 rounded-xl border border-white/5 space-y-3 mb-4">
+                   <div className="flex justify-between items-center text-sm">
+                     <span className="text-zinc-400">Winner</span>
+                     <span className="font-semibold text-emerald-400">{battleStats.result === "draw" || !battleStats.result ? "Draw / N/A" : battleStats.result}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
+                     <span className="text-zinc-400">New Rating Approximation</span>
+                     <span className="font-bold text-indigo-400 flex items-center gap-1">
+                       {battleStats.newRa || "N/A"}
+                     </span>
+                   </div>
+                 </div>
+                 <button onClick={() => window.location.href='/leaderboard'} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2.5 rounded-lg transition-colors">
+                   View Leaderboard
+                 </button>
+               </div>
+             )}
+          </div>
+        </div>
+      )}
 
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#09090b] shadow-sm z-10 w-full">
+      <header className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#09090b] shadow-sm z-10 w-full shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <h1 className="text-sm font-semibold tracking-tight text-zinc-200">
@@ -232,22 +341,22 @@ export default function BattlePage({ params }: PageProps) {
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               <span className="text-xs font-mono font-semibold text-zinc-300 px-2.5 select-none tracking-wider">
-                {currentQuestion}/3
+                {currentQuestion}/{problems.length > 0 ? problems.length : 3}
               </span>
               <button
                 className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
-                disabled={currentQuestion === 3}
-                onClick={() => setCurrentQuestion(prev => Math.min(3, prev + 1))}
+                disabled={problems.length > 0 ? currentQuestion === problems.length : currentQuestion === 3}
+                onClick={() => setCurrentQuestion(prev => Math.min(problems.length || 3, prev + 1))}
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <button className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-blue-400 font-medium hover:bg-blue-500/10 transition-colors border border-transparent hover:border-blue-500/20">
+            <button onClick={() => toast.success("Draw request sent to the opponent.")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-blue-400 font-medium hover:bg-blue-500/10 transition-colors border border-transparent hover:border-blue-500/20">
               <Handshake className="w-3.5 h-3.5" />
-              Offer Draw
+              Draw
             </button>
-            <button className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
-              <Flag className="w-3.5 h-3.5" />
+            <button onClick={() => toast.error("You have surrendered the battle.")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
+              <span className="w-4 h-4 text-red-400 flex items-center justify-center">☠</span>
               Surrender
             </button>
           </div>
@@ -344,8 +453,7 @@ export default function BattlePage({ params }: PageProps) {
               )}
               {activeTab === 'submissions' && (
                 <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-4">
-                  <svg width="32" height="32" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 3C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H1.5ZM1 7.5C1 7.22386 1.22386 7 1.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H1.5C1.22386 8 1 7.77614 1 7.5ZM1 11.5C1 11.2239 1.22386 11 1.5 11H13.5C13.7761 11 14 11.2239 14 11.5C14 11.7761 13.7761 12 13.5 12H1.5C1.22386 12 1 11.7761 1 11.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                  <p className="text-sm">No recent submissions found.</p>
+                  <span className="text-sm">No recent submissions found.</span>
                 </div>
               )}
             </div>
@@ -373,14 +481,13 @@ export default function BattlePage({ params }: PageProps) {
                     style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23a1a1aa\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em' }}
                   >
                     <option value="cpp">C++ (GCC 11)</option>
-                    <option value="python">Python 3.10</option>
-                    <option value="go">Go 1.19</option>
-                    <option value="rust">Rust 1.66</option>
+                    <option value="python" disabled className="text-zinc-600">Python 3.10</option>
+                    <option value="java" disabled className="text-zinc-600">Java 17</option>
+                    <option value="javascript" disabled className="text-zinc-600">JavaScript (Node.js)</option>
+                    <option value="typescript" disabled className="text-zinc-600">TypeScript</option>
+                    <option value="go" disabled className="text-zinc-600">Go 1.19</option>
+                    <option value="rust" disabled className="text-zinc-600">Rust 1.66</option>
                   </select>
-                  <div className="w-px h-5 bg-white/10 mx-1"></div>
-                  <button className="text-zinc-500 hover:text-zinc-300 p-1.5 rounded-md hover:bg-white/5 transition-colors" title="Settings">
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 3.04999C11.5 2.4977 11.0523 2.04999 10.5 2.04999H4.5C3.94772 2.04999 3.5 2.4977 3.5 3.04999V11.95C3.5 12.5023 3.94772 12.95 4.5 12.95H10.5C11.0523 12.95 11.5 12.5023 11.5 11.95V3.04999ZM10.5 1.04999C11.6046 1.04999 12.5 1.94542 12.5 3.04999V11.95C12.5 13.0546 11.6046 13.95 10.5 13.95H4.5C3.39543 13.95 2.5 13.0546 2.5 11.95V3.04999C2.5 1.94542 3.39543 1.04999 4.5 1.04999H10.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                  </button>
                 </div>
 
                 <div className="flex items-center gap-2.5">
@@ -388,14 +495,14 @@ export default function BattlePage({ params }: PageProps) {
                     onClick={() => handleExecute("Run")}
                     disabled={isExecuting}
                     className="flex items-center gap-1.5 bg-zinc-800 text-zinc-200 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-zinc-700 hover:text-white transition-all border border-white/5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Play className={`w-3.5 h-3.5 ${isExecuting ? 'animate-pulse' : ''}`} />
+                    <Play className={`w-3.5 h-3.5 ${isExecuting ? 'animate-pulse text-yellow-500' : ''}`} />
                     Run
                   </button>
                   <button 
                     onClick={() => handleExecute("Submit")}
                     disabled={isExecuting}
                     className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-5 py-1.5 rounded-lg text-sm font-medium hover:bg-emerald-500/20 border border-emerald-500/20 transition-all shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_-3px_rgba(16,185,129,0.3)] hover:-translate-y-[0.5px] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Upload className="w-3.5 h-3.5" />
+                    <Upload className={`w-3.5 h-3.5 ${isExecuting ? 'animate-bounce' : ''}`} />
                     Submit
                   </button>
                 </div>
@@ -462,22 +569,15 @@ export default function BattlePage({ params }: PageProps) {
                 {panelTab === 'testcases' && (
                   <div className="flex flex-col h-full gap-3">
                     <div className="flex gap-2">
-                      {testcases.map(tc => (
+                      {testcases.map((tc, idx) => (
                         <button
                           key={tc.id}
                           onClick={() => setActiveTestCaseId(tc.id)}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTestCaseId === tc.id ? 'bg-white/10 text-white' : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'}`}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTestCaseId === tc.id ? 'bg-white/10 text-white' : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'} ${executionResult && executionResult.failed_test_case === (idx + 1) ? 'border border-red-500/50' : ''}`}
                         >
-                          Case {tc.id}
+                          Case {tc.id} {executionResult && executionResult.failed_test_case === (tc.id) && <span className="text-red-500 ml-1">✖</span>}
                         </button>
                       ))}
-                      <button
-                        onClick={() => setTestcases([...testcases, { id: testcases.length + 1, input: "" }])}
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-white/5 hover:text-zinc-300 transition-colors flex items-center gap-1"
-                        title="Add New Case"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2.75C8 2.47386 7.77614 2.25 7.5 2.25C7.22386 2.25 7 2.47386 7 2.75V7H2.75C2.47386 7 2.25 7.22386 2.25 7.5C2.25 7.77614 2.47386 8 2.75 8H7V12.25C7 12.5261 7.22386 12.75 7.5 12.75C7.77614 12.75 8 12.5261 8 12.25V8H12.25C12.5261 8 12.75 7.77614 12.75 7.5C12.75 7.22386 12.5261 7 12.25 7H8V2.75Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                      </button>
                     </div>
 
                     {testcases.map(tc => tc.id === activeTestCaseId && (
@@ -500,9 +600,36 @@ export default function BattlePage({ params }: PageProps) {
                 )}
 
                 {panelTab === 'result' && (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-3">
-                    <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 3C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H1.5ZM1 7.5C1 7.22386 1.22386 7 1.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H1.5C1.22386 8 1 7.77614 1 7.5ZM1 11.5C1 11.2239 1.22386 11 1.5 11H13.5C13.7761 11 14 11.2239 14 11.5C14 11.7761 13.7761 12 13.5 12H1.5C1.22386 12 1 11.7761 1 11.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                    <p className="text-sm">Run your code to see results here.</p>
+                  <div className="flex flex-col h-full bg-[#09090b] text-zinc-300">
+                    {!executionResult ? (
+                      <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-3">
+                        {isExecuting ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-sm font-medium animate-pulse">Running Code...</span>
+                          </div>
+                        ) : (
+                          <p className="text-sm">Run your code to see results here.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <h3 className={`text-lg font-bold tracking-wide ${executionResult.status === "Accepted" ? "text-emerald-400" : "text-red-500"}`}>
+                           {executionResult.status}
+                        </h3>
+                        {executionResult.failed_test_case && (
+                           <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner inline-block self-start">
+                             <p className="font-semibold text-red-400 uppercase tracking-wide text-xs">Failed at Test Case: {executionResult.failed_test_case}</p>
+                           </div>
+                        )}
+                        {(executionResult.exec_time !== undefined || executionResult.memory !== undefined) && (
+                          <div className="flex gap-4 text-sm font-mono text-zinc-400 bg-[#121214] p-3 rounded-md border border-white/5 w-fit">
+                             {executionResult.exec_time !== undefined && <span>Runtime: {executionResult.exec_time} ms</span>}
+                             {executionResult.memory !== undefined && <span>Memory: {executionResult.memory} MB</span>}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
