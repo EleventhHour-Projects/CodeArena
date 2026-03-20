@@ -58,6 +58,7 @@ export async function GET(
             failed_test_case: submission.result?.failedTestCaseNumber,
             mle: submission.result?.mle,
             tle: submission.result?.tle,
+            actual_output: (submission.result as any)?.actualOutput,
             errorMsg: (submission as any).errorMsg,
         };
 

@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         console.log("Exec-code request body:", body);
-        const { code, language, userId, battleId, difficulty, problemId, type } = body;
+        const { code, language, userId, battleId, difficulty, problemId, type, testcases } = body;
 
         if (!difficulty || problemId === undefined) {
              console.error("[ERROR] Missing difficulty or problemId in request body");
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
             userId,
             battleId,
             problem: { difficulty, id: problemId },
+            testcases: type === "Run" ? testcases : undefined,
             status: "Pending",
             type: type || "Run"
         });

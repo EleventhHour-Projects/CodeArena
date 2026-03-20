@@ -69,15 +69,24 @@ func ListenForTasks(ctx context.Context) {
 				fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
 				continue
 			}
-			//fmt.Println(data)
-			all := false
-			if data.Type == "Submit" {
-				all = true
-			}
-			testCases, err := database.GetProblemTestCases(data.Problem.ID, all)
-			if err != nil {
-				fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
-				continue
+			// fmt.Println(data)
+			testCases := make(map[string]string)
+			if len(data.Testcases) > 0 {
+				fmt.Println("Using custom testcases from database")
+				for _, tc := range data.Testcases {
+					testCases[tc.Input] = tc.Output
+				}
+			} else {
+				all := false
+				if data.Type == "Submit" {
+					all = true
+				}
+				var err error
+				testCases, err = database.GetProblemTestCases(data.Problem.ID, all)
+				if err != nil {
+					fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
+					continue
+				}
 			}
 			maxTime, maxMemory, err := database.GetProblemConstraints(data.Problem.ID)
 			if err != nil {

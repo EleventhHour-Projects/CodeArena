@@ -79,7 +79,11 @@ type ExecutionCode struct {
 	Status    *string       `bson:"status,omitempty"`
 	BattleID  bson.ObjectID `bson:"battleId"`
 	Problem   Problem       `bson:"problem"`
-	CreatedAt time.Time     `bson:"createdAt,omitzero"`
+	Testcases []struct {
+		Input  string `bson:"input"`
+		Output string `bson:"output"`
+	} `bson:"testcases,omitempty"`
+	CreatedAt time.Time `bson:"createdAt,omitzero"`
 }
 
 type Problem struct {
@@ -96,6 +100,7 @@ type Result struct {
 	RunTimeMs            int     `bson:"runTimeMs,omitempty"`
 	MemoryUsedMB         int     `bson:"memoryUsedMB,omitempty"`
 	ErrorMSG             string  `bson:"errorMsg,omitempty"`
+	ActualOutput         string  `bson:"actualOutput,omitempty"`
 }
 
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission

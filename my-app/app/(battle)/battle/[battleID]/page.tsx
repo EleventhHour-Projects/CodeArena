@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload } from "lucide-react";
+import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -221,7 +221,8 @@ export default function BattlePage({ params }: PageProps) {
           battleId: battleID,
           difficulty: problem.difficulty.toLowerCase(),
           problemId: problem.id,
-          type
+          type,
+          testcases: type === "Run" ? testcases.map(t => ({ input: t.input, output: t.output })) : undefined
         }),
       });
 
@@ -615,9 +616,9 @@ export default function BattlePage({ params }: PageProps) {
                         <button
                           key={tc.id}
                           onClick={() => setActiveTestCaseId(tc.id)}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTestCaseId === tc.id ? 'bg-white/10 text-white' : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'} ${executionResult && executionResult.failed_test_case === (idx + 1) ? 'border border-red-500/50' : ''}`}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTestCaseId === tc.id ? 'bg-white/10 text-white' : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'} ${executionResult && (executionResult.failed_test_case === tc.input || executionResult.failed_test_case === String(tc.id)) ? 'border border-red-500/50' : ''}`}
                         >
-                          Case {tc.id} {executionResult && executionResult.failed_test_case === (tc.id) && <span className="text-red-500 ml-1">✖</span>}
+                          Case {tc.id} {executionResult && (executionResult.failed_test_case === tc.input || executionResult.failed_test_case === String(tc.id)) && <span className="text-red-500 ml-1">✖</span>}
                         </button>
                       ))}
                     </div>
@@ -633,7 +634,7 @@ export default function BattlePage({ params }: PageProps) {
                             newTestcases[index].input = e.target.value;
                             setTestcases(newTestcases);
                           }}
-                          className={`w-full flex-1 bg-[#18181b] border border-white/5 rounded-lg p-3 text-sm font-mono text-zinc-300 outline-none focus:border-indigo-500/50 resize-none transition-colors ${scrollbarClasses}`}
+                          className={`w-full flex-1 bg-[#18181b] border border-white/5 rounded-lg p-3 text-sm font-mono text-zinc-300 outline-none focus:border-indigo-500/50 resize-none transition-colors whitespace-pre-wrap ${scrollbarClasses}`}
                           spellCheck={false}
                         />
                       </div>
@@ -651,29 +652,82 @@ export default function BattlePage({ params }: PageProps) {
                             <span className="text-sm font-medium animate-pulse">Running Code...</span>
                           </div>
                         ) : (
-                          <p className="text-sm">Run your code to see results here.</p>
+                          <div className="flex flex-col items-center gap-3">
+                             <Play className="w-10 h-10 opacity-20" />
+                             <p className="text-sm">Run your code to see results here.</p>
+                          </div>
                         )}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-4">
-                        <h3 className={`text-lg font-bold tracking-wide ${executionResult.status === "Accepted" ? "text-emerald-400" : "text-red-500"}`}>
-                           {executionResult.status}
-                        </h3>
-                        {executionResult.failed_test_case && (
-                           <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner inline-block self-start">
-                             <p className="font-semibold text-red-400 uppercase tracking-wide text-xs">Failed at Test Case: {executionResult.failed_test_case}</p>
+                      <div className="flex flex-col gap-4 p-4 overflow-y-auto">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${executionResult.status === "Accepted" ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" : "bg-red-500/20 text-red-500 border border-red-500/30"}`}>
+                                 {executionResult.status}
+                              </span>
+                              {(executionResult.exec_time !== undefined || executionResult.memory !== undefined) && (
+                                <div className="flex gap-4 text-xs font-mono text-zinc-500 bg-[#121214] px-3 py-1 rounded-full border border-white/5">
+                                   {executionResult.exec_time !== undefined && <span>{executionResult.exec_time} ms</span>}
+                                   {executionResult.memory !== undefined && <span>{executionResult.memory} MB</span>}
+                                </div>
+                              )}
                            </div>
-                        )}
-                        {executionResult.errorMsg && (
-                          <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner mt-2 w-full overflow-x-auto">
-                            <h4 className="text-xs font-bold text-red-500 uppercase tracking-wide mb-2">Error Log</h4>
-                            <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{executionResult.errorMsg}</pre>
+                        </div>
+
+                        {executionResult.status !== "Accepted" && (
+                          <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                             {executionResult.errorMsg && (
+                               <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner w-full overflow-x-auto">
+                                 <h4 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2 opacity-80">System Error Log</h4>
+                                 <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{executionResult.errorMsg}</pre>
+                               </div>
+                             )}
+
+                             {executionResult.failed_test_case && (
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-2">
+                                     <div className="h-px flex-1 bg-red-500/20"></div>
+                                     <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">Failed Testcase (Case {executionResult.failed_test_case})</span>
+                                     <div className="h-px flex-1 bg-red-500/20"></div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 gap-4">
+                                     <div className="space-y-2">
+                                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Input</div>
+                                        <div className="bg-[#121214] rounded-lg p-3 border border-white/5 font-mono text-xs whitespace-pre-wrap text-zinc-300">
+                                          {executionResult.failed_test_case || "Input data unavailable"}
+                                        </div>
+                                     </div>
+
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                           <div className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider ml-1">Expected Output</div>
+                                           <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10 font-mono text-xs whitespace-pre-wrap text-emerald-100/80">
+                                             {testcases.find(t => t.input === executionResult.failed_test_case)?.output || "N/A"}
+                                           </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                           <div className="text-[11px] font-bold text-red-500/70 uppercase tracking-wider ml-1">Your Output</div>
+                                           <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/10 font-mono text-xs whitespace-pre-wrap text-red-100/80">
+                                             {executionResult.actual_output || "Empty Output"}
+                                           </div>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                             )}
                           </div>
                         )}
-                        {(executionResult.exec_time !== undefined || executionResult.memory !== undefined) && (
-                          <div className="flex gap-4 text-sm font-mono text-zinc-400 bg-[#121214] p-3 rounded-md border border-white/5 w-fit">
-                             {executionResult.exec_time !== undefined && <span>Runtime: {executionResult.exec_time} ms</span>}
-                             {executionResult.memory !== undefined && <span>Memory: {executionResult.memory} MB</span>}
+
+                        {executionResult.status === "Accepted" && (
+                          <div className="flex flex-col items-center justify-center py-10 gap-4 animate-in zoom-in-95 duration-300">
+                            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
+                              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                            </div>
+                            <div className="text-center space-y-1">
+                              <h3 className="text-xl font-bold text-emerald-500">Accepted</h3>
+                              <p className="text-sm text-zinc-500">Your solution passed all testcases.</p>
+                            </div>
                           </div>
                         )}
                       </div>
