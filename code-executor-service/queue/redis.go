@@ -70,7 +70,11 @@ func ListenForTasks(ctx context.Context) {
 				continue
 			}
 			//fmt.Println(data)
-			testCases, err := database.GetProblemTestCases(data.Problem.ID)
+			all := false
+			if data.Type == "Submit" {
+				all = true
+			}
+			testCases, err := database.GetProblemTestCases(data.Problem.ID, all)
 			if err != nil {
 				fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
 				continue

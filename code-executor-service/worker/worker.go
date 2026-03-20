@@ -181,7 +181,11 @@ func worker(ctx context.Context) {
 	}
 	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		panic(err)
+		utils.WorkerPoolData.Decrement()
+		KillContainerByID(ctx, containerName)
+		SpawnWorkerFailed(ctx)
+		return
+		//panic(err)
 	}
 	for {
 		task := utils.WorkerPoolData.GetTask()

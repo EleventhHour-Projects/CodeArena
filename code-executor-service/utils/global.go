@@ -73,6 +73,7 @@ type WorkerPool struct {
 type ExecutionCode struct {
 	ID        bson.ObjectID `bson:"_id"`
 	Code      string        `bson:"code"`
+	Type      string        `bson:"type"`
 	Language  string        `bson:"language"`
 	UserID    bson.ObjectID `bson:"userId"`
 	Status    *string       `bson:"status,omitempty"`
@@ -94,6 +95,7 @@ type Result struct {
 	FailedTestCaseNumber *string `bson:"failedTestCaseNumber,omitempty"`
 	RunTimeMs            int     `bson:"runTimeMs,omitempty"`
 	MemoryUsedMB         int     `bson:"memoryUsedMB,omitempty"`
+	ErrorMSG             string  `bson:"errorMsg,omitempty"`
 }
 
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission
@@ -207,3 +209,6 @@ func (t *TaskProcessingInfo) GetTotalTasks() int {
 
 // Global variable to keep track of task processing information, allowing for monitoring and analysis of the performance of the code execution service by tracking the total number of tasks processed and the total time taken for processing those tasks in a thread-safe manner
 var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, mu: sync.Mutex{}}
+
+// For Info API
+var StartTime time.Time

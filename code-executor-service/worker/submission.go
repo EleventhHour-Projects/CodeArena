@@ -32,6 +32,7 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		FailedTestCaseNumber: &failed.TestCase,
 		RunTimeMs:            int(timeElapsed.Milliseconds()),
 		MemoryUsedMB:         memory,
+		ErrorMSG:             failed.ErrorMessage,
 	}
 	database.MongoDB.UpdateExecutionCodeStatus(task.TaskID, status, *task, !failed.isFailed)
 	return nil
