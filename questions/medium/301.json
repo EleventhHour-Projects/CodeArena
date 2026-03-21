@@ -1,0 +1,11 @@
+{
+  "id": 301,
+  "slug": "house-robber",
+  "title": "House Robber",
+  "difficulty": "Medium",
+  "tags": ["Dynamic Programming", "Array"],
+  "description": "You are planning to rob houses arranged in a straight line. Each house contains a certain amount of money. However, robbing two adjacent houses will trigger an alarm. Given an integer array nums representing the money in each house, return the maximum amount you can rob without robbing adjacent houses.",
+  "constraints": "1 <= nums.length <= 100\n0 <= nums[i] <= 400",
+  "input_format": "An integer array nums representing money in each house.",
+  "output_format": "Return a single integer representing the maximum money that can be robbed."
+}
