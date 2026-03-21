@@ -9,6 +9,7 @@ export interface User{
     usernameChangeCount: number;
     name: string; // fetch from google auth
     email: string; // fetch from google auth
+    image?: string;
     createdAt: Date;
     lastActive: Date;
     role: UserRole;

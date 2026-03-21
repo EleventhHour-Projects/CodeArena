@@ -27,6 +27,12 @@ export async function GET(req: NextRequest) {
             );
         }
 
+        // Update lastActive time
+        await UserModel.updateOne(
+            { _id: curUser._id },
+            { $set: { lastActive: new Date() } }
+        );
+
         // Check if the current user is already in a battle
         if (curUser.currentBattleId !== null) {
             return NextResponse.json(
@@ -41,8 +47,8 @@ export async function GET(req: NextRequest) {
             status: "Pending",
             expiresAt: { $gt: Date.now() }
         })
-        .select("player1 difficulty _id")
-        .populate("player1", "username name rating"); // Optionally populate player1 details if needed by frontend
+        .select("player1 difficulty _id expiresAt timeLimitMinutes")
+        .populate("player1", "username name rating image"); // Optionally populate player1 details if needed by frontend
 
         return NextResponse.json(
             { success: true, invitations: pendingInvites },
