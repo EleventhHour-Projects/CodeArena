@@ -24,16 +24,24 @@ import { Button } from "@/components/ui/button";
 interface BattleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialOpponent?: string;
 }
 
-export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange }) => {
+export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, initialOpponent = "" }) => {
   const router = useRouter();
   
-  const [opponentUsername, setOpponentUsername] = useState("");
+  const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
   const [difficulty, setDifficulty] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "sending" | "waiting">("idle");
   const [timeLeft, setTimeLeft] = useState(180);
   const [inviteId, setInviteId] = useState<string | null>(null);
+
+  // Sync initialOpponent to state when modal opens
+  useEffect(() => {
+    if (open && initialOpponent) {
+      setOpponentUsername(initialOpponent);
+    }
+  }, [open, initialOpponent]);
 
   // Send Invitation Request
   const handleSendInvite = async () => {

@@ -1,25 +1,39 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Swords } from "lucide-react";
 import { CodeBackground } from "@/components/code-background";
 import { BattleModal } from "@/components/battle-modal";
 import { ActivityDashboard } from "@/components/activity-dashboard";
-import { Button } from "@/components/ui/button";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
+import { FriendsList } from "@/components/friends-list";
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [challengeUsername, setChallengeUsername] = useState("");
+
+  // Open modal pre-filled when navigated with ?challenge=username
+  useEffect(() => {
+    const c = searchParams.get("challenge");
+    if (c) {
+      setChallengeUsername(c);
+      setModalOpen(true);
+      // Clean up URL
+      router.replace("/");
+    }
+  }, [searchParams, router]);
 
   const handleBattleClick = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/user/active-battle");
       const data = await res.json();
-
       if (data.success && data.battleId) {
         toast.info("You are already in a battle. Redirecting...");
         router.push(`/battle/${data.battleId}`);
@@ -35,58 +49,147 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-zinc-50 dark:bg-[#050505] overflow-hidden text-zinc-900 dark:text-white font-sans transition-colors duration-300">
-      
-      {/* LEFT PANEL (70%) */}
-      <main className="relative flex-[7] flex flex-col items-center justify-center p-8 lg:p-16 border-r border-zinc-200 dark:border-zinc-900 transition-colors duration-300">
+    <div className="flex min-h-screen w-full bg-[#050505] overflow-hidden text-white font-sans">
+      {/* ─── LEFT PANEL (70%) ─── */}
+      <main className="relative flex-[7] flex flex-col items-center justify-center p-8 lg:p-16 border-r border-zinc-800/60">
         <CodeBackground />
-        
-        {/* Foreground Content */}
-        <div className="z-10 flex flex-col items-center justify-center text-center gap-6 max-w-3xl">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter">
-            <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">Code.</span>{" "}
-            <span className="text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">Compete.</span>{" "}
-            <span className="text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">Conquer.</span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-zinc-600 dark:text-zinc-400 font-medium max-w-2xl mt-2">
-            Turn Coding Practice Into Battles. 
-            <br />
-            Challenge friends to solve algorithmic problems in real time.
-          </p>
 
-          <div className="mt-12 group relative rounded-lg">
-             <GlowingEffect 
-                blur={0}
-                spread={20}
-                glow={true}
-                disabled={false}
-                proximity={64}
-                inactiveZone={0.01}
-                borderWidth={2}
-                className="rounded-lg duration-300 transition-opacity"
-              />
-            <Button
-              size="lg"
-              className="relative text-xl px-16 py-8 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-950/90 dark:hover:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg text-white font-bold transition-all shadow-xl dark:shadow-2xl"
+        {/* Radial glow behind content */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 55%, rgba(34,197,94,0.07) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* Foreground content */}
+        <div className="z-10 flex flex-col items-center justify-center text-center gap-8 max-w-3xl">
+          {/* Pill badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              Real-time 1v1 Coding Battles
+            </span>
+          </motion.div>
+
+          {/* Main headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-[1.05]"
+          >
+            <span
+              style={{
+                color: "#f4f4f5", // zinc-100
+                filter: "drop-shadow(0 0 24px rgba(244,244,245,0.15))",
+              }}
+            >
+              Code.
+            </span>{" "}
+            <span
+              style={{
+                color: "#6ee7b7", // emerald-300
+                filter: "drop-shadow(0 0 24px rgba(110,231,183,0.3))",
+              }}
+            >
+              Compete.
+            </span>{" "}
+            <span
+              style={{
+                color: "#22c55e", // green-500
+                filter: "drop-shadow(0 0 24px rgba(34,197,94,0.45))",
+              }}
+            >
+              Conquer.
+            </span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-zinc-400 font-medium max-w-xl leading-relaxed"
+          >
+            Challenge friends to solve algorithmic problems in real time.
+            Prove your skills, climb the ranks, dominate the arena.
+          </motion.p>
+
+          {/* CTA Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-2 group relative"
+          >
+            <GlowingEffect
+              blur={0}
+              spread={30}
+              glow={true}
+              disabled={false}
+              proximity={80}
+              inactiveZone={0.01}
+              borderWidth={2}
+              className="rounded-2xl duration-300 transition-opacity"
+            />
+            <button
               onClick={handleBattleClick}
               disabled={loading}
+              className="relative flex items-center gap-3 text-lg px-12 py-5 bg-gradient-to-br from-zinc-900 to-zinc-950 hover:from-zinc-800 hover:to-zinc-900 border border-zinc-700 hover:border-zinc-500 rounded-2xl text-white font-bold transition-all shadow-2xl active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
+              <Swords className="w-5 h-5 text-green-400" />
               {loading ? "Checking Active Battles..." : "Start Battle"}
-            </Button>
-          </div>
+            </button>
+          </motion.div>
+
+          {/* Friends list */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="w-full flex justify-center mt-2"
+          >
+            <FriendsList />
+          </motion.div>
         </div>
       </main>
 
-      {/* RIGHT PANEL (30%) */}
-      <aside className="hidden lg:flex flex-[3] bg-white dark:bg-zinc-950 flex-col p-8 z-10 relative border-l border-zinc-200 dark:border-zinc-900 shadow-xl transition-colors duration-300">
-        <div className="flex flex-col gap-4 h-full">
-          <h2 className="text-2xl font-bold border-b border-zinc-200 dark:border-zinc-800 pb-4 tracking-tight transition-colors duration-300">Activity Dashboard</h2>
+      {/* ─── RIGHT PANEL (30%) ─── */}
+      <aside className="hidden lg:flex flex-[3] flex-col z-10 relative">
+        {/* Glass panel background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 via-[#0d0d0d] to-zinc-950 border-l border-zinc-800/60" />
+
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
+
+        <div className="relative flex flex-col gap-4 h-full p-8 overflow-hidden">
+          {/* Panel header */}
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <h2 className="text-lg font-bold tracking-tight text-zinc-100">
+                Activity Dashboard
+              </h2>
+            </div>
+            <span className="text-xs text-zinc-600 font-mono">LIVE</span>
+          </div>
+
+          {/* Dashboard content */}
           <ActivityDashboard />
         </div>
       </aside>
 
-      <BattleModal open={modalOpen} onOpenChange={setModalOpen} />
+      <BattleModal
+        open={modalOpen}
+        onOpenChange={(o) => { setModalOpen(o); if (!o) setChallengeUsername(""); }}
+        initialOpponent={challengeUsername}
+      />
     </div>
   );
 }

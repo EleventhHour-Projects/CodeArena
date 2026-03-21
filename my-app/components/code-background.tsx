@@ -3,37 +3,37 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+";
+const CHARACTERS = "ELEVENTHHOUR<>/\\;:";
 
 const getRandomChar = () => CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
 
 interface CodeColumnProps {
   delay: number;
   duration: number;
+  bright?: boolean;
 }
 
-const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration }) => {
+const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration, bright }) => {
   const length = 40;
-  const [chars, setChars] = useState<string[]>(() => 
+  const [chars, setChars] = useState<string[]>(() =>
     Array.from({ length }, getRandomChar)
   );
 
   useEffect(() => {
-    // interval to randomly flip characters to give a matrix vibe
     const interval = setInterval(() => {
       setChars((prev) => {
         const next = [...prev];
-        // randomly flip a few characters
-        for (let i = 0; i < 3; i++) {
+        const count = bright ? 5 : 3;
+        for (let i = 0; i < count; i++) {
           const idx = Math.floor(Math.random() * length);
           next[idx] = getRandomChar();
         }
         return next;
       });
-    }, 100);
+    }, bright ? 80 : 130);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [bright]);
 
   return (
     <motion.div
@@ -45,13 +45,25 @@ const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration }) => {
         ease: "linear",
         delay,
       }}
-      className="flex flex-col text-green-400/60 dark:text-green-500/40 text-xs sm:text-sm font-mono whitespace-pre w-5 md:w-6 items-center shrink-0 transition-colors duration-300"
+      className="flex flex-col text-xs font-mono whitespace-pre items-center shrink-0 select-none"
       style={{
-        textShadow: "0 0 8px rgba(34, 197, 94, 0.4)",
+        width: "20px",
+        color: bright ? "rgba(74, 222, 128, 0.7)" : "rgba(34, 197, 94, 0.22)",
+        textShadow: bright
+          ? "0 0 12px rgba(74, 222, 128, 0.9), 0 0 4px rgba(74, 222, 128, 0.5)"
+          : "0 0 6px rgba(34, 197, 94, 0.3)",
       }}
     >
       {chars.map((c, i) => (
-        <span key={i} className="my-[2px]">
+        <span
+          key={i}
+          className="my-[2px] leading-none"
+          style={{
+            opacity: bright
+              ? Math.max(0.15, 1 - i / (length * 0.8))
+              : Math.max(0.05, 0.5 - i / (length * 1.2)),
+          }}
+        >
           {c}
         </span>
       ))}
@@ -60,18 +72,20 @@ const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration }) => {
 };
 
 export const CodeBackground = () => {
-  const [columnProps, setColumnProps] = useState<{delay: number, duration: number}[]>([]);
+  const [columnProps, setColumnProps] = useState<
+    { delay: number; duration: number; bright: boolean }[]
+  >([]);
 
   useEffect(() => {
     const updateColumns = () => {
-      // calculate for ~70% screen width
       const elWidth = window.innerWidth * 0.7;
-      const columnsCount = Math.floor(elWidth / 24);
-      
+      const columnsCount = Math.floor(elWidth / 22);
+
       setColumnProps(
-        Array.from({ length: columnsCount }).map(() => ({
-          delay: Math.random() * 5,
-          duration: Math.random() * 10 + 8,
+        Array.from({ length: columnsCount }).map((_, i) => ({
+          delay: Math.random() * 8,
+          duration: Math.random() * 12 + 10,
+          bright: i % 7 === 0, // every 7th column is a bright "lead" column
         }))
       );
     };
@@ -82,16 +96,19 @@ export const CodeBackground = () => {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-50 dark:bg-[#050505] flex justify-center pointer-events-none transition-colors duration-300">
-      {/* Gradient overlays to fade top and bottom */}
-      <div className="absolute inset-0 bg-linear-to-b from-zinc-50/90 via-transparent to-zinc-50/90 dark:from-black/80 dark:via-transparent dark:to-black/80 z-10 transition-colors duration-300"></div>
-      
-      <div className="flex w-full h-[200%] opacity-50 justify-evenly">
+    <div className="absolute inset-0 z-0 overflow-hidden bg-[#050505] flex justify-center pointer-events-none">
+      {/* Vertical fade overlays */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]" />
+      {/* Horizontal fade from center */}
+      <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,#050505_100%)]" />
+
+      <div className="flex w-full h-[200%] justify-evenly items-start">
         {columnProps.map((props, i) => (
           <CodeColumn
             key={i}
             delay={props.delay}
             duration={props.duration}
+            bright={props.bright}
           />
         ))}
       </div>

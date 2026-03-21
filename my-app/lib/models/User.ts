@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema<User>({
     usernameChangeCount: { type: Number, required: true, default: 0 },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    image: { type: String, default: "" },
     createdAt: { type: Date, required: true, default: Date.now },
     lastActive: { type: Date, required: true, default: Date.now },
     role: { type: String, required: true, default: "EndUser" },
