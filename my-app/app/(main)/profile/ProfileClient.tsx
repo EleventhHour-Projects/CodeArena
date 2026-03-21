@@ -57,6 +57,7 @@ const FloatingCode = () => {
                         ease: "linear"
                     }}
                     className="absolute text-foreground font-mono text-xs font-bold"
+                    style={{ willChange: "transform, opacity" }}
                 >
                     {el.text}
                 </motion.div>
@@ -73,9 +74,9 @@ const ScanningLine = () => (
     >
         <motion.div 
             className="w-full h-px bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.5)]"
-            animate={{ top: ["0%", "100%", "0%"] }}
+            animate={{ y: ["0vh", "80vh", "0vh"] }}
             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            style={{ position: 'absolute' }}
+            style={{ position: 'absolute', top: 0, willChange: 'transform' }}
         />
     </motion.div>
 );

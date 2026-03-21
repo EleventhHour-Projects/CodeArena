@@ -10,6 +10,7 @@ import { BattleModal } from "@/components/battle-modal";
 import { ActivityDashboard } from "@/components/activity-dashboard";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { FriendsList } from "@/components/friends-list";
+import { useMounted } from "@/hooks/use-mounted";
 
 export default function Home() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [challengeUsername, setChallengeUsername] = useState("");
+  const mounted = useMounted();
 
   // Open modal pre-filled when navigated with ?challenge=username
   useEffect(() => {
@@ -50,13 +52,13 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-[#050505] overflow-hidden text-white font-sans">
+    <div className="flex min-h-screen w-full bg-background overflow-hidden text-foreground font-sans transition-colors duration-300">
       {/* ─── LEFT PANEL (Main) ─── */}
-      <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-zinc-800/60 w-full">
+      <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-border/40 w-full transition-colors">
         {/* Toggle Button for Desktop */}
         <button
           onClick={() => setIsRightPanelOpen((prev) => !prev)}
-          className="hidden lg:flex absolute top-6 -right-4 z-50 bg-[#0a0a0a] border border-[#00ff41]/30 p-1.5 rounded-full text-zinc-400 hover:text-[#00ff41] hover:border-[#00ff41]/60 transition-colors shadow-[0_0_15px_rgba(0,0,0,0.5)] cursor-pointer"
+          className={`hidden lg:flex absolute top-6 ${isRightPanelOpen ? "-right-4" : "right-4"} z-50 bg-background border border-border/30 p-1.5 rounded-full text-muted-foreground hover:text-primary hover:border-primary/60 transition-colors shadow-lg cursor-pointer`}
         >
           {isRightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -65,10 +67,11 @@ export default function Home() {
 
         {/* Radial glow behind content */}
         <div
-          className="pointer-events-none absolute inset-0 z-0"
+          className="pointer-events-none absolute inset-0 z-0 dark:block hidden"
           style={{
             background:
               "radial-gradient(ellipse 60% 50% at 50% 55%, rgba(34,197,94,0.07) 0%, transparent 70%)",
+            willChange: "opacity",
           }}
         />
 
@@ -94,9 +97,9 @@ export default function Home() {
             className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-[1.05]"
           >
             <span
+              className="text-foreground"
               style={{
-                color: "#f4f4f5", // zinc-100
-                filter: "drop-shadow(0 0 24px rgba(244,244,245,0.15))",
+                filter: "drop-shadow(0 0 24px rgba(var(--foreground),0.15))",
               }}
             >
               Code.
@@ -124,7 +127,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-zinc-400 font-medium max-w-xl leading-relaxed"
+            className="text-lg md:text-xl text-muted-foreground font-medium max-w-xl leading-relaxed"
           >
             Challenge friends to solve algorithmic problems in real time.
             Prove your skills, climb the ranks, dominate the arena.
@@ -150,7 +153,7 @@ export default function Home() {
             <button
               onClick={handleBattleClick}
               disabled={loading}
-              className="relative flex items-center gap-3 text-lg px-12 py-5 bg-gradient-to-br from-zinc-900 to-zinc-950 hover:from-zinc-800 hover:to-zinc-900 border border-zinc-700 hover:border-zinc-500 rounded-2xl text-white font-bold transition-all shadow-2xl active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              className="relative flex items-center gap-3 text-lg px-12 py-5 bg-linear-to-br from-card to-background hover:from-muted hover:to-card border border-border hover:border-primary/50 rounded-2xl text-foreground font-bold transition-all shadow-xl active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               <Swords className="w-5 h-5 text-green-400" />
               {loading ? "Checking Active Battles..." : "Start Battle"}
@@ -163,6 +166,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
             className="w-full flex justify-center mt-2"
+            style={{ willChange: "transform, opacity" }}
           >
             <FriendsList />
           </motion.div>
@@ -177,20 +181,21 @@ export default function Home() {
             animate={{ width: "350px", opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="hidden lg:flex flex-col z-10 relative bg-[#0a0a0a] border-l border-white/[0.05] shrink-0"
+            className="hidden lg:flex flex-col z-10 relative bg-card border-l border-border shrink-0 transition-colors"
+            style={{ willChange: "width, opacity" }}
           >
             {/* Neon glow gradient */}
-            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,255,65,0.15),_transparent_60%)]" />
+            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top_right,rgba(34,197,94,0.15),transparent_60%)] dark:block hidden" />
 
             {/* Top accent line */}
-            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00ff41]/30 to-transparent shadow-[0_0_10px_rgba(0,255,65,0.2)]" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[#00ff41]/30 to-transparent shadow-[0_0_10px_rgba(0,255,65,0.2)]" />
 
             <div className="relative flex flex-col gap-6 h-full p-8 overflow-hidden w-[350px]">
               {/* Panel header */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/[0.05] shrink-0">
+              <div className="flex items-center justify-between pb-4 border-b border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#00ff41] animate-pulse shadow-[0_0_8px_rgba(0,255,65,0.8)]" />
-                  <h2 className="text-lg font-bold tracking-tight text-zinc-100">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                  <h2 className="text-lg font-bold tracking-tight text-foreground">
                     Activity Dashboard
                   </h2>
                 </div>

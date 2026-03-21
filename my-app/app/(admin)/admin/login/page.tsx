@@ -39,17 +39,17 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 transition-colors">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
 
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-white">
+            <h1 className="text-2xl font-semibold text-foreground">
               Admin Login
             </h1>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Enter your credentials to continue
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function AdminLogin() {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-9 h-11 bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-600"
+                className="pl-9 h-11 bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/50"
                 required
               />
             </div>
@@ -78,7 +78,7 @@ export default function AdminLogin() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9 h-11 bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-600"
+                className="pl-9 h-11 bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/50"
                 required
               />
             </div>
@@ -87,7 +87,7 @@ export default function AdminLogin() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-white text-black hover:bg-zinc-200 font-medium"
+              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
@@ -95,7 +95,7 @@ export default function AdminLogin() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-zinc-500 mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-6">
           Restricted access
         </p>
       </div>

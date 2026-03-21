@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/dbConnect";
 import { UserModel } from "@/lib/models/User";
+import BattleModel from "@/lib/models/Battle";
 
 export async function GET(req: NextRequest) {
     try {
@@ -18,13 +19,27 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
         }
 
+        const userId = user._id;
+
+        // Calculate actual counts from Battle history for consistency
+        const [battlesPlayed, battlesWon] = await Promise.all([
+            BattleModel.countDocuments({
+                $or: [{ player1: userId }, { player2: userId }],
+                status: "Completed"
+            }),
+            BattleModel.countDocuments({
+                winner: userId,
+                status: "Completed"
+            })
+        ]);
+
         // Calculate Rank (1-indexed based on rating)
         const higherRatedCount = await UserModel.countDocuments({ rating: { $gt: user.rating } });
         const rank = higherRatedCount + 1;
 
-        // Win Rate Calculation
-        const winRate = user.battlesPlayed > 0 
-            ? Math.round((user.battlesWon / user.battlesPlayed) * 100) 
+        // Win Rate Calculation based on live counts
+        const winRate = battlesPlayed > 0 
+            ? Math.round((battlesWon / battlesPlayed) * 100) 
             : 0;
 
         // Total Problems Solved
@@ -38,8 +53,8 @@ export async function GET(req: NextRequest) {
                 username: user.username,
                 rating: user.rating,
                 rank,
-                battlesPlayed: user.battlesPlayed,
-                battlesWon: user.battlesWon,
+                battlesPlayed,
+                battlesWon,
                 winRate,
                 currentStreak: user.currentStreak,
                 longestStreak: user.longestStreak,

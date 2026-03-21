@@ -184,7 +184,9 @@ export async function POST(req: Request) {
             battle.status = "Completed";
             battle.endTime = endTime;
             battle.duration = durationObj;
+            console.log("Saving battle problemResults:", updatedProblemResults);
             battle.problemResults = updatedProblemResults;
+            battle.markModified('problemResults');
             
             battle.ratingChangeA = ratingChangeA;
             battle.ratingChangeB = ratingChangeB;

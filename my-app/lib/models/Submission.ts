@@ -16,7 +16,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
     result: { 
         tle: { type: Boolean, required: true, default: false },
         mle: { type: Boolean, required: true, default: false },
-        failedTestCaseNumber: { type: Number, required: true, default: null },
+        failedTestCaseNumber: { type: String, required: false, default: "" },
         runTimeMs: { type: Number, required: true, default: 0 },
         memoryUsedMB: { type: Number, required: true, default: 0 },
         actualOutput: { type: String, required: false },

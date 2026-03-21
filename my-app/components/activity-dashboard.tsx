@@ -124,19 +124,19 @@ export const ActivityDashboard = () => {
 
   if (activeBattleId) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 h-full p-6 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 h-full p-6 bg-muted/20 rounded-2xl border border-border/30 transition-colors">
         <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 mb-2">
           <Swords className="w-6 h-6 text-red-400" />
         </div>
-        <h3 className="text-lg font-bold text-zinc-100 text-center">
+        <h3 className="text-lg font-bold text-foreground text-center">
           Battle in Progress
         </h3>
-        <p className="text-sm text-zinc-400 text-center mb-2">
+        <p className="text-sm text-muted-foreground text-center mb-2">
           You have an active battle session. Let's finish what you started.
         </p>
         <button
           onClick={handleRejoin}
-          className="w-full bg-green-500 hover:bg-green-400 text-green-950 font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(34,197,94,0.15)]"
+          className="w-full bg-primary hover:bg-primary/80 text-primary-foreground font-bold px-6 py-3 rounded-xl transition-all shadow-lg"
         >
           Rejoin Battle
         </button>
@@ -159,7 +159,7 @@ export const ActivityDashboard = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto pr-2 space-y-3 pt-2 pb-4 scrollbar-thin scrollbar-thumb-zinc-700/50 hover:scrollbar-thumb-zinc-600">
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3 pt-2 pb-4 scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-muted-foreground/30 transition-colors">
           {invitations.map((invite) => {
             const diffConfig = getDifficultyConfig(invite.difficulty);
             const tier = getRatingTier(invite.player1?.rating ?? 0);
@@ -168,7 +168,7 @@ export const ActivityDashboard = () => {
             return (
               <div
                 key={invite._id}
-                className="group relative flex flex-col p-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl transition-all hover:bg-white/[0.04] hover:border-white/[0.1] overflow-hidden"
+                className="group relative flex flex-col p-4 bg-card border border-border rounded-2xl transition-all hover:bg-muted/10 hover:border-border/60 overflow-hidden"
               >
                 {/* Header row */}
                 <div className="flex items-center justify-between mb-3">
@@ -194,7 +194,7 @@ export const ActivityDashboard = () => {
 
                 {/* Player Profile */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="relative shrink-0 ring-2 ring-white/[0.05] rounded-full">
+                  <div className="relative shrink-0 ring-2 ring-border/40 rounded-full">
                     {invite.player1?.image ? (
                       <img
                         src={invite.player1.image}
@@ -202,21 +202,21 @@ export const ActivityDashboard = () => {
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-lg font-bold text-zinc-300">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground">
                         {(invite.player1?.username?.[0] || "?").toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-base font-bold text-zinc-100 truncate">
+                      <span className="text-base font-bold text-foreground truncate">
                         {invite.player1?.username}
                       </span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-white/[0.05] bg-white/[0.02] ${tier.color}`}>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-border/40 bg-muted/20 ${tier.color}`}>
                         {invite.player1?.rating ?? "—"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 mb-1.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 mb-1.5">
                       Invited you to a battle
                     </p>
                     <div className="flex items-center">
@@ -232,14 +232,14 @@ export const ActivityDashboard = () => {
                   <button
                     onClick={() => handleInviteAction(invite._id, "accept")}
                     disabled={isActing}
-                    className="flex-1 bg-green-500 text-green-950 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(34,197,94,0.1)] hover:shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm py-2.5 rounded-xl transition-all shadow-md"
                   >
                     Accept
                   </button>
                   <button
                     onClick={() => handleInviteAction(invite._id, "reject")}
                     disabled={isActing}
-                    className="flex-1 bg-transparent border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm py-2.5 rounded-xl transition-all"
+                    className="flex-1 bg-transparent border border-border text-foreground/80 hover:text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm py-2.5 rounded-xl transition-all"
                   >
                     Decline
                   </button>
@@ -247,7 +247,7 @@ export const ActivityDashboard = () => {
 
                 {/* Auto-expire footer */}
                 {invite.expiresAt && (
-                  <p className="mt-3 text-center text-[10px] uppercase tracking-wider font-semibold text-zinc-500 relative z-10">
+                  <p className="mt-3 text-center text-[10px] uppercase tracking-wider font-semibold text-muted-foreground relative z-10">
                     Auto-expires at {formatExpiry(invite.expiresAt)}
                   </p>
                 )}

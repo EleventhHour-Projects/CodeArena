@@ -43,31 +43,31 @@ export async function AppSidebar() {
   const userRating = session?.user?.rating ?? "Unable to fetch rating"
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-zinc-800/60 font-sans z-20">
-      {/* Background gradient from Right Panel */}
-      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 via-[#0d0d0d] to-[#050505] pointer-events-none z-0" />
+    <Sidebar collapsible="icon" className="border-r border-border/40 font-sans z-20">
+      {/* Background gradient — subtle in dark, clean in light */}
+      <div className="absolute inset-0 bg-linear-to-b from-sidebar via-sidebar to-sidebar pointer-events-none z-0" />
       {/* Radial glow to match Center Panel */}
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-70"
+        className="pointer-events-none absolute inset-0 z-0 opacity-70 dark:block hidden"
         style={{
           background:
             "radial-gradient(ellipse 60% 50% at 50% 10%, rgba(34,197,94,0.05) 0%, transparent 60%)",
         }}
       />
       {/* Top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-green-500/50 to-transparent pointer-events-none z-10" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-primary/50 to-transparent pointer-events-none z-10" />
 
       <SidebarHeader className="z-10 relative bg-transparent pt-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent hover:bg-zinc-900/50 transition-colors data-[state=open]:text-sidebar-accent-foreground">
-              <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-950 border border-zinc-800 shadow-[0_0_12px_rgba(34,197,94,0.15)] text-sidebar-primary-foreground">
+            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent hover:bg-muted/50 transition-colors data-[state=open]:text-sidebar-accent-foreground">
+              <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-card border border-border shadow-[0_0_12px_rgba(34,197,94,0.15)] text-sidebar-primary-foreground">
                 <Image src={logo} alt="Logo" width={42} height={42} />
               </span>
               <div className="flex flex-col justify-center pl-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-bold text-lg tracking-tight text-zinc-100">CodeArena</span>
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#00ff41] animate-pulse shadow-[0_0_8px_rgba(0,255,65,0.8)] shrink-0" />
+                  <span className="truncate font-bold text-lg tracking-tight text-foreground">CodeArena</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)] shrink-0" />
                 </div>
                 <span className="text-[10px] text-zinc-500 tracking-wider uppercase font-semibold mt-0.1">
                   EleventhHour
@@ -99,7 +99,7 @@ export async function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="z-10 relative bg-transparent pb-4 border-t border-zinc-800/40">
+      <SidebarFooter className="z-10 relative bg-transparent pb-4 border-t border-border/40">
         <SidebarMenu>
           {/* RATING PLACEHOLDER (Above avatar) */}
           {session && (

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
 
 const CHARACTERS = "ELEVENTHHOUR<>/\\;:";
 
@@ -14,6 +15,8 @@ interface CodeColumnProps {
 }
 
 const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration, bright }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
   const length = 40;
   const [chars, setChars] = useState<string[]>(() =>
     Array.from({ length }, getRandomChar)
@@ -48,10 +51,15 @@ const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration, bright }) => {
       className="flex flex-col text-xs font-mono whitespace-pre items-center shrink-0 select-none"
       style={{
         width: "20px",
-        color: bright ? "rgba(74, 222, 128, 0.7)" : "rgba(34, 197, 94, 0.22)",
+        willChange: "transform",
+        color: isLight 
+          ? (bright ? "rgba(22, 163, 74, 0.45)" : "rgba(34, 197, 94, 0.12)")
+          : (bright ? "rgba(74, 222, 128, 0.7)" : "rgba(34, 197, 94, 0.22)"),
         textShadow: bright
-          ? "0 0 12px rgba(74, 222, 128, 0.9), 0 0 4px rgba(74, 222, 128, 0.5)"
-          : "0 0 6px rgba(34, 197, 94, 0.3)",
+          ? (isLight 
+              ? "0 0 8px rgba(34, 197, 94, 0.3)" 
+              : "0 0 12px rgba(74, 222, 128, 0.9), 0 0 4px rgba(74, 222, 128, 0.5)")
+          : (isLight ? "none" : "0 0 6px rgba(34, 197, 94, 0.3)"),
       }}
     >
       {chars.map((c, i) => (
@@ -96,11 +104,11 @@ export const CodeBackground = () => {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-[#050505] flex justify-center pointer-events-none">
+    <div className="absolute inset-0 z-0 overflow-hidden bg-background flex justify-center pointer-events-none transition-colors duration-500">
       {/* Vertical fade overlays */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]" />
+      <div className="absolute inset-0 z-10 bg-linear-to-b from-background via-transparent to-background" />
       {/* Horizontal fade from center */}
-      <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,#050505_100%)]" />
+      <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,var(--background)_100%)] opacity-80" />
 
       <div className="flex w-full h-[200%] justify-evenly items-start">
         {columnProps.map((props, i) => (

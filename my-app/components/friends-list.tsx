@@ -86,7 +86,7 @@ const Avatar = ({
     )}
     {/* Status dot */}
     <span
-      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0d0d0d] ${STATUS_CONFIG[status].dot} ${
+      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${STATUS_CONFIG[status].dot} ${
         status === "online" ? "animate-pulse" : ""
       }`}
     />
@@ -94,11 +94,11 @@ const Avatar = ({
 );
 
 const SkeletonRow = () => (
-  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-    <div className="w-10 h-10 rounded-full bg-zinc-800 animate-pulse shrink-0" />
+  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/30 border border-border/40 transition-colors">
+    <div className="w-10 h-10 rounded-full bg-muted animate-pulse shrink-0" />
     <div className="flex-1 flex flex-col gap-2">
-      <div className="h-3 w-28 rounded bg-zinc-800 animate-pulse" />
-      <div className="h-2.5 w-16 rounded bg-zinc-800/60 animate-pulse" />
+      <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+      <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
     </div>
   </div>
 );
@@ -223,7 +223,7 @@ export const FriendsList: React.FC = () => {
   /* ── guest ────────────────────────────────────────────── */
   if (isGuest) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-sm text-zinc-500 w-full max-w-2xl">
+      <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-muted/30 border border-border/40 text-sm text-muted-foreground w-full max-w-2xl transition-colors">
         <WifiOff className="w-4 h-4 shrink-0" />
         Log in to see your friends list.
       </div>
@@ -235,16 +235,16 @@ export const FriendsList: React.FC = () => {
     <div className="flex flex-col gap-3 w-full max-w-2xl">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-zinc-400 font-medium">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium transition-colors">
           <Users className="w-4 h-4" />
           <span>Friends</span>
           {onlineCount > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20">
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
               {onlineCount} active
             </span>
           )}
           {friends.length > 0 && (
-            <span className="text-[10px] text-zinc-600">/ {friends.length}</span>
+            <span className="text-[10px] text-muted-foreground/60">/ {friends.length}</span>
           )}
         </div>
 
@@ -252,8 +252,8 @@ export const FriendsList: React.FC = () => {
           onClick={() => setAddOpen((o) => !o)}
           className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
             addOpen
-              ? "bg-zinc-700 text-white"
-              : "bg-white/[0.04] border border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:border-white/20"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
           }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -272,6 +272,7 @@ export const FriendsList: React.FC = () => {
             transition={{ duration: 0.18, ease: "easeInOut" }}
             onSubmit={handleAdd}
             className="overflow-hidden"
+            style={{ willChange: "height, opacity" }}
           >
             <div className="flex gap-2 pb-1 pt-0.5">
               <input
@@ -280,7 +281,7 @@ export const FriendsList: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Username…"
                 disabled={adding}
-                className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 focus:outline-none text-sm text-zinc-100 placeholder-zinc-600 px-3 py-2 rounded-xl transition-colors"
+                className="flex-1 bg-muted/50 border border-border focus:border-primary/50 focus:outline-none text-sm text-foreground placeholder-muted-foreground px-3 py-2 rounded-xl transition-colors"
               />
               <button
                 type="submit"
@@ -297,12 +298,12 @@ export const FriendsList: React.FC = () => {
       {/* ── Search (only if enough friends) ── */}
       {friends.length >= 5 && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Search friends…"
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-zinc-900/60 border border-zinc-800 rounded-xl text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-muted/30 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
       )}
@@ -333,12 +334,13 @@ export const FriendsList: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.97 }}
                   transition={{ duration: 0.18, delay: i * 0.03 }}
+                  style={{ willChange: "transform, opacity" }}
                   className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${
                     status === "in-battle"
                       ? "bg-red-500/5 border-red-500/15 hover:border-red-500/25"
                       : status === "online"
-                      ? "bg-green-500/5 border-green-500/10 hover:border-green-500/20"
-                      : "bg-white/[0.02] border-white/[0.05] hover:border-white/[0.09]"
+                      ? "bg-primary/5 border-primary/10 hover:border-primary/20"
+                      : "bg-muted/20 border-border/40 hover:border-border/60"
                   }`}
                 >
                   <Avatar friend={friend} status={status} />

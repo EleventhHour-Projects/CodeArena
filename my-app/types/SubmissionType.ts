@@ -18,7 +18,7 @@ export interface Submission {
     result: {
         tle: boolean;
         mle: boolean;
-        failedTestCaseNumber: number | null;
+        failedTestCaseNumber: string | null;
         runTimeMs: number;
         memoryUsedMB: number;
         actualOutput?: string;
