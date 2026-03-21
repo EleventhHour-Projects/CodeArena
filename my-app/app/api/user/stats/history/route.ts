@@ -27,8 +27,10 @@ export async function GET(req: NextRequest) {
             status: "Completed"
         }).sort({ createdAt: 1 });
 
-        // Build Rating History
+        // Build Rating History and Heatmap Data
         const ratingHistory = [];
+        const dailyActivity: Record<string, number> = {};
+        
         let wins = 0;
         let losses = 0;
         let draws = 0;
@@ -53,13 +55,36 @@ export async function GET(req: NextRequest) {
                     rating: ratingAfterBattle
                 });
             }
+
+            // Record daily activity for heatmap
+            const dateStr = battle.createdAt.toISOString().split("T")[0];
+            dailyActivity[dateStr] = (dailyActivity[dateStr] || 0) + 1;
+        }
+
+        // Build 365 days of data so the calendar is properly filled out
+        const activityHeatmap = [];
+        const today = new Date();
+        for (let i = 364; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split("T")[0];
+            const count = dailyActivity[dateStr] || 0;
+            
+            let level = 0;
+            if (count > 0 && count <= 2) level = 1;
+            else if (count >= 3 && count <= 5) level = 2;
+            else if (count >= 6 && count <= 9) level = 3;
+            else if (count >= 10) level = 4;
+            
+            activityHeatmap.push({ date: dateStr, count, level });
         }
 
         return NextResponse.json({
             success: true,
             history: {
                 ratingTimeline: ratingHistory,
-                outcomes: { wins, losses, draws }
+                outcomes: { wins, losses, draws },
+                activityHeatmap
             }
         });
 

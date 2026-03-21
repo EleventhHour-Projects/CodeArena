@@ -37,6 +37,10 @@ const battleSchema = new mongoose.Schema<Battle>({
     newRatingB: { type: Number },
 })
 
+// Create indexes for efficient querying
+battleSchema.index({ player1: 1, status: 1 });
+battleSchema.index({ player2: 1, status: 1 });
+
 // set the name of collection to battles
 const BattleModel = mongoose.models.Battle || mongoose.model<Battle>("Battle", battleSchema, "battles");
 

@@ -23,5 +23,8 @@ const userSchema = new mongoose.Schema<User>({
     totalProblemsSolved: { type: Object, required: true, default: { easy: 0, medium: 0, hard: 0 } },
 })
 
+// Create an index on rating for efficient rank calculation
+userSchema.index({ rating: -1 });
+
 // set the name of collection to users
 export const UserModel = mongoose.models.User || mongoose.model<User>("User", userSchema, "users");

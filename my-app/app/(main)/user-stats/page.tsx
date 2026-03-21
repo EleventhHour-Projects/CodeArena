@@ -5,10 +5,13 @@ import { motion } from "framer-motion";
 import { Trophy, Swords, Flame, Target, Activity, BrainCircuit, Clock } from "lucide-react";
 import { CodeBackground } from "@/components/code-background";
 import { RatingChart } from "@/components/charts/rating-chart";
-import { WinLossDonut } from "@/components/charts/win-loss-chart";
 import { DifficultyChart } from "@/components/charts/difficulty-chart";
+import { ActivityCalendar } from 'react-activity-calendar';
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface OverviewStats {
+  username?: string;
   rating: number;
   rank: number;
   battlesPlayed: number;
@@ -32,7 +35,7 @@ function StatCard({ title, value, icon: Icon, delay, colorClass, glowClass }: { 
     >
       {/* Background Glow */}
       <div className={`absolute -bottom-6 -right-6 w-24 h-24 blur-3xl opacity-10 rounded-full ${glowClass} transition-opacity group-hover:opacity-20`} />
-      
+
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-zinc-400">{title}</p>
@@ -57,6 +60,7 @@ function formatDuration(time: { hours: number; minutes: number; seconds: number 
 }
 
 export default function UserStatsPage() {
+  const { data: session } = useSession();
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [history, setHistory] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -65,13 +69,13 @@ export default function UserStatsPage() {
     async function loadStats() {
       try {
         const [overviewRes, historyRes] = await Promise.all([
-           fetch("/api/user/stats/overview"),
-           fetch("/api/user/stats/history")
+          fetch("/api/user/stats/overview"),
+          fetch("/api/user/stats/history")
         ]);
-        
+
         const [overviewData, historyData] = await Promise.all([
-           overviewRes.json(),
-           historyRes.json()
+          overviewRes.json(),
+          historyRes.json()
         ]);
 
         if (overviewData.success) {
@@ -91,19 +95,14 @@ export default function UserStatsPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-[#050505] overflow-y-auto text-white font-sans relative">
-      <CodeBackground />
-      
-      <main className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 md:py-20 flex flex-col gap-12">
+
+      <main className="relative z-10 w-full max-w-7xl mx-auto px-6 py-4 md:py-4 flex flex-col gap-12">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col gap-3"
         >
-          <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 w-fit">
-            <Activity className="w-3.5 h-3.5" />
-            Performance Dashboard
-          </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
             My Statistics
           </h1>
@@ -122,105 +121,131 @@ export default function UserStatsPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-8">
-            {/* Tier 1 Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard 
-                title="Global Rating" 
-                value={stats.rating} 
-                icon={Trophy} 
-                delay={0.1}
-                colorClass="text-yellow-400"
-                glowClass="bg-yellow-500"
-              />
-              <StatCard 
-                title="Global Rank" 
-                value={`#${stats.rank}`} 
-                icon={Target} 
-                delay={0.2}
-                colorClass="text-emerald-400"
-                glowClass="bg-emerald-500"
-              />
-              <StatCard 
-                title="Win Rate" 
-                value={`${stats.winRate}%`} 
-                icon={Activity} 
-                delay={0.3}
-                colorClass="text-blue-400"
-                glowClass="bg-blue-500"
-              />
-              <StatCard 
-                title="Total Battles" 
-                value={stats.battlesPlayed} 
-                icon={Swords} 
-                delay={0.4}
-                colorClass="text-zinc-100"
-                glowClass="bg-zinc-400"
-              />
+            {/* Top Profile & Heatmap Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+              {/* Profile Sidebar */}
+              <div className="lg:col-span-1 flex flex-col items-center text-center p-8 rounded-2xl bg-white/[0.02] border border-white/[0.05] gap-4">
+                <Avatar className="w-24 h-24 border-2 border-zinc-800">
+                  <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
+                  <AvatarFallback className="text-3xl font-bold bg-zinc-900 text-zinc-100">{session?.user?.name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+
+                <div className="flex flex-col mb-2">
+                  <h2 className="text-2xl font-extrabold text-zinc-100 tracking-tight">{session?.user?.name || "Player"}</h2>
+                  <p className="text-zinc-400 font-medium pb-2">@{stats?.username || "user"}</p>
+
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-semibold text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
+                      Rating: {stats.rating}
+                    </span>
+                    <span className="inline-flex items-center rounded-md bg-emerald-400/10 px-2 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-inset ring-emerald-400/20">
+                      Rank: #{stats.rank}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full h-px bg-zinc-800/60 my-2" />
+
+                {/* Battles Won/Played Circle */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative w-32 h-32 rounded-full flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full -rotate-90">
+                      <circle cx="64" cy="64" r="58" fill="none" className="stroke-zinc-800" strokeWidth="6" />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        fill="none"
+                        className="stroke-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                        strokeWidth="6"
+                        strokeDasharray={`${((stats.battlesWon / Math.max(stats.battlesPlayed, 1)) * 364.4)} 364.4`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="flex flex-col items-center text-center z-10 w-full px-2">
+                      <span className="text-2xl font-black text-white">{stats.battlesWon}<span className="text-sm text-zinc-500 font-bold">/{stats.battlesPlayed}</span></span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Battle Won / Played</span>
+                </div>
+              </div>
+
+              {/* Main Column: Stats List & Heatmap */}
+              <div className="lg:col-span-3 flex flex-col gap-8">
+
+                {/* Metrics Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+                  <div className="flex flex-col justify-center bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl gap-2 hover:bg-white/[0.04] transition-colors">
+                    <span className="text-zinc-400 font-medium">Total Question solved</span>
+                    <span className="text-3xl font-bold text-white mt-1">{stats.totalProblems}</span>
+                  </div>
+                  <div className="flex flex-col justify-center bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl gap-2 hover:bg-white/[0.04] transition-colors">
+                    <span className="text-zinc-400 font-medium">Won streak</span>
+                    <span className="text-3xl font-bold text-orange-400 mt-1">{stats.currentStreak} 🔥</span>
+                  </div>
+                  <div className="flex flex-col justify-center bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl gap-2 hover:bg-white/[0.04] transition-colors">
+                    <span className="text-zinc-400 font-medium">Other info (Win Rate)</span>
+                    <span className="text-3xl font-bold text-white mt-1">{stats.winRate}%</span>
+                  </div>
+                </div>
+
+                {/* Activity Heatmap */}
+                <div className="flex flex-col gap-4 p-8 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                  <div className="flex flex-col gap-1 mb-2 items-center text-center">
+                    <h3 className="text-xl font-bold text-zinc-100">HeatMap</h3>
+                    <p className="text-sm text-zinc-400">Your daily battle activity over the past year.</p>
+                  </div>
+                  <div className="flex-1 w-full overflow-hidden flex justify-center pb-2">
+                    {history?.activityHeatmap ? (
+                      <ActivityCalendar
+                        data={history.activityHeatmap}
+                        theme={{
+                          light: ['#18181b', '#064e3b', '#047857', '#10b981', '#34d399'],
+                          dark: ['#18181b', '#064e3b', '#047857', '#10b981', '#34d399']
+                        }}
+                        colorScheme="dark"
+                        blockSize={10}
+                        blockMargin={3}
+                        fontSize={12}
+                        labels={{
+                          legend: {
+                            less: "Less",
+                            more: "More",
+                          },
+                          months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                          totalCount: "{{count}} battles in the last year",
+                        }}
+                      />
+                    ) : (
+                      <div className="animate-pulse w-full max-w-4xl h-32 bg-white/[0.02] rounded-lg" />
+                    )}
+                  </div>
+                </div>
+
+              </div>
             </div>
 
-            {/* Tier 2 Deep Dive */}
-            <h2 className="text-2xl font-bold mt-4 border-b border-zinc-800 pb-4">Battle Metrics</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCard 
-                title="Current Streak" 
-                value={`${stats.currentStreak} 🔥`} 
-                icon={Flame} 
-                delay={0.5}
-                colorClass="text-orange-500"
-                glowClass="bg-orange-600"
-              />
-              <StatCard 
-                title="Problems Solved" 
-                value={stats.totalProblems} 
-                icon={BrainCircuit} 
-                delay={0.6}
-                colorClass="text-purple-400"
-                glowClass="bg-purple-500"
-              />
-              <StatCard 
-                title="Avg Winning Time" 
-                value={formatDuration(stats.averageWinningTime)} 
-                icon={Clock} 
-                delay={0.7}
-                colorClass="text-emerald-400"
-                glowClass="bg-emerald-500"
-              />
+            {/* Bottom Section: Graph & Problems */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-[400px] flex flex-col gap-4 p-8 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                <div className="flex flex-col gap-1 items-center">
+                  <h3 className="text-xl font-bold text-zinc-100">Rating graph</h3>
+                </div>
+                <div className="flex-1 w-full relative -ml-4 mt-4">
+                  {history ? <RatingChart data={history.ratingTimeline} /> : <div className="animate-pulse w-full h-full bg-white/[0.02] rounded-lg" />}
+                </div>
+              </div>
+
+              <div className="h-[400px] flex flex-col gap-4 p-8 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                <div className="flex flex-col gap-1 items-center">
+                  <h3 className="text-xl font-bold text-zinc-100">Problem by difficulty</h3>
+                </div>
+                <div className="flex-1 w-full relative mt-4">
+                  {stats ? <DifficultyChart data={stats.problemsByDifficulty} /> : <div className="animate-pulse w-full h-full bg-white/[0.02] rounded-lg" />}
+                </div>
+              </div>
             </div>
-            
-            {/* Phase 2: Core Charts */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-               <div className="lg:col-span-2 h-96 flex flex-col gap-4 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                 <div className="flex flex-col gap-1">
-                   <h3 className="text-xl font-bold text-zinc-100">Rating Progression</h3>
-                   <p className="text-sm text-zinc-400">Your historical rating trend across all battles.</p>
-                 </div>
-                 <div className="flex-1 min-h-0 w-full relative -ml-4">
-                    {history ? <RatingChart data={history.ratingTimeline} /> : <div className="animate-pulse w-full h-full bg-white/[0.02] rounded-lg" />}
-                 </div>
-               </div>
-
-               <div className="h-96 flex flex-col gap-4 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                 <div className="flex flex-col gap-1">
-                   <h3 className="text-xl font-bold text-zinc-100">Battle Outcomes</h3>
-                   <p className="text-sm text-zinc-400">Wins, losses, and drawn matches.</p>
-                 </div>
-                 <div className="flex-1 min-h-[200px] w-full relative">
-                    {history ? <WinLossDonut data={history.outcomes} /> : <div className="animate-pulse w-full h-full bg-white/[0.02] rounded-lg" />}
-                 </div>
-               </div>
-             </div>
-
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
-               <div className="h-80 flex flex-col gap-4 p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                 <div className="flex flex-col gap-1">
-                   <h3 className="text-xl font-bold text-zinc-100">Problems by Difficulty</h3>
-                   <p className="text-sm text-zinc-400">Distribution of challenges completed.</p>
-                 </div>
-                 <div className="flex-1 min-h-[200px] w-full relative">
-                    {stats ? <DifficultyChart data={stats.problemsByDifficulty} /> : <div className="animate-pulse w-full h-full bg-white/[0.02] rounded-lg" />}
-                 </div>
-               </div>
-             </div>
           </div>
         )}
       </main>

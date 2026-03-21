@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({
             success: true,
             overview: {
+                username: user.username,
                 rating: user.rating,
                 rank,
                 battlesPlayed: user.battlesPlayed,

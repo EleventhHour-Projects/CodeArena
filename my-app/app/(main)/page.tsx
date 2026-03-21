@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { Swords } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Swords, ChevronRight, ChevronLeft } from "lucide-react";
 import { CodeBackground } from "@/components/code-background";
 import { BattleModal } from "@/components/battle-modal";
 import { ActivityDashboard } from "@/components/activity-dashboard";
@@ -16,6 +16,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [challengeUsername, setChallengeUsername] = useState("");
 
   // Open modal pre-filled when navigated with ?challenge=username
@@ -50,8 +51,16 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen w-full bg-[#050505] overflow-hidden text-white font-sans">
-      {/* ─── LEFT PANEL (70%) ─── */}
-      <main className="relative flex-[7] flex flex-col items-center justify-center p-8 lg:p-16 border-r border-zinc-800/60">
+      {/* ─── LEFT PANEL (Main) ─── */}
+      <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-zinc-800/60 w-full">
+        {/* Toggle Button for Desktop */}
+        <button
+          onClick={() => setIsRightPanelOpen((prev) => !prev)}
+          className="hidden lg:flex absolute top-6 -right-4 z-50 bg-[#0a0a0a] border border-[#00ff41]/30 p-1.5 rounded-full text-zinc-400 hover:text-[#00ff41] hover:border-[#00ff41]/60 transition-colors shadow-[0_0_15px_rgba(0,0,0,0.5)] cursor-pointer"
+        >
+          {isRightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+
         <CodeBackground />
 
         {/* Radial glow behind content */}
@@ -160,30 +169,40 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ─── RIGHT PANEL (30%) ─── */}
-      <aside className="hidden lg:flex flex-[3] flex-col z-10 relative">
-        {/* Glass panel background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 via-[#0d0d0d] to-zinc-950 border-l border-zinc-800/60" />
+      {/* ─── RIGHT PANEL (Collapsible) ─── */}
+      <AnimatePresence initial={false}>
+        {isRightPanelOpen && (
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "350px", opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="hidden lg:flex flex-col z-10 relative bg-[#0a0a0a] border-l border-white/[0.05] shrink-0"
+          >
+            {/* Neon glow gradient */}
+            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,255,65,0.15),_transparent_60%)]" />
 
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00ff41]/30 to-transparent shadow-[0_0_10px_rgba(0,255,65,0.2)]" />
 
-        <div className="relative flex flex-col gap-4 h-full p-8 overflow-hidden">
-          {/* Panel header */}
-          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <h2 className="text-lg font-bold tracking-tight text-zinc-100">
-                Activity Dashboard
-              </h2>
+            <div className="relative flex flex-col gap-6 h-full p-8 overflow-hidden w-[350px]">
+              {/* Panel header */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/[0.05] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00ff41] animate-pulse shadow-[0_0_8px_rgba(0,255,65,0.8)]" />
+                  <h2 className="text-lg font-bold tracking-tight text-zinc-100">
+                    Activity Dashboard
+                  </h2>
+                </div>
+                <span className="text-[10px] tracking-widest text-[#00ff41]/70 font-bold uppercase">Live</span>
+              </div>
+
+              {/* Dashboard content */}
+              <ActivityDashboard />
             </div>
-            <span className="text-xs text-zinc-600 font-mono">LIVE</span>
-          </div>
-
-          {/* Dashboard content */}
-          <ActivityDashboard />
-        </div>
-      </aside>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       <BattleModal
         open={modalOpen}

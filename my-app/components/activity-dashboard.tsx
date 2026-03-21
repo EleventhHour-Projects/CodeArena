@@ -147,13 +147,16 @@ export const ActivityDashboard = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {invitations.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
-          <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center">
-            <Bell className="w-5 h-5 text-zinc-600" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
+          <div className="w-16 h-16 rounded-full bg-[#00ff41]/5 flex items-center justify-center border border-[#00ff41]/10 shadow-[0_0_15px_rgba(0,255,65,0.05)]">
+            <Bell className="w-6 h-6 text-[#00ff41]/50" />
           </div>
-          <p className="text-sm text-zinc-500 font-medium max-w-[200px]">
-            No pending invites. Challenge a friend to get started.
-          </p>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-zinc-300 font-bold">No Pending Activity</h3>
+            <p className="text-sm text-zinc-500 font-medium max-w-[220px]">
+              You're all caught up! Challenge a friend to start your next coding battle.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto pr-2 space-y-3 pt-2 pb-4 scrollbar-thin scrollbar-thumb-zinc-700/50 hover:scrollbar-thumb-zinc-600">

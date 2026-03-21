@@ -9,7 +9,7 @@ export async function GET() {
 
     try {
         const leaderboard = await UserModel.aggregate([
-            { $match: { battlesPlayed: { $gte: 5 } } },
+            { $match: { battlesPlayed: { $gte: 1 } } },
             {
                 $sort: { longestStreak: -1, battlesWon: -1, rating: -1 }
             },
