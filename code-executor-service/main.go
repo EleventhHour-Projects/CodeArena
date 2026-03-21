@@ -19,6 +19,7 @@ import (
 	"context"
 	"executor-service/api"
 	"executor-service/database"
+	"executor-service/gh"
 	"executor-service/queue"
 	"executor-service/utils"
 	"executor-service/worker"
@@ -131,6 +132,7 @@ func main() {
 	loadEnv()
 	utils.REDIS_ADDR = os.Getenv("REDIS_ADDR")
 	utils.MONGO_URI = os.Getenv("MONGO_URI")
+	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
 
 	defer cancel()
 	err := checkImage()
@@ -147,7 +149,8 @@ func main() {
 	go queue.ListenForTasks(ctx)
 	// API service starting
 	go api.StartService()
-
+	// Initialize GitHub Client
+	gh.InitGH()
 	// Give a buffer time to start process of spawing workers
 	time.Sleep(1 * time.Second)
 	go worker.SpawnWorkers(ctx)

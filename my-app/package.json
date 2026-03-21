@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.1",
+    "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "mongoose": "^9.2.3",
     "motion": "^12.36.0",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -1,6 +1,6 @@
-// rate limiter
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from 'jose';
 
 type RateLimitRecord = {
   count: number;
@@ -12,31 +12,58 @@ const MAX_REQUESTS = 30; // 30 requests per minute
 
 const ipStore = new Map<string, RateLimitRecord>();
 
-export function middleware(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for") ||
-    "anonymous";
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-admin-key-code-arena';
+const secretKey = new TextEncoder().encode(JWT_SECRET);
 
-  const now = Date.now();
+export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
 
-  const record = ipStore.get(ip);
+  // 1. Admin Authentication Check
+  if (path.startsWith('/admin') || path.startsWith('/api/admin')) {
+    // Exclude login paths
+    if (path === '/admin/login' || path === '/api/admin/login' || path === '/api/admin/setup') {
+      return NextResponse.next();
+    }
 
-  if (!record) {
-    ipStore.set(ip, { count: 1, lastReset: now });
-  } else {
-    if (now - record.lastReset > RATE_LIMIT_WINDOW) {
-      // reset window
+    const token = request.cookies.get('admin_token')?.value;
+
+    if (!token) {
+      // Redirect to login if accessing page, return 401 if accessing API
+      if (path.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    try {
+      await jwtVerify(token, secretKey);
+      // Valid token, continue
+    } catch (err) {
+      if (path.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
+  // 2. Rate Limiting for specific routes
+  if (path === '/api/check-username-unique') {
+    const ip = request.headers.get("x-forwarded-for") || "anonymous";
+    const now = Date.now();
+    const record = ipStore.get(ip);
+
+    if (!record) {
       ipStore.set(ip, { count: 1, lastReset: now });
     } else {
-      if (record.count >= MAX_REQUESTS) {
-        return NextResponse.json(
-          { error: "Too many requests" },
-          { status: 429 }
-        );
+      if (now - record.lastReset > RATE_LIMIT_WINDOW) {
+        ipStore.set(ip, { count: 1, lastReset: now });
+      } else {
+        if (record.count >= MAX_REQUESTS) {
+          return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+        }
+        record.count++;
+        ipStore.set(ip, record);
       }
-
-      record.count++;
-      ipStore.set(ip, record);
     }
   }
 
@@ -44,5 +71,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/check-username-unique"],
+  matcher: [
+    "/api/check-username-unique",
+    "/admin/:path*",
+    "/api/admin/:path*"
+  ],
 };

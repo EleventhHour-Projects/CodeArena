@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/go-github/v84/github"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -30,6 +31,7 @@ const (
 var REDIS_ADDR string
 var REDIS_PASSWORD string
 var MONGO_URI string
+var GITHUB_TOKEN string
 
 // CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
 var CustomWorkerPoolSize int
@@ -217,3 +219,11 @@ var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, mu: sync.Mute
 
 // For Info API
 var StartTime time.Time
+
+type GitHubClient struct {
+	Client *github.Client
+	Owner  string
+	Repo   string
+}
+
+var GhClient *GitHubClient

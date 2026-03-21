@@ -1,0 +1,199 @@
+package api
+
+import (
+	"context"
+	"encoding/json"
+	"executor-service/gh"
+	"executor-service/utils"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/gofiber/fiber/v3"
+)
+
+type ProblemPayload struct {
+	Slug        string      `json:"slug"`
+	Tags        []string    `json:"tags"`
+	Title       string      `json:"title"`
+	Difficulty  string      `json:"difficulty"`
+	Description string      `json:"description"`
+	Testcases   interface{} `json:"testcases"`
+}
+
+type QuestionJson struct {
+	ID           int      `json:"id"`
+	Slug         string   `json:"slug"`
+	Tags         []string `json:"tags"`
+	Title        string   `json:"title"`
+	Difficulty   string   `json:"difficulty"`
+	Description  string   `json:"description"`
+	InputFormat  string   `json:"input_format"`
+	OutputFormat string   `json:"output_format"`
+	Constraints  string   `json:"constraints"`
+}
+
+func getNextId(difficulty string) (int, error) {
+	questionsDir := filepath.Join("..", "questions")
+	dir := filepath.Join(questionsDir, strings.ToLower(difficulty))
+
+	var minId, maxId int
+	switch strings.ToLower(difficulty) {
+	case "easy":
+		minId, maxId = 1, 299
+	case "medium":
+		minId, maxId = 300, 599
+	case "hard":
+		minId, maxId = 600, 899
+	default:
+		return 0, fmt.Errorf("invalid difficulty: %s", difficulty)
+	}
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return 0, err
+		}
+		return minId, nil
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return 0, err
+	}
+
+	highestId := minId - 1
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
+			name := strings.TrimSuffix(file.Name(), ".json")
+			id, err := strconv.Atoi(name)
+			if err == nil && id >= minId && id <= maxId {
+				if id > highestId {
+					highestId = id
+				}
+			}
+		}
+	}
+
+	nextId := highestId + 1
+	if nextId > maxId {
+		return 0, fmt.Errorf("ID limit reached for %s", difficulty)
+	}
+
+	return nextId, nil
+}
+
+// SaveProblem is a handler function that creates a new problem
+func SaveProblem(c fiber.Ctx) error {
+	var payload ProblemPayload
+	b := c.Body()
+	if err := json.Unmarshal(b, &payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	difficulty := payload.Difficulty
+	if difficulty == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Difficulty is required"})
+	}
+
+	nextId, err := getNextId(difficulty)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	questionJson := QuestionJson{
+		ID:           nextId,
+		Slug:         payload.Slug,
+		Tags:         payload.Tags,
+		Title:        payload.Title,
+		Difficulty:   difficulty,
+		Description:  payload.Description,
+		InputFormat:  "Read from standard input. Format details depends on the problem.",
+		OutputFormat: "Print to standard output.",
+		Constraints:  "Please read problem description for constraints.",
+	}
+
+	questionsDir := filepath.Join("..", "questions")
+	questionDir := filepath.Join(questionsDir, strings.ToLower(difficulty))
+	testcaseDir := filepath.Join(questionsDir, "testcase")
+
+	if err := os.MkdirAll(testcaseDir, 0755); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create testcase directory"})
+	}
+	if err := os.MkdirAll(questionDir, 0755); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create difficulty directory"})
+	}
+
+	questionFilePath := filepath.Join(questionDir, fmt.Sprintf("%d.json", nextId))
+	testcaseFilePath := filepath.Join(testcaseDir, fmt.Sprintf("%d.json", nextId))
+
+	questionBytes, err := json.MarshalIndent(questionJson, "", "    ")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal question details"})
+	}
+
+	testcasesWrapper := map[string]interface{}{
+		"testcases": payload.Testcases,
+	}
+
+	testcasesBytes, err := json.MarshalIndent(testcasesWrapper, "", "    ")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal testcases"})
+	}
+
+	if err := os.WriteFile(questionFilePath, questionBytes, 0644); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to write question file"})
+	}
+
+	if err := os.WriteFile(testcaseFilePath, testcasesBytes, 0644); err != nil {
+		// Clean up the created question file if testcase save fails
+		os.Remove(questionFilePath)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to write testcase file"})
+	}
+
+	// Make an asynchronous/synchronous call to push these new files to GitHub
+	if err := PushToGithub(questionFilePath, testcaseFilePath, difficulty, nextId, payload.Title); err != nil {
+		fmt.Printf("Failed to push newly created problem %d to GitHub: %v\n", nextId, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":       fmt.Sprintf("Successfully generated question! ID: %d", nextId),
+		"id":            nextId,
+		"slug":          payload.Slug,
+		"question_file": questionFilePath,
+		"testcase_file": testcaseFilePath,
+	})
+}
+
+func PushToGithub(questionFilePath, testcaseFilePath string, difficulty string, id int, title string) error {
+	if utils.GhClient == nil {
+		return fmt.Errorf("github client not initialized")
+	}
+
+	// Read newly created files
+	questionBytes, err := os.ReadFile(questionFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read question file: %v", err)
+	}
+
+	testcaseBytes, err := os.ReadFile(testcaseFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read testcase file: %v", err)
+	}
+
+	// Setup parameters for PR
+	branchName := fmt.Sprintf("add-problem-%d-%d", id, os.Getpid()) // A unique branch name
+	prTitle := fmt.Sprintf("Add Problem: %s", title)
+	prBody := fmt.Sprintf("This PR was automatically generated by CodeArena Admin panel to add problem ID %d: %s", id, title)
+
+	// Format paths properly, relative to the repository root
+	files := map[string][]byte{
+		fmt.Sprintf("questions/%s/%d.json", strings.ToLower(difficulty), id): questionBytes,
+		fmt.Sprintf("questions/testcase/%d.json", id):                        testcaseBytes,
+	}
+
+	_, err = gh.CreatePR(utils.GhClient, context.Background(), branchName, prTitle, prBody, files)
+	return err
+}

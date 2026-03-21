@@ -70,8 +70,9 @@ func StartService() {
 `+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
 `+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.CustomWorkerPoolSize+2, os.Getpid(), utils.CustomWorkerPoolSize)
+`, utils.CustomWorkerPoolSize+3, os.Getpid(), utils.CustomWorkerPoolSize)
 	app.Post("/go/api/queue", AddToQueue)
 	app.Get("/info", GetTaskInfo)
+	app.Post("/api/admin/problem", SaveProblem)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }
