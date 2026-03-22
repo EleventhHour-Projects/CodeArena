@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import BattleModel from "@/lib/models/Battle";
 import { UserModel } from "@/lib/models/User";
 import SubmissionModel from "@/lib/models/Submission";
+import ExecutionCodeModel from "@/lib/models/ExecutionCode"; // added to ensure model is registered for populate
 import dbConnect from "@/lib/dbConnect";
 import { BattleDifficulty, ProblemRef } from "@/types/BattleType";
 
@@ -95,10 +96,17 @@ export async function POST(req: Request) {
 
             // --- Server-side Result Calculation ---
             // Fetch all accepted submissions for this battle
-            const submissions = await SubmissionModel.find({
+            const submissionsRaw = await SubmissionModel.find({
                 battleId: new mongoose.Types.ObjectId(battleId),
                 status: "Accepted"
-            }).sort({ createdAt: 1 }).session(session);
+            })
+            .populate({
+                path: "execCodeId",
+                match: { type: "Submit" }
+            })
+            .sort({ createdAt: 1 }).session(session);
+
+            const submissions = submissionsRaw.filter(sub => sub.execCodeId !== null);
 
             const battleStart = battle.startTime ? new Date(battle.startTime).getTime() : new Date(battle.createdAt).getTime();
 
