@@ -3,6 +3,8 @@ package gh
 import (
 	"context"
 	"executor-service/utils"
+	"fmt"
+	"strings"
 
 	"github.com/google/go-github/v84/github"
 	"golang.org/x/oauth2"
@@ -29,7 +31,7 @@ func InitGH() {
 	utils.GhClient = NewGitHubClient(utils.GITHUB_TOKEN, "EleventhHour-Projects", "CodeArena")
 }
 
-func CreatePR(client *utils.GitHubClient, ctx context.Context, branchName, title, body string, files map[string][]byte) (*github.PullRequest, error) {
+func CreatePR(client *utils.GitHubClient, ctx context.Context, branchName, title, body string, files map[string][]byte, lable string) (*github.PullRequest, error) {
 	// 1. Get the repository to find the default branch
 	repo, _, err := client.Client.Repositories.Get(ctx, client.Owner, client.Repo)
 	if err != nil {
@@ -89,6 +91,70 @@ func CreatePR(client *utils.GitHubClient, ctx context.Context, branchName, title
 		Head:  github.String(branchName),
 		Base:  github.String(baseBranch),
 	})
+	utils.GhClient.Client.Issues.AddLabelsToIssue(ctx, client.Owner, client.Repo, *pr.Number, []string{lable})
 
 	return pr, err
+}
+
+func GetAllPRs(ctx context.Context, lable *string) ([]*github.PullRequest, error) {
+	opt := &github.PullRequestListOptions{
+		State: "open",
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+	prs, _, err := utils.GhClient.Client.PullRequests.List(ctx, utils.GhClient.Owner, utils.GhClient.Repo, opt)
+	if err != nil {
+		return nil, err
+	}
+	if lable != nil {
+		filteredPRs := []*github.PullRequest{}
+		for _, pr := range prs {
+			if pr.Labels[0].GetName() == *lable {
+				filteredPRs = append(filteredPRs, pr)
+			}
+		}
+		return filteredPRs, nil
+	} else {
+		return prs, nil
+	}
+}
+func GetNumberOfQuestionByLabel(ctx context.Context, label string) (int, error) {
+	if label == "" {
+		return 0, nil
+	}
+	switch strings.ToLower(label) {
+	case "easy":
+		label = "easy"
+	case "medium":
+		label = "medium"
+	case "hard":
+		label = "hard"
+	default:
+		return 0, fmt.Errorf("invalid label: %s", label)
+	}
+
+	path := fmt.Sprintf("questions/%s", label)
+
+	_, contents, _, err := utils.GhClient.Client.Repositories.GetContents(
+		ctx,
+		utils.GhClient.Owner,
+		utils.GhClient.Repo,
+		path,
+		nil,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+
+	for _, file := range contents {
+		// Only count JSON files
+		if file.GetType() == "file" && strings.HasSuffix(file.GetName(), ".json") {
+			count++
+		}
+	}
+
+	return count, nil
 }

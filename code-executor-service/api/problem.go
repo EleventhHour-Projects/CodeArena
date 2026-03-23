@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -36,11 +35,10 @@ type QuestionJson struct {
 }
 
 func getNextId(difficulty string) (int, error) {
-	questionsDir := filepath.Join("..", "questions")
-	dir := filepath.Join(questionsDir, strings.ToLower(difficulty))
+	d := strings.ToLower(difficulty)
 
 	var minId, maxId int
-	switch strings.ToLower(difficulty) {
+	switch d {
 	case "easy":
 		minId, maxId = 1, 299
 	case "medium":
@@ -51,38 +49,22 @@ func getNextId(difficulty string) (int, error) {
 		return 0, fmt.Errorf("invalid difficulty: %s", difficulty)
 	}
 
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return 0, err
-		}
-		return minId, nil
-	}
-
-	files, err := os.ReadDir(dir)
+	ctx := context.Background()
+	count, err := gh.GetNumberOfQuestionByLabel(ctx, d)
 	if err != nil {
 		return 0, err
 	}
-
-	highestId := minId - 1
-	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
-			name := strings.TrimSuffix(file.Name(), ".json")
-			id, err := strconv.Atoi(name)
-			if err == nil && id >= minId && id <= maxId {
-				if id > highestId {
-					highestId = id
-				}
-			}
-		}
+	prs, err := gh.GetAllPRs(ctx, &d)
+	if err != nil {
+		return 0, err
 	}
+	pendingPRs := len(prs)
 
-	nextId := highestId + 1
-	if nextId > maxId {
-		return 0, fmt.Errorf("ID limit reached for %s", difficulty)
+	nextID := minId + count + pendingPRs
+	if nextID > maxId {
+		return 0, fmt.Errorf("ID limit exceeded for %s (max %d)", d, maxId)
 	}
-
-	return nextId, nil
+	return nextID, nil
 }
 
 // SaveProblem is a handler function that creates a new problem
@@ -176,6 +158,7 @@ func PushToGithub(questionBytes, testcaseBytes []byte, difficulty string, id int
 		prTitle,
 		prBody,
 		files,
+		difficulty,
 	)
 
 	return err
