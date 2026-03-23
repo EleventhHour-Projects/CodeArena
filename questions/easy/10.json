@@ -1,0 +1,13 @@
+{
+    "id": 10,
+    "slug": "palindrome-number",
+    "tags": [
+        "Math"
+    ],
+    "title": "Palindrome Number",
+    "difficulty": "Easy",
+    "description": "Given an integer x, return true if x is a palindrome, and false otherwise.\n\n \nExample 1:\n\n\nInput: x = 121\nOutput: true\nExplanation: 121 reads as 121 from left to right and from right to left.\n\n\nExample 2:\n\n\nInput: x = -121\nOutput: false\nExplanation: From left to right, it reads -121. From right to left, it becomes 121-. Therefore it is not a palindrome.\n\n\nExample 3:\n\n\nInput: x = 10\nOutput: false\nExplanation: Reads 01 from right to left. Therefore it is not a palindrome.\n\n\n \nConstraints:\n\n\n\t-231 \u0026lt;= x \u0026lt;= 231 - 1\n\n\n \nFollow up: Could you solve it without converting the integer to a string?",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}

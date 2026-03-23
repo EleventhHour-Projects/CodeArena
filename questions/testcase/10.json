@@ -1,0 +1,11 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "121",
+                "output": "true"
+            }
+        ],
+        "submit": []
+    }
+}
