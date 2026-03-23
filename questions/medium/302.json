@@ -1,0 +1,15 @@
+{
+    "id": 302,
+    "slug": "maximum-non-negative-product-in-a-matrix",
+    "tags": [
+        "Array",
+        "Dynamic Programming",
+        "Matrix"
+    ],
+    "title": "Maximum Non Negative Product in a Matrix",
+    "difficulty": "Medium",
+    "description": "You are given a m x n matrix grid. Initially, you are located at the top-left corner (0, 0), and in each step, you can only move right or down in the matrix.\n\nAmong all possible paths starting from the top-left corner (0, 0) and ending in the bottom-right corner (m - 1, n - 1), find the path with the maximum non-negative product. The product of a path is the product of all integers in the grid cells visited along the path.\n\nReturn the maximum non-negative product modulo 109 + 7. If the maximum product is negative, return -1.\n\nNotice that the modulo is performed after getting the maximum product.\n\n \nExample 1:\n\n\nInput: grid = [[-1,-2,-3],[-2,-3,-3],[-3,-3,-2]]\nOutput: -1\nExplanation: It is not possible to get non-negative product in the path from (0, 0) to (2, 2), so return -1.\n\n\nExample 2:\n\n\nInput: grid = [[1,-2,1],[1,-2,1],[3,-4,1]]\nOutput: 8\nExplanation: Maximum non-negative product is shown (1 * 1 * -2 * -4 * 1 = 8).\n\n\nExample 3:\n\n\nInput: grid = [[1,3],[0,-4]]\nOutput: 0\nExplanation: Maximum non-negative product is shown (1 * 0 * -4 = 0).\n\n\n \nConstraints:\n\n\n\tm == grid.length\n\tn == grid[i].length\n\t1 \u0026lt;= m, n \u0026lt;= 15\n\t-4 \u0026lt;= grid[i][j] \u0026lt;= 4",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
