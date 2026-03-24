@@ -2,9 +2,33 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2 } from "lucide-react";
+import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2, Activity, Volume2, VolumeX } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { io, Socket } from "socket.io-client";
+
+// Minimal synthesized sound effects
+const playTone = (freq: number, type: OscillatorType, duration: number) => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {}
+};
+const playRunSound = () => playTone(150, "sawtooth", 0.3); // Low engine hum
+const playSuccessSound = () => {
+  playTone(500, "sine", 0.1);
+  setTimeout(() => playTone(800, "sine", 0.3), 100);
+};
 
 interface PageProps {
   params: Promise<{
@@ -40,6 +64,83 @@ export default function BattlePage({ params }: PageProps) {
   const { data: session } = useSession();
   const resolvedParams = use(params);
   const battleID = resolvedParams.battleID;
+
+  // Real-time WebSocket State
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [opponentSolvedCount, setOpponentSolvedCount] = useState(0);
+  const [mySolvedCount, setMySolvedCount] = useState(0);
+  const [crackLevel, setCrackLevel] = useState(0);
+  const [showHeartbeat, setShowHeartbeat] = useState(false);
+  const [floatingMsg, setFloatingMsg] = useState("");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(soundEnabled);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  // WebSocket Connection
+  useEffect(() => {
+    if (!session?.user || !battleID) return;
+    const currentUserId = (session.user as any).id;
+    
+    // Connect to backend server running Socket.IO (on port 3000 locally)
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000";
+    const newSocket = io(socketUrl);
+    setSocket(newSocket);
+
+    newSocket.emit("JOIN_BATTLE", { battleId: battleID, userId: currentUserId });
+
+    newSocket.on("event", (event: any) => {
+      const isOpponent = event.userId !== currentUserId;
+      
+      switch (event.type) {
+        case "USER_RUN":
+          if (isOpponent) {
+            setShowHeartbeat(true);
+            setTimeout(() => setShowHeartbeat(false), 2000);
+            setFloatingMsg("Opponent is executing code...");
+            setTimeout(() => setFloatingMsg(""), 3000);
+            if (soundEnabledRef.current) playRunSound();
+          }
+          break;
+        case "USER_RESULT":
+          if (isOpponent) {
+            if (event.data?.status === "WA") {
+              setFloatingMsg("Opponent failed a testcase ❌");
+            } else if (event.data?.status === "AC") {
+              setFloatingMsg("Opponent passed all tests ✅");
+            }
+            setTimeout(() => setFloatingMsg(""), 3000);
+          }
+          break;
+        case "USER_SOLVED":
+          if (isOpponent) {
+            setOpponentSolvedCount(prev => prev + 1);
+            setCrackLevel(prev => Math.min(prev + 1, 3));
+            setFloatingMsg("Opponent solved a problem ⚡");
+            setTimeout(() => setFloatingMsg(""), 3000);
+            if (soundEnabledRef.current) playSuccessSound();
+          } else {
+            setMySolvedCount(prev => prev + 1);
+            setFloatingMsg("You solved a problem 🚀");
+            setTimeout(() => setFloatingMsg(""), 3000);
+            if (soundEnabledRef.current) playSuccessSound();
+          }
+          break;
+        case "MATCH_COMPLETE":
+          setCrackLevel(4);
+          setFloatingMsg("Battle completed!");
+          setTimeout(() => setFloatingMsg(""), 3000);
+          break;
+      }
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [session, battleID]);
 
   const [battleDetails, setBattleDetails] = useState<any>(null);
 
@@ -381,8 +482,43 @@ export default function BattlePage({ params }: PageProps) {
   }
 
   return (
-    <div className="h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden">
+    <div className="h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden relative">
       
+      {/* Real-time Event Floating Msg */}
+      {floatingMsg && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#121214]/90 border border-white/10 px-6 py-2.5 rounded-full shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)] backdrop-blur-md animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
+           <span className="text-white text-xs font-bold tracking-wide">{floatingMsg}</span>
+        </div>
+      )}
+
+      {/* Opponent Progress Crack Animation UI */}
+      {crackLevel > 0 && crackLevel < 4 && (
+        <div className="pointer-events-none absolute inset-0 z-40 overflow-hidden mix-blend-overlay opacity-20">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+             <defs>
+               <filter id="crack-glow" x="-20%" y="-20%" width="140%" height="140%">
+                 <feGaussianBlur stdDeviation="3" result="blur" />
+                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
+               </filter>
+             </defs>
+             {crackLevel >= 1 && (
+               <path d="M 0 50 Q 150 100 200 250 T 350 400" stroke="white" strokeWidth="2" fill="none" filter="url(#crack-glow)" className="animate-in fade-in duration-700" />
+             )}
+             {crackLevel >= 2 && (
+               <path d="M 100 0 Q 300 200 250 400 T 500 800" stroke="white" strokeWidth="3" fill="none" filter="url(#crack-glow)" className="animate-in fade-in duration-700 delay-300" />
+             )}
+             {crackLevel >= 3 && (
+               <path d="M 800 0 Q 600 300 700 600 T 900 1000" stroke="white" strokeWidth="4" fill="none" filter="url(#crack-glow)" className="animate-in fade-in duration-700 delay-500" />
+             )}
+          </svg>
+        </div>
+      )}
+
+      {/* Final Collapse UI Overlay */}
+      {crackLevel >= 4 && !isBattleOver && (
+        <div className="pointer-events-none absolute inset-0 z-40 bg-red-500/10 animate-pulse mix-blend-screen transition-opacity duration-1000"></div>
+      )}
+
       {/* End of Battle Overlay */}
       {isBattleOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl animate-in fade-in duration-500">
@@ -538,7 +674,7 @@ export default function BattlePage({ params }: PageProps) {
       )}
 
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#09090b] shadow-sm z-10 w-full shrink-0">
+      <header className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#09090b] shadow-sm z-10 w-full shrink-0 relative">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <h1 className="text-sm font-semibold tracking-tight text-zinc-200">
@@ -547,6 +683,19 @@ export default function BattlePage({ params }: PageProps) {
             <p className="text-[11px] text-zinc-500 font-mono">
               ID: {battleID.slice(0, 8)}
             </p>
+          </div>
+        </div>
+
+        {/* WebSocket Progress Bar Center */}
+        <div className="flex-1 hidden md:flex flex-col items-center justify-center max-w-[400px] mx-4">
+          <div className="flex justify-between w-full text-[10px] font-bold uppercase tracking-widest mb-1">
+             <span className="text-emerald-500">You ({mySolvedCount}/{problems.length || 3})</span>
+             <span className="text-amber-500">Opponent ({opponentSolvedCount}/{problems.length || 3})</span>
+          </div>
+          <div className="w-full h-1.5 bg-zinc-800 rounded-full flex shadow-inner overflow-hidden">
+             <div style={{ width: `${(mySolvedCount / Math.max(problems.length || 3, 1)) * 100}%` }} className="h-full bg-emerald-500 transition-all duration-700 shadow-[0_0_10px_#10b981]"></div>
+             <div className="flex-1"></div>
+             <div style={{ width: `${Math.min(100, (opponentSolvedCount / Math.max(problems.length || 3, 1)) * 100)}%` }} className="h-full bg-amber-500 transition-all duration-700 shadow-[0_0_10px_#f59e0b]"></div>
           </div>
         </div>
 
@@ -585,6 +734,11 @@ export default function BattlePage({ params }: PageProps) {
             <button onClick={() => toast.error("You have surrendered the battle.")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
               <span className="w-4 h-4 text-red-400 flex items-center justify-center">☠</span>
               Surrender
+            </button>
+            <div className="w-px h-5 bg-white/10 mx-1"></div>
+            {showHeartbeat && <Activity className="w-4 h-4 text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" />}
+            <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={soundEnabled ? "Mute Sounds" : "Enable Sounds"}>
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -792,7 +946,15 @@ export default function BattlePage({ params }: PageProps) {
                   language={language}
                   theme="vs-dark"
                   value={code}
-                  onChange={(value) => setCode(value || "")}
+                  onChange={(value) => {
+                    setCode(value || "");
+                    if (socket && session?.user && battleID) {
+                      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                      typingTimeoutRef.current = setTimeout(() => {
+                        socket.emit("event", { type: "USER_TYPING", battleId: battleID, userId: (session.user as any).id });
+                      }, 1000);
+                    }
+                  }}
                   loading={
                     <div className="flex items-center justify-center h-full text-zinc-500 font-mono text-sm">
                       Loading editor...
