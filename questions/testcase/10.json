@@ -1,0 +1,48 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "9669",
+                "output": "9969"
+            },
+            {
+                "input": "9996",
+                "output": "9999"
+            },
+            {
+                "input": "9999",
+                "output": "9999"
+            }
+        ],
+        "submit": [
+            {
+                "input": "696",
+                "output": "996"
+            },
+            {
+                "input": "6669",
+                "output": "9669"
+            },
+            {
+                "input": "6696",
+                "output": "9696"
+            },
+            {
+                "input": "6999",
+                "output": "9999"
+            },
+            {
+                "input": "9696",
+                "output": "9996"
+            },
+            {
+                "input": "6666",
+                "output": "9666"
+            },
+            {
+                "input": "9999",
+                "output": "9999"
+            }
+        ]
+    }
+}
