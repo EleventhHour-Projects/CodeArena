@@ -1,0 +1,15 @@
+{
+    "id": 302,
+    "slug": "sort-the-students-by-their-kth-score",
+    "tags": [
+        "Array",
+        "Sorting",
+        "Matrix"
+    ],
+    "title": "Sort the Students by Their Kth Score",
+    "difficulty": "Medium",
+    "description": "You are given a matrix score of size m × n, where:\n\nm represents the number of students\nn represents the number of exams\nscore[i][j] is the score obtained by the i-th student in the j-th exam\n\nAll values in the matrix are distinct integers.\n\nYou are also given an integer k (0-indexed), representing a specific exam.\n\nTask\n\nSort the students (i.e., the rows of the matrix) in descending order based on their scores in the k-th exam.\n\nReturn the sorted matrix.\n\nExample 1\n\nInput:\nscore = [[10,6,9,1],[7,5,11,2],[4,8,3,15]], k = 2\n\nOutput:\n[[7,5,11,2],[10,6,9,1],[4,8,3,15]]\n\nExplanation:\n\nStudent 1 scored 11 in exam 2 → highest → rank 1\nStudent 0 scored 9 → rank 2\nStudent 2 scored 3 → rank 3\nExample 2\n\nInput:\nscore = [[3,4],[5,6]], k = 0\n\nOutput:\n[[5,6],[3,4]]\n\nExplanation:\n\nStudent 1 scored 5 in exam 0 → highest → rank 1\nStudent 0 scored 3 → rank 2\nConstraints\nm == score.length\nn == score[i].length\n1 ≤ m, n ≤ 250\n1 ≤ score[i][j] ≤ 100000\nAll elements in score are distinct\n0 ≤ k \u003c n",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
