@@ -1,0 +1,64 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "6\neat tea tan ate nat bat",
+                "output": "bat\nnat tan\nate eat tea"
+            },
+            {
+                "input": "1\n",
+                "output": ""
+            },
+            {
+                "input": "1\na",
+                "output": "a"
+            }
+        ],
+        "submit": [
+            {
+                "input": "2\nddddddddddg dgggggggggg",
+                "output": "dgggggggggg ddddddddddg"
+            },
+            {
+                "input": "5\ntea and ate eat den",
+                "output": "den and ate eat tea"
+            },
+            {
+                "input": "11\nb bb bbb bbbb bbbbb bbbbbb bbbbbbb bbbbbbbb bbbbbbbbb bbbbbbbbbb",
+                "output": "bbbbb\nbbbbbbbb\nbbbb\nbbbbbbbbbb\nbbbbbbbbb\nbbbbbbb\nbbb\nb\nbbbbbb\nbb\n"
+            },
+            {
+                "input": "17\nlisten silent enlist google gogole elbows below bowel state taste tates abc bca cab xyz zyx yxz",
+                "output": "xyz yxz zyx\nenlist listen silent\ngogole google\nelbows\nbelow bowel\nabc bca cab\nstate taste tates"
+            },
+            {
+                "input": "4\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaba",
+                "output": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaba baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+                "input": "11\n a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa",
+                "output": "aaaaaaaa\naaaaaaa\naaaaaa\naaaaaaaaaa\naaaaaaaaa\naa\na\naaaaa\naaaa\naaa\n"
+            },
+            {
+                "input": "6\na b c a b c",
+                "output": "c c\nb b\na a"
+            },
+            {
+                "input": "5\nz z z z z",
+                "output": "z z z z z"
+            },
+            {
+                "input": "4\nabc def ghi jkl",
+                "output": "jkl\ndef\nghi\nabc"
+            },
+            {
+                "input": "4\nabcd abce abcf abcg",
+                "output": "abcf\nabcg\nabce\nabcd"
+            },
+            {
+                "input": "9\nabc bca xyz zyx yxz foo ofo oof bar",
+                "output": "foo ofo oof\nxyz yxz zyx\nbar abc bca"
+            }
+        ]
+    }
+}
