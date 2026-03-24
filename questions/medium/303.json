@@ -1,0 +1,16 @@
+{
+    "id": 303,
+    "slug": "minimize-maximum-pair-sum-in-array",
+    "tags": [
+        "Array",
+        "Two Pointers",
+        "Greedy",
+        "Sorting"
+    ],
+    "title": "Minimize Maximum Pair Sum in Array",
+    "difficulty": "Medium",
+    "description": "You are given an integer array nums of even length n.\n\nA pair sum is defined as the sum of two elements (a, b), i.e., a + b.\n\nWhen you form n / 2 pairs using all elements in the array:\n\nEach element must belong to exactly one pair\nNo element can be reused\nTask\n\nPair up the elements such that the maximum pair sum among all pairs is as small as possible.\n\nReturn this minimized maximum pair sum.\n\nExample 1\n\nInput:\nnums = [3,5,2,3]\n\nOutput:\n7\n\nExplanation:\nPossible pairing:\n\n(3,3) → sum = 6\n(5,2) → sum = 7\n\nMaximum pair sum = max(6, 7) = 7\n\nExample 2\n\nInput:\nnums = [3,5,4,2,4,6]\n\nOutput:\n8\n\nExplanation:\nOne optimal pairing:\n\n(2,6) → 8\n(3,5) → 8\n(4,4) → 8\n\nMaximum pair sum = 8\n\nConstraints\nn == nums.length\n2 ≤ n ≤ 100000\nn is even\n1 ≤ nums[i] ≤ 100000",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
