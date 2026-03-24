@@ -221,7 +221,7 @@ export default function UserStatsPage() {
                   {/* Streaks */}
                   <div className="flex flex-col bg-card border border-border p-5 rounded-2xl gap-3 hover:bg-muted/30 transition-all shadow-sm group">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">Streaks</span>
+                      <span className="text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">Win Streak</span>
                       <Flame className="w-4 h-4 text-orange-500 opacity-70 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="flex items-center justify-between mt-1">
@@ -232,7 +232,7 @@ export default function UserStatsPage() {
                       <Separator orientation="vertical" className="h-6" />
                       <div className="flex flex-col text-right">
                         <span className="text-xl font-bold text-orange-500 leading-none">{stats.longestStreak}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">Longest Max</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">Longest</span>
                       </div>
                     </div>
                   </div>
