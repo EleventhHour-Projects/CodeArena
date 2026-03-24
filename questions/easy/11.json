@@ -1,0 +1,15 @@
+{
+    "id": 11,
+    "slug": "power-of-four",
+    "tags": [
+        "Math",
+        "Bit Manipulation",
+        "Recursion"
+    ],
+    "title": "Power of Four",
+    "difficulty": "Easy",
+    "description": "Given an integer n, determine whether it is a power of four.\n\nReturn true if there exists an integer x such that:\n\nn = 4^x\n\nOtherwise, return false.\n\nExamples\n\nExample 1\nInput: n = 16\nOutput: true\nExplanation: 16 = 4²\n\nExample 2\nInput: n = 5\nOutput: false\nExplanation: 5 is not a power of 4.\n\nExample 3\nInput: n = 1\nOutput: true\nExplanation: 1 = 4⁰\n\nConstraints\n-2³¹ ≤ n ≤ 2³¹ - 1\nFollow-up\n\nCan you solve this problem without using loops or recursion?",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
