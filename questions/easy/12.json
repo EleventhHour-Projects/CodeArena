@@ -1,0 +1,14 @@
+{
+    "id": 12,
+    "slug": "minimum-moves-to-equal-array-elements",
+    "tags": [
+        "Array",
+        "Math"
+    ],
+    "title": "Minimum Moves to Equal Array Elements",
+    "difficulty": "Easy",
+    "description": "You are given an integer array nums.\n\nIn one move, you can increase any single element by 1.\n\nReturn the minimum number of moves required to make all elements in the array equal.\n\nExamples\n\nExample 1\nInput: nums = [2, 1, 3]\nOutput: 3\nExplanation:\n\nIncrease nums[0] from 2 → 3\nIncrease nums[1] from 1 → 2\nIncrease nums[1] from 2 → 3\nAll elements become 3. Total moves = 3.\n\nExample 2\nInput: nums = [4, 4, 5]\nOutput: 2\nExplanation:\n\nIncrease nums[0] from 4 → 5\nIncrease nums[1] from 4 → 5\nAll elements become 5. Total moves = 2.\nConstraints\n1 ≤ nums.length ≤ 100\n1 ≤ nums[i] ≤ 100",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
