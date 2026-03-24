@@ -1,0 +1,76 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "abcd\n2",
+                "output": "bf"
+            },
+            {
+                "input": "mxz\n3",
+                "output": "i"
+            }
+        ],
+        "submit": [
+            {
+                "input": "ab\n1",
+                "output": "ab"
+            },
+            {
+                "input": "abcd\n2",
+                "output": "bf"
+            },
+            {
+                "input": "aaaaaa\n3",
+                "output": "aa"
+            },
+            {
+                "input": "zzzz\n2",
+                "output": "yy"
+            },
+            {
+                "input": "a\n1",
+                "output": "a"
+            },
+            {
+                "input": "xyz\n1",
+                "output": "xyz"
+            },
+            {
+                "input": "eleventhhour\n2",
+                "output": "pzravl"
+            },
+            {
+                "input": "zzzzzz\n3",
+                "output": "xx"
+            },
+            {
+                "input": "wdjskfhsdkhfjdhsbfhgjwhe\n2",
+                "output": "zbpznmmzgnfl"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyz\n2",
+                "output": "bfjnrvzdhlptx"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv\n5",
+                "output": "kjihgfedcbazyxwvutsr"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr\n10",
+                "output": "tplhdzvrnjfbxtplhdzv"
+            },
+            {
+                "input": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n20",
+                "output": "gggggggggg"
+            },
+            {
+                "input": "azbycxdwevfugthsirjqkplomnazbycxdwevfugthsirjqkplomnazbycxdwevfugthsirjqkplomnazbycxdwevfugthsirjqkplomnazbycxdwevfugthsirjqkplomnazbycxdwevfugthsirjqkplomn\n6",
+                "output": "xxxxxxxxxxxxxxxxxxxxxxxxxx"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\n26",
+                "output": "nnnnnnnnnnnnnnnnnnnn"
+            }
+        ]
+    }
+}
