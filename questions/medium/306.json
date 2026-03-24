@@ -7,7 +7,7 @@
         "String",
         "Sorting"
     ],
-    "title": "Group Anagrams",
+    "title": "Anagrams Grouping",
     "difficulty": "Medium",
     "description": "You are given an array of strings strs.\n\nTwo strings are anagrams if they contain the same characters with the same frequencies, but possibly in a different order.\n\nTask\n\nGroup all the strings that are anagrams of each other.\n\nReturn a list of groups, where each group contains strings that are mutual anagrams.\nThe order of groups and the order of strings within each group does not matter.\n\nExample 1\n\nInput:\nstrs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\n\nOutput:\n[[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]\n\nExplanation:\n\n\"bat\" has no anagram pair\n\"nat\" and \"tan\" are anagrams\n\"ate\", \"eat\", and \"tea\" are anagrams\nExample 2\n\nInput:\nstrs = [\"\"]\n\nOutput:\n[[\"\"]]\n\nExample 3\n\nInput:\nstrs = [\"a\"]\n\nOutput:\n[[\"a\"]]\n\nConstraints\n1 ≤ strs.length ≤ 10000\n0 ≤ strs[i].length ≤ 100\nstrs[i] consists of lowercase English letters",
     "input_format": "Read from standard input. Format details depends on the problem.",
