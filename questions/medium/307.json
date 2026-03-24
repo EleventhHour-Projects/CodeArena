@@ -1,0 +1,15 @@
+{
+    "id": 307,
+    "slug": "minimum-cost-path-with-edge-reversals",
+    "tags": [
+        "Graph Theory",
+        "Heap (Priority Queue)",
+        "Shortest Path"
+    ],
+    "title": "Shortest Path with One-Time Edge Reversal per Node",
+    "difficulty": "Medium",
+    "description": "You are given a directed weighted graph consisting of n nodes numbered from 0 to n - 1. The graph is represented by an array edges, where each element edges[i] = [u, v, w] denotes a directed edge from node u to node v with a cost of w.\n\nEach node has a special ability (a switch) that can be used at most once. When you reach a node u, if you have not used its switch yet, you may choose to:\n\nPick any incoming edge v → u\nTemporarily reverse it to u → v\nImmediately traverse this reversed edge\n\nTraversing a reversed edge costs twice the original weight, i.e., 2 × w.\n\nNote:\n\nThe reversal is valid only for that single traversal.\nEach node’s switch can be used only once during the entire journey.\n\nYour task is to compute the minimum cost required to travel from node 0 to node n - 1.\nIf it is impossible to reach the destination, return -1.",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
