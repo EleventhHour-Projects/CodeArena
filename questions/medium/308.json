@@ -1,0 +1,16 @@
+{
+    "id": 308,
+    "slug": "redundant-connection",
+    "tags": [
+        "Depth-First Search",
+        "Breadth-First Search",
+        "Union-Find",
+        "Graph Theory"
+    ],
+    "title": "Detect and Remove the Extra Edge in a Tree",
+    "difficulty": "Medium",
+    "description": "Reworded Problem Description:\n\nA tree is defined as an undirected graph that is fully connected and contains no cycles.\n\nYou are given a graph that was originally a tree with n nodes labeled from 1 to n. However, one extra edge was added between two distinct nodes, creating exactly one cycle.\n\nThe graph is represented as an array edges of size n, where each element edges[i] = [a, b] indicates an undirected edge between nodes a and b.\n\nYour task is to identify and return one edge that can be removed so that the graph becomes a valid tree again (i.e., connected and acyclic).\n\nIf multiple edges could be removed to achieve this, return the one that appears last in the input array.",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
