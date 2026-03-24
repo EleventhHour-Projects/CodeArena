@@ -102,11 +102,12 @@ func main() {
 	// Parse command-line flags for worker pool size, allowing users to specify the number of worker goroutines to spawn for processing code execution tasks.
 	// If the flag is not provided or is set to a non-positive value, the application will default to using the WORKER_POOL_SIZE constant defined in the utils package.
 	workerCount := flag.Int("worker", 0, "number of workers to spawn (optional)")
+	apiOnly := flag.Bool("api", false, "for starting server only in API mode")
 	flag.Usage = utils.FlagUsage
 	flag.Parse()
 	utils.CustomWorkerPoolSize = *workerCount
 
-	if utils.CustomWorkerPoolSize <= 0 {
+	if utils.CustomWorkerPoolSize <= 0 && !*apiOnly {
 		utils.CustomWorkerPoolSize = utils.WORKER_POOL_SIZE
 	}
 	// WARING if Worker Pool Size set above 100
@@ -135,25 +136,32 @@ func main() {
 	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
 
 	defer cancel()
-	err := checkImage()
-	if err != nil {
-		// Pulling gcc image (for c++)
-		installImage("gcc:13")
+	if !*apiOnly {
+		err := checkImage()
+		if err != nil {
+			// Pulling gcc image (for c++)
+			installImage("gcc:13")
+		}
 	}
 
 	// MongoDB and Redis initilization
 	database.InitMongoDB()
-	queue.InitRedis()
+	if !*apiOnly {
+		queue.InitRedis()
 
-	// Listing for data in redis queue
-	go queue.ListenForTasks(ctx)
+		// Listing for data in redis queue
+		go queue.ListenForTasks(ctx)
+	}
 	// API service starting
 	go api.StartService()
 	// Initialize GitHub Client
 	gh.InitGH()
-	// Give a buffer time to start process of spawing workers
-	time.Sleep(1 * time.Second)
-	go worker.SpawnWorkers(ctx)
+
+	if !*apiOnly {
+		// Give a buffer time to start process of spawing workers
+		time.Sleep(1 * time.Second)
+		go worker.SpawnWorkers(ctx)
+	}
 
 	// Exit Process (Ctrl + C)
 	sigCh := make(chan os.Signal, 1)
@@ -161,12 +169,13 @@ func main() {
 
 	<-sigCh
 	fmt.Println(utils.Cyan + "Shutting down gracefully..." + utils.Reset)
-	fmt.Println(utils.Cyan + "Stopping all workers and cleaning up containers..." + utils.Reset)
-	err = worker.KillAllContainers(ctx)
-	if err != nil {
-		fmt.Println(utils.Red+"Error occurred while shutting down:"+utils.Reset, err)
-		cancel()
-		return
+	if !*apiOnly {
+		fmt.Println(utils.Cyan + "Stopping all workers and cleaning up containers..." + utils.Reset)
+		if err := worker.KillAllContainers(ctx); err != nil {
+			fmt.Println(utils.Red+"Error occurred while shutting down:"+utils.Reset, err)
+			cancel()
+			return
+		}
 	}
 	fmt.Println(utils.Yellow + "Shutdown complete." + utils.Reset)
 	cancel()
