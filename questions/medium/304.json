@@ -5,7 +5,7 @@
         "String",
         "Simulation"
     ],
-    "title": "Hash Divided String",
+    "title": "Hash Distributed String",
     "difficulty": "Medium",
     "description": "You are given:\n\nA string s of length n, consisting only of lowercase English letters\nAn integer k, where n is divisible by k\nTask\n\nConvert the string s into a new string result using the following process:\n\nDivide s into n / k contiguous substrings, each of length k.\nFor each substring:\nConvert each character into its alphabet index:\n'a' → 0, 'b' → 1, ..., 'z' → 25\nCompute the sum of these values\nTake the result modulo 26\nConvert this value back to a lowercase character\nAppend each resulting character to result\n\nReturn the final string result.\n\nExample 1\n\nInput:\ns = \"abcd\", k = 2\n\nOutput:\n\"bf\"\n\nExplanation:\n\nSubstring \"ab\" → 0 + 1 = 1 → 1 % 26 = 1 → 'b'\nSubstring \"cd\" → 2 + 3 = 5 → 5 % 26 = 5 → 'f'\n\nResult = \"bf\"\n\nExample 2\n\nInput:\ns = \"mxz\", k = 3\n\nOutput:\n\"i\"\n\nExplanation:\n\nSubstring \"mxz\" → 12 + 23 + 25 = 60\n60 % 26 = 8 → 'i'\nConstraints\n1 ≤ k ≤ 100\nk ≤ s.length ≤ 1000\ns.length is divisible by k\ns contains only lowercase English letters",
     "input_format": "Read from standard input. Format details depends on the problem.",
