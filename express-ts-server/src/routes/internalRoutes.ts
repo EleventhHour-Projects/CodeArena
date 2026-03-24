@@ -6,14 +6,9 @@ import { internalAuth } from '../middleware/auth.js';
 
 const router = Router();
 
-/**
- * POST /internal/event
- * Receives real-time battle events from CES.
- */
 router.post('/event', internalAuth, (req: Request, res: Response): void => {
   const { type, battleId, userId, problemId, submissionId, data, timestamp } = req.body;
 
-  // 1. Validation Logic
   if (!type || !battleId || !userId) {
     res.status(400).json({ error: 'Missing required fields: type, battleId, or userId' });
     return;
@@ -24,7 +19,6 @@ router.post('/event', internalAuth, (req: Request, res: Response): void => {
     return;
   }
 
-  // 2. Normalization
   const event: EventPayload = {
     type: type as EventType,
     battleId,
@@ -36,7 +30,7 @@ router.post('/event', internalAuth, (req: Request, res: Response): void => {
   };
 
   try {
-    // 3. Forward to Emitter
+    // Forward to Emitter
     emitEventToBattle(battleId, event);
 
     res.status(200).json({ status: 'OK' });

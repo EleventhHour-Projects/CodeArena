@@ -1,10 +1,13 @@
 // src/services/emitter.ts
 import { type EventPayload } from '../types/events.js';
+import { Server } from "socket.io";
 
-/**
- * Emits an event to a specific battle.
- * Placeholder function for future WebSocket or Redis integration.
- */
+let io: Server | null = null;
+
+export function setIO(ioInstance: Server) {
+  io = ioInstance;
+}
+
 export function emitEventToBattle(battleId: string, event: EventPayload): void {
   // Structured log for future extensibility
   console.log("[WSS_EMIT]", {
@@ -15,7 +18,9 @@ export function emitEventToBattle(battleId: string, event: EventPayload): void {
     data: event.data
   });
 
-  // Future Logic:
-  // - wss.to(battleId).emit('event', event);
-  // - redis.publish(`battle:${battleId}`, JSON.stringify(event));
+  if (!io) {
+    console.error("Socket.IO not initialized");
+    return;
+  }
+  io.to(battleId).emit("event", event);
 }

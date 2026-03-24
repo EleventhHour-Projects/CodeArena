@@ -1,20 +1,37 @@
-// src/index.ts
-import express, { type Application, type Request, type Response } from 'express';
+import express from 'express';
+import http from "http";
+import { Server } from "socket.io";
 import internalRoutes from './routes/internalRoutes.js';
+import { setIO } from "./services/emitter.js";
 
-const app: Application = express();
+const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
-
-// Routes
 app.use('/internal', internalRoutes);
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Welcome to Express & TypeScript Server');
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: "*" }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+io.on("connection", (socket) => {
+  console.log("user connected");
+
+  socket.on("JOIN_BATTLE", ({ battleId, userId }) => {
+    socket.join(battleId);
+    socket.data.userId = userId;
+
+    console.log(`User ${userId} joined ${battleId}`);
+  });
+  socket.on("disconnect", () => {
+    console.log(`User ${socket.data?.userId} disconnected`);
+  });
+});
+
+setIO(io);
+
+server.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
