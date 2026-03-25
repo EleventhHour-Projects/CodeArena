@@ -22,6 +22,7 @@ import (
 	"executor-service/gh"
 	"executor-service/queue"
 	"executor-service/utils"
+	"executor-service/websocket"
 	"executor-service/worker"
 	"flag"
 	"fmt"
@@ -134,6 +135,7 @@ func main() {
 	utils.REDIS_ADDR = os.Getenv("REDIS_ADDR")
 	utils.MONGO_URI = os.Getenv("MONGO_URI")
 	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
+	utils.INTERNAL_KEY = os.Getenv("INTERNAL_KEY")
 
 	defer cancel()
 	if !*apiOnly {
@@ -151,6 +153,7 @@ func main() {
 
 		// Listing for data in redis queue
 		go queue.ListenForTasks(ctx)
+		go websocket.ListForEvents(ctx)
 	}
 	// API service starting
 	go api.StartService()

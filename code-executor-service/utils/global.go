@@ -32,6 +32,7 @@ var REDIS_ADDR string
 var REDIS_PASSWORD string
 var MONGO_URI string
 var GITHUB_TOKEN string
+var INTERNAL_KEY string
 
 // CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
 var CustomWorkerPoolSize int
@@ -53,6 +54,7 @@ type CodeConfig struct {
 	UserID      bson.ObjectID          `json:"user_id,omitempty"`
 	BattleID    bson.ObjectID          `json:"battle_id,omitempty"`
 	Problem     Problem                `json:"problem,omitempty"`
+	Type        string                 `json:"type,omitempty"`
 }
 
 // WorkerPool is a struct that manages the worker pool for executing code tasks
