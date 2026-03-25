@@ -18,9 +18,9 @@ const (
 type EVENTTYPE string
 
 type WSSPayload struct {
-	UserID       bson.ObjectID  `bson:"userID"`
-	BattleID     bson.ObjectID  `bson:"BattleID"`
-	SubmissionID *bson.ObjectID `bson:"submissionID"`
+	UserID       bson.ObjectID  `bson:"userID" json:"userId"`
+	BattleID     bson.ObjectID  `bson:"BattleID" json:"battleId"`
+	SubmissionID *bson.ObjectID `bson:"submissionID" json:"submissionId"`
 	Event        EVENTTYPE      `json:"event"`
 }
 

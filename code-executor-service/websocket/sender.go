@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	WSSIP = "localhost:6767"
+	WSSIP = "http://localhost:6767/internal/event"
 )
 
 func sendToWSS(payload utils.WSSPayload) error {
@@ -47,10 +47,15 @@ func sendToWSS(payload utils.WSSPayload) error {
 
 func ListForEvents(ctx context.Context) {
 	for {
-		payload := utils.WSServer.Get()
-		err := sendToWSS(payload)
-		if err != nil {
-			fmt.Println(err)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			payload := utils.WSServer.Get()
+			err := sendToWSS(payload)
+			if err != nil {
+				fmt.Println("Error sending event to TS server:", err)
+			}
 		}
 	}
 }

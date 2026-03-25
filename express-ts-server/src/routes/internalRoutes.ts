@@ -7,15 +7,42 @@ import { internalAuth } from '../middleware/auth.js';
 const router = Router();
 
 router.post('/event', internalAuth, (req: Request, res: Response): void => {
-  const { type, battleId, userId, problemId, submissionId, data, timestamp } = req.body;
+  let { type, battleId, userId, problemId, submissionId, data, timestamp, event: goEvent } = req.body;
+
+  // Map Go 'event' field to TS 'type' field if needed
+  if (!type && goEvent) {
+    switch (goEvent) {
+      case 'EVENTRUN':
+        type = EventType.USER_RUN;
+        break;
+      case 'EVENTSUBMIT':
+        type = EventType.USER_RUN;
+        break;
+      case 'EVENTRUNPASS':
+        type = EventType.USER_RESULT;
+        data = { status: 'AC' };
+        break;
+      case 'EVENTRUNFAIL':
+        type = EventType.USER_RESULT;
+        data = { status: 'WA' };
+        break;
+      case 'EVENTTYPESUBMITPASS':
+      case 'EVENTSUBMITPASS':
+        type = EventType.USER_SOLVED;
+        data = { status: 'AC' };
+        break;
+      case 'EVENTTYPESUBMITFAIL':
+      case 'EVENTSUBMITFAIL':
+        type = EventType.USER_RESULT;
+        data = { status: 'WA' };
+        break;
+      default:
+        type = goEvent;
+    }
+  }
 
   if (!type || !battleId || !userId) {
     res.status(400).json({ error: 'Missing required fields: type, battleId, or userId' });
-    return;
-  }
-
-  if (type === EventType.USER_RESULT && (!data || !data.status)) {
-    res.status(400).json({ error: 'USER_RESULT requires data.status' });
     return;
   }
 
