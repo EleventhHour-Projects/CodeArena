@@ -86,7 +86,7 @@ export default function BattlePage({ params }: PageProps) {
     const currentUserId = (session.user as any).id;
     
     // Connect to backend server running Socket.IO (on port 3000 locally)
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000";
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:6767";
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 
@@ -168,7 +168,7 @@ export default function BattlePage({ params }: PageProps) {
          if (saved) {
            setCode(saved);
          } else {
-           setCode("#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}");
+           setCode("#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Write your code here\n    return 0;\n}");
          }
          lastProblemIdRef.current = problem.id;
        }
