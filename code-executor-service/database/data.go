@@ -98,7 +98,7 @@ func GetProblemConstraints(problemID int) (int, int, error) {
 
 // UpdateExecutionCodeStatus is a function that updates the status of an submission document in the MongoDB collection
 // It takes the ID of the execution code document and the new status as parameters, and updates the document in the database accordingly
-func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result, task utils.CodeConfig, pass bool) error {
+func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result, task utils.CodeConfig, pass bool) (*bson.ObjectID, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var passString string
@@ -109,7 +109,7 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 	}
 	bsonObjId, _ := bson.ObjectIDFromHex(id)
 	//fmt.Println(bsonObjId)
-	_, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
+	r, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
 		ExecutionCodeID: bsonObjId,
 		Code:            task.Code,
 		Language:        task.Language,
@@ -121,11 +121,11 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 		Status:          &passString,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	filter := bson.M{"_id": objID}
 	_, err = m.ExecutionCode.UpdateOne(context.TODO(), filter, bson.M{
@@ -133,5 +133,10 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 			"status": passString,
 		},
 	})
-	return err
+	objID, ok := r.InsertedID.(bson.ObjectID)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast inserted ID")
+	}
+
+	return &objID, nil
 }

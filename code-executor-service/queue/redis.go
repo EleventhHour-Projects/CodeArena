@@ -105,6 +105,7 @@ func ListenForTasks(ctx context.Context) {
 					MaxTime:   maxTime,
 					MaxMemory: maxMemory,
 				},
+				Type: data.Type,
 			})
 		}
 	}

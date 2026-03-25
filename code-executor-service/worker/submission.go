@@ -36,6 +36,21 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		ErrorMSG:             failed.ErrorMessage,
 		ActualOutput:         failed.ActualOutput,
 	}
-	database.MongoDB.UpdateExecutionCodeStatus(task.TaskID, status, *task, !failed.isFailed)
+	event := utils.EVENTTYPESUBMITPASS
+	if failed.isFailed {
+		event = utils.EVENTTYPESUBMITFAIL
+	} else if task.Type == "Run" {
+		event = utils.EVENTTYPERUNPASS
+		if isTle || isMle || failed.isFailed {
+			event = utils.EVENTTYPERUNFAIL
+		}
+	}
+	subID, _ := database.MongoDB.UpdateExecutionCodeStatus(task.TaskID, status, *task, !failed.isFailed)
+	utils.WSServer.Add(utils.WSSPayload{
+		UserID:       task.UserID,
+		BattleID:     task.BattleID,
+		SubmissionID: subID,
+		Event:        utils.EVENTTYPE(event),
+	})
 	return nil
 }

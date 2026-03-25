@@ -208,10 +208,20 @@ func worker(ctx context.Context) {
 	for {
 		task := utils.WorkerPoolData.GetTask()
 		fmt.Println("Worker received task:", task.TaskID)
-		
+		eventType := utils.EVENTTYPERUN
+		if task.Type == "Submit" {
+			eventType = utils.EVENTTYPESUBMIT
+		}
+		utils.WSServer.Add(utils.WSSPayload{
+			UserID:       task.UserID,
+			BattleID:     task.BattleID,
+			SubmissionID: nil,
+			Event:        utils.EVENTTYPE(eventType),
+		})
+
 		// 10 seconds is more reasonable for compilation + multiple test cases
 		runCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		
+
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
 			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
