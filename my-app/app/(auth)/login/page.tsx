@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import SignInButton from "./SignInButton";
-import logo from "@/public/logo.png"
+import { Logo } from "@/components/Logo"
 import Image from "next/image";
 
 export default async function LoginPage() {
@@ -21,10 +21,18 @@ export default async function LoginPage() {
                     <div className="absolute top-[20%] left-[-10%] w-[80%] h-[80%] bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-blue-900/10 via-[#09090b] to-transparent blur-[80px]" />
                     <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-indigo-900/10 via-[#09090b] to-transparent blur-[100px]" />
                 </div>
-                
-                <div className="flex items-center gap-4 z-10 text-white">
-                    <div className="p-3 bg-black rounded-2xl shadow-lg">
-                        <Image src={logo} alt="Logo" className="w-200 h-200" width={500} height={500} />
+
+                <div className="relative z-10 flex flex-col items-center gap-6">
+                    <div className="p-6 bg-zinc-900/50 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-sm group hover:border-primary/50 transition-all duration-500">
+                        <Logo width={120} height={105} className="group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <h1 className="text-5xl font-black tracking-tighter text-white">
+                            Code<span className="text-primary">Arena</span>
+                        </h1>
+                        <p className="text-zinc-500 font-medium tracking-widest uppercase text-xs">
+                            Ultimate Coding Battles
+                        </p>
                     </div>
                 </div>
             </div>

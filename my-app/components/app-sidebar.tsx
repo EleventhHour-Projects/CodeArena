@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import logo from "@/public/logo.svg"
+import { Logo } from "@/components/Logo"
 import Image from "next/image"
 import { ThemeToggleSidebarItem } from "@/components/theme-toggle-sidebar-item"
 
@@ -61,9 +61,9 @@ export async function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent hover:bg-muted/50 transition-colors data-[state=open]:text-sidebar-accent-foreground">
-              <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-card border border-border shadow-[0_0_12px_rgba(34,197,94,0.15)] text-sidebar-primary-foreground">
-                <Image src={logo} alt="Logo" width={42} height={42} />
-              </span>
+              <div className="flex items-center justify-center rounded-lg text-sidebar-primary-foreground overflow-hidden h-9 w-auto">
+                <Logo width={132} height={36} />
+              </div>
               <div className="flex flex-col justify-center pl-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate font-bold text-lg tracking-tight text-foreground">CodeArena</span>
