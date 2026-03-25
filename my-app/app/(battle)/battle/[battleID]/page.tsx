@@ -20,7 +20,7 @@ const playTone = (freq: number, type: OscillatorType, duration: number) => {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
     osc.stop(ctx.currentTime + duration);
   } catch (e) {}
 };
