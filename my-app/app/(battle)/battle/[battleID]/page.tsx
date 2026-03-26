@@ -6,6 +6,8 @@ import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckC
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { io, Socket } from "socket.io-client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Minimal synthesized sound effects
 const playTone = (freq: number, type: OscillatorType, duration: number) => {
@@ -75,6 +77,9 @@ export default function BattlePage({ params }: PageProps) {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const soundEnabledRef = useRef(soundEnabled);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [drawOffer, setDrawOffer] = useState<{ fromUserId: string } | null>(null);
+  const [isSurrenderOpen, setIsSurrenderOpen] = useState(false);
+  const [drawsSent, setDrawsSent] = useState(0);
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
@@ -133,6 +138,29 @@ export default function BattlePage({ params }: PageProps) {
           setCrackLevel(4);
           setFloatingMsg("Battle completed!");
           setTimeout(() => setFloatingMsg(""), 3000);
+          break;
+        case "USER_SURRENDER":
+          if (isOpponent) {
+            toast.success("Opponent has surrendered! You win! 🏆");
+            const winnerResult = isMePlayer1 ? "player1" : "player2";
+            handleBattleComplete(battleDetails, winnerResult);
+          }
+          break;
+        case "DRAW_REQUEST":
+          if (isOpponent) {
+            setDrawOffer({ fromUserId: event.userId });
+            toast.info("Opponent has offered a draw.");
+          }
+          break;
+        case "DRAW_RESPONSE":
+          if (isOpponent) {
+            if (event.data?.accepted) {
+              toast.success("Opponent accepted the draw offer.");
+              handleBattleComplete(battleDetails, "draw");
+            } else {
+              toast.error("Opponent declined the draw offer.");
+            }
+          }
           break;
       }
     });
@@ -195,6 +223,12 @@ export default function BattlePage({ params }: PageProps) {
         const battle = data.battle;
         setBattleDetails(battle);
 
+        if (session?.user) {
+          const currentUserId = (session.user as any).id;
+          const isP1 = String(battle.player1) === String(currentUserId);
+          setDrawsSent(isP1 ? (battle.drawOffersA || 0) : (battle.drawOffersB || 0));
+        }
+
         if (battle.status === "Completed") {
             setIsBattleOver(true);
             const statsRes = await fetch('/api/battle/complete', {
@@ -241,9 +275,9 @@ export default function BattlePage({ params }: PageProps) {
       }
     }
     fetchBattle();
-  }, [battleID]);
+  }, [battleID, session]);
 
-  const handleBattleComplete = async (currentBattle: any) => {
+  const handleBattleComplete = async (currentBattle: any, resultOverride?: string) => {
     if (isBattleOver) return;
     setIsBattleOver(true);
     toast.info("Battle has ended! Computing final results...");
@@ -258,7 +292,7 @@ export default function BattlePage({ params }: PageProps) {
       const res = await fetch('/api/battle/complete', {
          method: 'POST', 
          headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ battleId: battleID }) 
+         body: JSON.stringify({ battleId: battleID, resultOverride }) 
       });
       const data = await res.json();
       setBattleStats(data);
@@ -409,6 +443,81 @@ export default function BattlePage({ params }: PageProps) {
     }
   };
 
+  const handleSurrender = () => {
+    if (isBattleOver) return;
+    setIsSurrenderOpen(true);
+  };
+
+  const confirmSurrender = () => {
+    if (!socket || !session?.user || isBattleOver) return;
+    const currentUserId = (session.user as any).id;
+    
+    socket.emit("event", {
+      type: "USER_SURRENDER",
+      battleId: battleID,
+      userId: currentUserId,
+      timestamp: Date.now()
+    });
+    
+    const loserResult = isMePlayer1 ? "player2" : "player1";
+    handleBattleComplete(battleDetails, loserResult);
+    toast.error("You have surrendered the battle.");
+    setIsSurrenderOpen(false);
+  };
+
+  const handleDrawRequest = async () => {
+    if (!socket || !session?.user || isBattleOver) return;
+    
+    const currentUserId = (session.user as any).id;
+    
+    try {
+      const res = await fetch('/api/battle/draw-offer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ battleId: battleID, userId: currentUserId })
+      });
+      
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to send draw offer.");
+        return;
+      }
+      
+      socket.emit("event", {
+        type: "DRAW_REQUEST",
+        battleId: battleID,
+        userId: currentUserId,
+        timestamp: Date.now()
+      });
+      
+      setDrawsSent(data.count);
+      toast.success(`Draw request sent (${data.count}/2).`);
+    } catch (error) {
+      console.error("Error sending draw offer:", error);
+      toast.error("Failed to send draw offer due to a network error.");
+    }
+  };
+
+  const handleDrawResponse = (accepted: boolean) => {
+    if (!socket || !session?.user || !drawOffer) return;
+    const currentUserId = (session.user as any).id;
+    
+    socket.emit("event", {
+      type: "DRAW_RESPONSE",
+      battleId: battleID,
+      userId: currentUserId,
+      data: { accepted },
+      timestamp: Date.now()
+    });
+    
+    setDrawOffer(null);
+    if (accepted) {
+      handleBattleComplete(battleDetails, "draw");
+    } else {
+      toast.info("You declined the draw offer.");
+    }
+  };
+
   const formatSolveTime = (seconds: number) => {
     if (!seconds || seconds <= 0) return "Not Solved";
     const m = Math.floor(seconds / 60);
@@ -518,6 +627,66 @@ export default function BattlePage({ params }: PageProps) {
       {crackLevel >= 4 && !isBattleOver && (
         <div className="pointer-events-none absolute inset-0 z-40 bg-red-500/10 animate-pulse mix-blend-screen transition-opacity duration-1000"></div>
       )}
+
+      {/* Draw Offer Dialog */}
+      <Dialog open={!!drawOffer} onOpenChange={(open) => !open && setDrawOffer(null)}>
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-400">
+              <Handshake className="w-5 h-5" />
+              Draw Offered
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Your opponent has offered a draw. Would you like to accept?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleDrawResponse(false)}
+              className="border-white/10 hover:bg-zinc-800 text-white"
+            >
+              Decline
+            </Button>
+            <Button
+              onClick={() => handleDrawResponse(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white"
+            >
+              Accept
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Surrender Confirmation Dialog */}
+      <Dialog open={isSurrenderOpen} onOpenChange={setIsSurrenderOpen}>
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <Flag className="w-5 h-5" />
+              Surrender Battle?
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to surrender? This will record a loss and affect your rating.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsSurrenderOpen(false)}
+              className="border-white/10 hover:bg-zinc-800 text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmSurrender}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              Surrender
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* End of Battle Overlay */}
       {isBattleOver && (
@@ -727,11 +896,11 @@ export default function BattlePage({ params }: PageProps) {
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <button onClick={() => toast.success("Draw request sent to the opponent.")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-blue-400 font-medium hover:bg-blue-500/10 transition-colors border border-transparent hover:border-blue-500/20">
+            <button onClick={handleDrawRequest} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-blue-400 font-medium hover:bg-blue-500/10 transition-colors border border-transparent hover:border-blue-500/20">
               <Handshake className="w-3.5 h-3.5" />
               Draw
             </button>
-            <button onClick={() => toast.error("You have surrendered the battle.")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
+            <button onClick={handleSurrender} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
               <span className="w-4 h-4 text-red-400 flex items-center justify-center">☠</span>
               Surrender
             </button>

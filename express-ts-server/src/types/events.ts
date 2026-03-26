@@ -5,6 +5,9 @@ export enum EventType {
   USER_RESULT = 'USER_RESULT',
   USER_SOLVED = 'USER_SOLVED',
   USER_TYPING = 'USER_TYPING',
+  USER_SURRENDER = 'USER_SURRENDER',
+  DRAW_REQUEST = 'DRAW_REQUEST',
+  DRAW_RESPONSE = 'DRAW_RESPONSE',
 }
 
 export interface EventPayload {

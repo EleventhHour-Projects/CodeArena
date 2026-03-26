@@ -25,6 +25,14 @@ io.on("connection", (socket) => {
 
     console.log(`User ${userId} joined ${battleId}`);
   });
+  
+  socket.on("event", (event) => {
+    if (event.battleId) {
+      socket.to(event.battleId).emit("event", event);
+      console.log(`Relaying event ${event.type} from ${event.userId} to ${event.battleId}`);
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log(`User ${socket.data?.userId} disconnected`);
   });

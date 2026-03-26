@@ -41,4 +41,6 @@ export interface Battle {
     ratingChangeB?: number;
     newRatingA?: number;
     newRatingB?: number;
+    drawOffersA?: number; // count for player1
+    drawOffersB?: number; // count for player2
 }

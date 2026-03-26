@@ -35,6 +35,8 @@ const battleSchema = new mongoose.Schema<Battle>({
     ratingChangeB: { type: Number },
     newRatingA: { type: Number },
     newRatingB: { type: Number },
+    drawOffersA: { type: Number, default: 0 },
+    drawOffersB: { type: Number, default: 0 },
 })
 
 // Create indexes for efficient querying

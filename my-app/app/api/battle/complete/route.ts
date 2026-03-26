@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { battleId } = body;
+        const { battleId, resultOverride } = body;
 
         if (!battleId) {
             return NextResponse.json({ success: false, message: "Missing battleId" }, { status: 400 });
@@ -160,10 +160,14 @@ export async function POST(req: Request) {
 
             // --- Determine Winner ---
             let result: "player1" | "player2" | "draw" = "draw";
-            if (scoreA > scoreB) {
-                result = "player1";
-            } else if (scoreB > scoreA) {
-                result = "player2";
+            if (resultOverride) {
+                result = resultOverride;
+            } else {
+                if (scoreA > scoreB) {
+                    result = "player1";
+                } else if (scoreB > scoreA) {
+                    result = "player2";
+                }
             }
 
             // Elo Rating Update
