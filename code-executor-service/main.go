@@ -136,6 +136,10 @@ func main() {
 	utils.MONGO_URI = os.Getenv("MONGO_URI")
 	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
 	utils.INTERNAL_KEY = os.Getenv("INTERNAL_KEY")
+	utils.WSSIP = os.Getenv("WSSIP")
+	if utils.WSSIP == "" {
+		utils.WSSIP = "http://localhost:6767/internal/event"
+	}
 
 	defer cancel()
 	if !*apiOnly {

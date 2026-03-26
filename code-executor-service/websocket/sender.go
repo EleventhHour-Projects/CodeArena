@@ -10,17 +10,13 @@ import (
 	"time"
 )
 
-const (
-	WSSIP = "http://localhost:6767/internal/event"
-)
-
 func sendToWSS(payload utils.WSSPayload) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, WSSIP, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, utils.WSSIP, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}

@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"os"
+
 	"github.com/google/go-github/v84/github"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -33,6 +35,7 @@ var REDIS_PASSWORD string
 var MONGO_URI string
 var GITHUB_TOKEN string
 var INTERNAL_KEY string
+var WSSIP string
 
 // CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
 var CustomWorkerPoolSize int
@@ -229,3 +232,10 @@ type GitHubClient struct {
 }
 
 var GhClient *GitHubClient
+
+func GetEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
