@@ -239,12 +239,12 @@ export const FriendsList: React.FC = () => {
           <Users className="w-4 h-4" />
           <span>Friends</span>
           {onlineCount > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-              {onlineCount} active
+            <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 border border-primary/20 text-zinc-900 dark:text-zinc-100">
+              {onlineCount} Active
             </span>
           )}
           {friends.length > 0 && (
-            <span className="text-[10px] text-muted-foreground/60">/ {friends.length}</span>
+            <span className="text-[12px] text-zinc-900 dark:text-zinc-100">/ {friends.length}</span>
           )}
         </div>
 
@@ -348,7 +348,7 @@ export const FriendsList: React.FC = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-zinc-100 truncate">
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                         {friend.username}
                       </span>
                       <span className={`text-[10px] font-semibold ${tier.color}`}>
