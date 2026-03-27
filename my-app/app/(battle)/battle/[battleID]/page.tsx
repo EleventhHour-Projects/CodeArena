@@ -69,8 +69,8 @@ export default function BattlePage({ params }: PageProps) {
 
   // Real-time WebSocket State
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [opponentSolvedCount, setOpponentSolvedCount] = useState(0);
-  const [mySolvedCount, setMySolvedCount] = useState(0);
+  const [opponentSolvedProblems, setOpponentSolvedProblems] = useState<Set<number>>(new Set());
+  const [mySolvedProblems, setMySolvedProblems] = useState<Set<number>>(new Set());
   const [crackLevel, setCrackLevel] = useState(0);
   const [showHeartbeat, setShowHeartbeat] = useState(false);
   const [floatingMsg, setFloatingMsg] = useState("");
@@ -122,13 +122,13 @@ export default function BattlePage({ params }: PageProps) {
           break;
         case "USER_SOLVED":
           if (isOpponent) {
-            setOpponentSolvedCount(prev => prev + 1);
+            setOpponentSolvedProblems(prev => new Set(prev).add(event.problemId));
             setCrackLevel(prev => Math.min(prev + 1, 3));
             setFloatingMsg("Opponent solved a problem ⚡");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();
           } else {
-            setMySolvedCount(prev => prev + 1);
+            setMySolvedProblems(prev => new Set(prev).add(event.problemId));
             setFloatingMsg("You solved a problem 🚀");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();
@@ -844,8 +844,8 @@ export default function BattlePage({ params }: PageProps) {
 
       {/* Header */}
       <header className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#09090b] shadow-sm z-10 w-full shrink-0 relative">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col min-w-[120px]">
             <h1 className="text-sm font-semibold tracking-tight text-zinc-200">
               CodeArena Battle
             </h1>
@@ -853,20 +853,40 @@ export default function BattlePage({ params }: PageProps) {
               ID: {battleID.slice(0, 8)}
             </p>
           </div>
+
+          {/* New WebSocket Progress Bar - Top Left */}
+          <div className="flex flex-col gap-2.5 min-w-[280px] w-full max-w-[350px]">
+             {/* My Progress Line */}
+             <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest w-16 shrink-0 text-right">
+                  You ({mySolvedProblems.size}/{problems.length || 3})
+                </span>
+                <div className="relative flex-1 h-1.5 bg-zinc-800/80 rounded-full shadow-inner mt-0.5">
+                   {/* Track width */}
+                   <div style={{ width: `${(Math.min(mySolvedProblems.size, problems.length || 3) / Math.max(problems.length || 3, 1)) * 100}%` }} className="absolute left-0 top-0 h-full bg-emerald-500 border border-emerald-400/50 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(16,185,129,0.8)]">
+                       <span className="absolute -top-[14px] -right-2 text-lg drop-shadow-md z-20">🏃</span>
+                   </div>
+                   <span className="absolute -top-[15px] -right-3 text-lg drop-shadow-sm opacity-90 z-10 w-6 text-right">🏁</span>
+                </div>
+             </div>
+
+             {/* Opponent Progress Line */}
+             <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest w-16 shrink-0 text-right flex items-center justify-end gap-1 relative">
+                  {showHeartbeat && <Activity className="absolute -left-4 w-3.5 h-3.5 text-red-500 animate-[pulse_0.8s_ease-in-out_infinite] drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" />}
+                  Opp ({opponentSolvedProblems.size}/{problems.length || 3})
+                </span>
+                <div className="relative flex-1 h-1.5 bg-zinc-800/80 rounded-full shadow-inner mt-0.5">
+                   <div style={{ width: `${(Math.min(opponentSolvedProblems.size, problems.length || 3) / Math.max(problems.length || 3, 1)) * 100}%` }} className="absolute left-0 top-0 h-full bg-amber-500 border border-amber-400/50 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(245,158,11,0.8)]">
+                       <span className="absolute -top-[14px] -right-2 text-lg drop-shadow-md z-20">🏃</span>
+                   </div>
+                   <span className="absolute -top-[15px] -right-3 text-lg drop-shadow-sm opacity-90 z-10 w-6 text-right">🏁</span>
+                </div>
+             </div>
+          </div>
         </div>
 
-        {/* WebSocket Progress Bar Center */}
-        <div className="flex-1 hidden md:flex flex-col items-center justify-center max-w-[400px] mx-4">
-          <div className="flex justify-between w-full text-[10px] font-bold uppercase tracking-widest mb-1">
-             <span className="text-emerald-500">You ({mySolvedCount}/{problems.length || 3})</span>
-             <span className="text-amber-500">Opponent ({opponentSolvedCount}/{problems.length || 3})</span>
-          </div>
-          <div className="w-full h-1.5 bg-zinc-800 rounded-full flex shadow-inner overflow-hidden">
-             <div style={{ width: `${(mySolvedCount / Math.max(problems.length || 3, 1)) * 100}%` }} className="h-full bg-emerald-500 transition-all duration-700 shadow-[0_0_10px_#10b981]"></div>
-             <div className="flex-1"></div>
-             <div style={{ width: `${Math.min(100, (opponentSolvedCount / Math.max(problems.length || 3, 1)) * 100)}%` }} className="h-full bg-amber-500 transition-all duration-700 shadow-[0_0_10px_#f59e0b]"></div>
-          </div>
-        </div>
+        <div className="flex-1"></div> {/* Spacer to push right content */}
 
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-white/5 shadow-inner">
@@ -905,7 +925,6 @@ export default function BattlePage({ params }: PageProps) {
               Surrender
             </button>
             <div className="w-px h-5 bg-white/10 mx-1"></div>
-            {showHeartbeat && <Activity className="w-4 h-4 text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" />}
             <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={soundEnabled ? "Mute Sounds" : "Enable Sounds"}>
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
