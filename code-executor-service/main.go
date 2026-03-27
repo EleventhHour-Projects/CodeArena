@@ -138,6 +138,7 @@ func main() {
 	utils.INTERNAL_KEY = os.Getenv("INTERNAL_KEY")
 	utils.WSSIP = os.Getenv("WSSIP")
 	if utils.WSSIP == "" {
+		fmt.Println(utils.Red + "WSSIP not set" + utils.Reset)
 		utils.WSSIP = "http://localhost:6767/internal/event"
 	}
 
