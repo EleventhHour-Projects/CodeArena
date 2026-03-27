@@ -26,15 +26,58 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        // Fetch completed battles for the user
-        const battles = await BattleModel.find({
+        const url = new URL(req.url);
+        const page = parseInt(url.searchParams.get("page") || "1");
+        const limit = parseInt(url.searchParams.get("limit") || "10");
+        const search = url.searchParams.get("search") || "";
+        const skip = (page - 1) * limit;
+
+        // Fetch overall stats (unfiltered)
+        const totalBattles = await BattleModel.countDocuments({
             $or: [{ player1: user._id }, { player2: user._id }],
             status: "Completed"
-        })
-        .populate("player1", "name username image")
-        .populate("player2", "name username image")
-        .sort({ createdAt: -1 })
-        .lean();
+        });
+
+        const totalWins = await BattleModel.countDocuments({
+            winner: user._id,
+            status: "Completed"
+        });
+
+        // Search logic
+        let query: any = {
+            $or: [{ player1: user._id }, { player2: user._id }],
+            status: "Completed"
+        };
+
+        if (search) {
+            const matchingUsers = await UserModel.find({
+                $or: [
+                    { username: { $regex: search, $options: "i" } },
+                    { name: { $regex: search, $options: "i" } }
+                ]
+            }).select("_id");
+            const matchingUserIds = matchingUsers.map(u => u._id);
+
+            query = {
+                status: "Completed",
+                $or: [
+                    { player1: user._id, player2: { $in: matchingUserIds } },
+                    { player2: user._id, player1: { $in: matchingUserIds } }
+                ]
+            };
+        }
+
+        const filteredCount = await BattleModel.countDocuments(query);
+        const totalPages = Math.ceil(filteredCount / limit);
+
+        // Fetch paginated battles
+        const battles = await BattleModel.find(query)
+            .populate("player1", "name username image")
+            .populate("player2", "name username image")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
         // Transform battles to identify the opponent
         const transformedBattles = battles.map((battle: any) => {
@@ -70,7 +113,15 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            battles: transformedBattles
+            battles: transformedBattles,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalBattles,
+                totalWins,
+                filteredCount,
+                limit
+            }
         });
 
     } catch (error) {
