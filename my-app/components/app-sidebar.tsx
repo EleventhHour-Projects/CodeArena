@@ -43,7 +43,7 @@ export async function AppSidebar() {
   const userRating = session?.user?.rating ?? "Unable to fetch rating"
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/40 font-sans z-20">
+    <Sidebar collapsible="icon" className="border-r border-border/40 font-sans z-20" >
       {/* Background gradient — subtle in dark, clean in light */}
       <div className="absolute inset-0 bg-linear-to-b from-sidebar via-sidebar to-sidebar pointer-events-none z-0" />
       {/* Radial glow to match Center Panel */}
