@@ -108,21 +108,31 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 		passString = "Rejected"
 	}
 	bsonObjId, _ := bson.ObjectIDFromHex(id)
-	//fmt.Println(bsonObjId)
-	r, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
-		ExecutionCodeID: bsonObjId,
-		Code:            task.Code,
-		Language:        task.Language,
-		Result:          &status,
-		CreatedAt:       time.Now(),
-		UserID:          task.UserID,
-		BattleID:        task.BattleID,
-		Problem:         task.Problem,
-		Status:          &passString,
-	})
-	if err != nil {
-		return nil, err
+
+	var subID *bson.ObjectID
+
+	if task.Type == "Submit" {
+		r, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
+			ExecutionCodeID: bsonObjId,
+			Code:            task.Code,
+			Language:        task.Language,
+			Result:          &status,
+			CreatedAt:       time.Now(),
+			UserID:          task.UserID,
+			BattleID:        task.BattleID,
+			Problem:         task.Problem,
+			Status:          &passString,
+		})
+		if err != nil {
+			return nil, err
+		}
+		idVal, ok := r.InsertedID.(bson.ObjectID)
+		if !ok {
+			return nil, fmt.Errorf("failed to cast inserted ID")
+		}
+		subID = &idVal
 	}
+
 	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -133,10 +143,9 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 			"status": passString,
 		},
 	})
-	objID, ok := r.InsertedID.(bson.ObjectID)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast inserted ID")
+	if err != nil {
+		return nil, err
 	}
 
-	return &objID, nil
+	return subID, nil
 }

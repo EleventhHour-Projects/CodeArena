@@ -366,6 +366,31 @@ export default function BattlePage({ params }: PageProps) {
     }
   }, [activeTab, currentQuestion, problem?.id]);
 
+  const fetchBattleProgress = async () => {
+    if (!battleID || !session?.user || !battleDetails) return;
+    try {
+      const res = await fetch(`/api/battle/${battleID}/progress`);
+      const data = await res.json();
+      if (data.success) {
+        const currentUserId = (session.user as any).id;
+        const isMeP1 = String(battleDetails.player1) === String(currentUserId);
+        const myIds = isMeP1 ? data.player1Solved : data.player2Solved;
+        const opIds = isMeP1 ? data.player2Solved : data.player1Solved;
+        
+        setMySolvedProblems(new Set(myIds.map(Number)));
+        setOpponentSolvedProblems(new Set(opIds.map(Number)));
+      }
+    } catch (error) {
+      console.error("Failed to fetch battle progress:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (battleID && session?.user && battleDetails) {
+      fetchBattleProgress();
+    }
+  }, [battleID, session, battleDetails, currentQuestion]);
+
   const pollSubmissionStatus = async (execId: string, type: "Run" | "Submit", toastId: string | number) => {
     const pollInterval = setInterval(async () => {
       try {
