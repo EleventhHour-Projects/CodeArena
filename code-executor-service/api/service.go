@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"executor-service/utils"
+	"executor-service/worker"
 	"fmt"
 	"log"
 	"os"
@@ -41,6 +42,24 @@ func GetTaskInfo(c fiber.Ctx) error {
 	})
 }
 
+func SpawnOneWorker(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	worker.SpawnWorkerFailed(utils.WorkerCTX)
+	return c.SendStatus(200)
+}
+
+func StopAnyOneWorker(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	p := true
+	utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
+	time.Sleep(time.Second * 1)
+	return c.SendStatus(200)
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -74,5 +93,7 @@ func StartService() {
 	app.Post("/go/api/queue", AddToQueue)
 	app.Get("/info", GetTaskInfo)
 	app.Post("/api/admin/problem", SaveProblem)
+	app.Get("/api/internal/spawn", SpawnOneWorker)
+	app.Get("/api/internal/stop", StopAnyOneWorker)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

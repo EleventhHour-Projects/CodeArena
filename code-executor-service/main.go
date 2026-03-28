@@ -129,6 +129,7 @@ func main() {
 	utils.StartTime = time.Now()
 	// Context for whole service
 	ctx, cancel := context.WithCancel(context.Background())
+	utils.WorkerCTX = ctx
 
 	// Loading environment variables
 	loadEnv()
