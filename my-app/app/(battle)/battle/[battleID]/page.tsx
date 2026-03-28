@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2, Activity, Volume2, VolumeX } from "lucide-react";
+import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2, Activity, Volume2, VolumeX, MessageSquare, MessageSquareOff, Zap, ZapOff } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { io, Socket } from "socket.io-client";
@@ -80,6 +80,25 @@ export default function BattlePage({ params }: PageProps) {
   const [drawOffer, setDrawOffer] = useState<{ fromUserId: string } | null>(null);
   const [isSurrenderOpen, setIsSurrenderOpen] = useState(false);
   const [drawsSent, setDrawsSent] = useState(0);
+  const [toastsEnabled, setToastsEnabled] = useState(true);
+  const [realTimeInfoEnabled, setRealTimeInfoEnabled] = useState(true);
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedToasts = localStorage.getItem("battle_toasts_enabled");
+    if (savedToasts !== null) setToastsEnabled(savedToasts === "true");
+    const savedRealTime = localStorage.getItem("battle_realtime_info_enabled");
+    if (savedRealTime !== null) setRealTimeInfoEnabled(savedRealTime === "true");
+  }, []);
+
+  // Sync settings to localStorage
+  useEffect(() => {
+    localStorage.setItem("battle_toasts_enabled", String(toastsEnabled));
+  }, [toastsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("battle_realtime_info_enabled", String(realTimeInfoEnabled));
+  }, [realTimeInfoEnabled]);
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
@@ -102,7 +121,7 @@ export default function BattlePage({ params }: PageProps) {
       
       switch (event.type) {
         case "USER_RUN":
-          if (isOpponent) {
+          if (isOpponent && realTimeInfoEnabled) {
             setShowHeartbeat(true);
             setTimeout(() => setShowHeartbeat(false), 2000);
             setFloatingMsg("Opponent is executing code...");
@@ -111,7 +130,7 @@ export default function BattlePage({ params }: PageProps) {
           }
           break;
         case "USER_RESULT":
-          if (isOpponent) {
+          if (isOpponent && realTimeInfoEnabled) {
             if (event.data?.status === "WA") {
               setFloatingMsg("Opponent failed a testcase ❌");
             } else if (event.data?.status === "AC") {
@@ -123,25 +142,31 @@ export default function BattlePage({ params }: PageProps) {
         case "USER_SOLVED":
           if (isOpponent) {
             setOpponentSolvedProblems(prev => new Set(prev).add(Number(event.problemId)));
-            setCrackLevel(prev => Math.min(prev + 1, 3));
-            setFloatingMsg("Opponent solved a problem ⚡");
-            setTimeout(() => setFloatingMsg(""), 3000);
-            if (soundEnabledRef.current) playSuccessSound();
+            if (realTimeInfoEnabled) {
+              setCrackLevel(prev => Math.min(prev + 1, 3));
+              setFloatingMsg("Opponent solved a problem ⚡");
+              setTimeout(() => setFloatingMsg(""), 3000);
+              if (soundEnabledRef.current) playSuccessSound();
+            }
           } else {
             setMySolvedProblems(prev => new Set(prev).add(Number(event.problemId)));
-            setFloatingMsg("You solved a problem 🚀");
-            setTimeout(() => setFloatingMsg(""), 3000);
-            if (soundEnabledRef.current) playSuccessSound();
+            if (realTimeInfoEnabled) {
+              setFloatingMsg("You solved a problem 🚀");
+              setTimeout(() => setFloatingMsg(""), 3000);
+              if (soundEnabledRef.current) playSuccessSound();
+            }
           }
           break;
         case "MATCH_COMPLETE":
-          setCrackLevel(4);
-          setFloatingMsg("Battle completed!");
-          setTimeout(() => setFloatingMsg(""), 3000);
+          if (realTimeInfoEnabled) {
+            setCrackLevel(4);
+            setFloatingMsg("Battle completed!");
+            setTimeout(() => setFloatingMsg(""), 3000);
+          }
           break;
         case "USER_SURRENDER":
           if (isOpponent) {
-            toast.success("Opponent has surrendered! You win! 🏆");
+            if (toastsEnabled) toast.success("Opponent has surrendered! You win! 🏆");
             const winnerResult = isMePlayer1 ? "player1" : "player2";
             handleBattleComplete(battleDetails, winnerResult);
           }
@@ -149,16 +174,16 @@ export default function BattlePage({ params }: PageProps) {
         case "DRAW_REQUEST":
           if (isOpponent) {
             setDrawOffer({ fromUserId: event.userId });
-            toast.info("Opponent has offered a draw.");
+            if (toastsEnabled) toast.info("Opponent has offered a draw.");
           }
           break;
         case "DRAW_RESPONSE":
           if (isOpponent) {
             if (event.data?.accepted) {
-              toast.success("Opponent accepted the draw offer.");
+              if (toastsEnabled) toast.success("Opponent accepted the draw offer.");
               handleBattleComplete(battleDetails, "draw");
             } else {
-              toast.error("Opponent declined the draw offer.");
+              if (toastsEnabled) toast.error("Opponent declined the draw offer.");
             }
           }
           break;
@@ -246,7 +271,9 @@ export default function BattlePage({ params }: PageProps) {
 
           setMySolvedProblems(initialMySolved);
           setOpponentSolvedProblems(initialOppSolved);
-          setCrackLevel(Math.min(initialOppSolved.size, 3));
+          if (realTimeInfoEnabled) {
+            setCrackLevel(Math.min(initialOppSolved.size, 3));
+          }
         }
 
         if (battle.status === "Completed") {
@@ -284,7 +311,7 @@ export default function BattlePage({ params }: PageProps) {
             const probData = await probRes.json();
             setProblems(probData.problems || []);
         } else {
-            toast.error("Critical Error: No problems assigned to this battle.");
+            if (toastsEnabled) toast.error("Critical Error: No problems assigned to this battle.");
             setProblems([]);
         }
 
@@ -317,7 +344,7 @@ export default function BattlePage({ params }: PageProps) {
       const data = await res.json();
       setBattleStats(data);
     } catch (e) {
-      toast.error("Failed to compute battle results.");
+      if (toastsEnabled) toast.error("Failed to compute battle results.");
     }
   };
 
@@ -400,18 +427,18 @@ export default function BattlePage({ params }: PageProps) {
            if (type === "Submit") {
              fetchSubmissions(); // Refresh submissions list
              if (data.status === "Accepted") {
-                toast.success("Submission Accepted! 🎉", { id: toastId });
+                if (toastsEnabled) toast.success("Submission Accepted! 🎉", { id: toastId });
              } else {
-                toast.error(`Submission Failed: ${data.status}`, { id: toastId });
+                if (toastsEnabled) toast.error(`Submission Failed: ${data.status}`, { id: toastId });
              }
            } else {
-               toast.info(`Run Completed: ${data.status}`, { id: toastId });
+               if (toastsEnabled) toast.info(`Run Completed: ${data.status}`, { id: toastId });
            }
         }
       } catch (e) {
          clearInterval(pollInterval);
          setIsExecuting(false);
-         toast.error("Error checking submission status", { id: toastId });
+         if (toastsEnabled) toast.error("Error checking submission status", { id: toastId });
       }
     }, 1500);
   };
@@ -431,7 +458,12 @@ export default function BattlePage({ params }: PageProps) {
     setExecutionResult(null); // Clear previous results
     
     // Create a loading toast and capture its ID
-    const toastId = toast.loading(`${type} initiated. Polling for results...`);
+    let toastId: string | number | undefined; 
+    if (toastsEnabled) {
+      toastId = toast.loading(`${type} initiated. Polling for results...`);
+    } else {
+      toastId = "silent-toast"; // Placeholder for pollSubmissionStatus
+    }
     
     try {
       const response = await fetch('/api/battle/exec-code', {
@@ -451,15 +483,15 @@ export default function BattlePage({ params }: PageProps) {
 
       const data = await response.json();
       if (data.success) {
-        pollSubmissionStatus(data.executionCode._id || data.executionCode.id || data.executionCode, type, toastId);
+        pollSubmissionStatus(data.executionCode._id || data.executionCode.id || data.executionCode, type, toastId!);
       } else {
         setIsExecuting(false);
-        toast.error(data.error || `Failed to ${type} code`, { id: toastId });
+        if (toastsEnabled) toast.error(data.error || `Failed to ${type} code`, { id: toastId! });
       }
     } catch (err) {
       console.error(`Error during ${type}:`, err);
       setIsExecuting(false);
-      toast.error(`A network error occurred during ${type}`, { id: toastId });
+      if (toastsEnabled) toast.error(`A network error occurred during ${type}`, { id: toastId! });
     }
   };
 
@@ -481,7 +513,7 @@ export default function BattlePage({ params }: PageProps) {
     
     const loserResult = isMePlayer1 ? "player2" : "player1";
     handleBattleComplete(battleDetails, loserResult);
-    toast.error("You have surrendered the battle.");
+    if (toastsEnabled) toast.error("You have surrendered the battle.");
     setIsSurrenderOpen(false);
   };
 
@@ -499,7 +531,7 @@ export default function BattlePage({ params }: PageProps) {
       
       const data = await res.json();
       if (!data.success) {
-        toast.error(data.message || "Failed to send draw offer.");
+        if (toastsEnabled) toast.error(data.message || "Failed to send draw offer.");
         return;
       }
       
@@ -511,10 +543,10 @@ export default function BattlePage({ params }: PageProps) {
       });
       
       setDrawsSent(data.count);
-      toast.success(`Draw request sent (${data.count}/2).`);
+      if (toastsEnabled) toast.success(`Draw request sent (${data.count}/2).`);
     } catch (error) {
       console.error("Error sending draw offer:", error);
-      toast.error("Failed to send draw offer due to a network error.");
+      if (toastsEnabled) toast.error("Failed to send draw offer due to a network error.");
     }
   };
 
@@ -534,7 +566,7 @@ export default function BattlePage({ params }: PageProps) {
     if (accepted) {
       handleBattleComplete(battleDetails, "draw");
     } else {
-      toast.info("You declined the draw offer.");
+      if (toastsEnabled) toast.info("You declined the draw offer.");
     }
   };
 
@@ -614,14 +646,14 @@ export default function BattlePage({ params }: PageProps) {
     <div className="h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-hidden relative">
       
       {/* Real-time Event Floating Msg */}
-      {floatingMsg && (
+      {realTimeInfoEnabled && floatingMsg && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#121214]/90 border border-white/10 px-6 py-2.5 rounded-full shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)] backdrop-blur-md animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
            <span className="text-white text-xs font-bold tracking-wide">{floatingMsg}</span>
         </div>
       )}
 
       {/* Opponent Progress Crack Animation UI */}
-      {crackLevel > 0 && crackLevel < 4 && (
+      {realTimeInfoEnabled && crackLevel > 0 && crackLevel < 4 && (
         <div className="pointer-events-none absolute inset-0 z-40 overflow-hidden mix-blend-overlay opacity-20">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
              <defs>
@@ -644,7 +676,7 @@ export default function BattlePage({ params }: PageProps) {
       )}
 
       {/* Final Collapse UI Overlay */}
-      {crackLevel >= 4 && !isBattleOver && (
+      {realTimeInfoEnabled && crackLevel >= 4 && !isBattleOver && (
         <div className="pointer-events-none absolute inset-0 z-40 bg-red-500/10 animate-pulse mix-blend-screen transition-opacity duration-1000"></div>
       )}
 
@@ -947,6 +979,12 @@ export default function BattlePage({ params }: PageProps) {
             <div className="w-px h-5 bg-white/10 mx-1"></div>
             <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={soundEnabled ? "Mute Sounds" : "Enable Sounds"}>
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <button onClick={() => setToastsEnabled(!toastsEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={toastsEnabled ? "Hide Toasts" : "Show Toasts"}>
+              {toastsEnabled ? <MessageSquare className="w-4 h-4" /> : <MessageSquareOff className="w-4 h-4" />}
+            </button>
+            <button onClick={() => setRealTimeInfoEnabled(!realTimeInfoEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={realTimeInfoEnabled ? "Disable Real-time Info" : "Enable Real-time Info"}>
+              {realTimeInfoEnabled ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
             </button>
           </div>
         </div>
