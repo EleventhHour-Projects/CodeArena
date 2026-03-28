@@ -1,0 +1,15 @@
+{
+    "id": 315,
+    "slug": "total-waviness-of-numbers-in-range-i",
+    "tags": [
+        "Math",
+        "Dynamic Programming",
+        "Enumeration"
+    ],
+    "title": "Total Waviness of Numbers in Range I",
+    "difficulty": "Medium",
+    "description": "You are given two integers num1 and num2 representing an inclusive range [num1, num2].\n\nThe waviness of a number is defined as the total number of its peaks and valleys.\n\nDefinitions\n\nFor a number’s digits:\n\nA digit is a peak if it is strictly greater than both of its immediate neighbors.\nA digit is a valley if it is strictly less than both of its immediate neighbors.\nThe first and last digits cannot be peaks or valleys.\nAny number with fewer than 3 digits has a waviness of 0.\nTask\n\nReturn the sum of waviness values for all numbers in the range [num1, num2].\n\nExamples\n\nExample 1\nInput: num1 = 120, num2 = 130\nOutput: 3\n\nExplanation:\n\n120 → middle digit 2 is a peak → waviness = 1\n121 → middle digit 2 is a peak → waviness = 1\n130 → middle digit 3 is a peak → waviness = 1\nAll other numbers contribute 0.\nTotal = 3\n\nExample 2\nInput: num1 = 198, num2 = 202\nOutput: 3\n\nExplanation:\n\n198 → 9 is a peak → 1\n201 → 0 is a valley → 1\n202 → 0 is a valley → 1\nTotal = 3\n\nExample 3\nInput: num1 = 4848, num2 = 4848\nOutput: 2\n\nExplanation:\n\n4848 →\n8 (2nd digit) is a peak\n4 (3rd digit) is a valley\nTotal waviness = 2\nConstraints\n1 ≤ num1 ≤ num2 ≤ 10⁵",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
