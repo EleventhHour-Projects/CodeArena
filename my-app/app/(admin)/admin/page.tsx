@@ -84,6 +84,15 @@ export default function AdminDashboard() {
             </Button>
 
             <Button
+              onClick={() => router.push("/admin/testproblem")}
+              variant="outline"
+              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
+            >
+              <Code className="h-4 w-4" />
+              Test Problem
+            </Button>
+
+            <Button
               variant="outline"
               onClick={handleLogout}
               className="border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -252,11 +261,12 @@ export default function AdminDashboard() {
 
           {/* grid */}
           {executorInfo ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
               <Stat label="Workers" value={executorInfo.active_worker} icon={Activity} />
               <Stat label="Tasks" value={executorInfo.total_tasks} icon={Code} />
               <Stat label="Avg Time" value={`${executorInfo.average_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
               <Stat label="Total Time" value={`${executorInfo.total_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
+              <Stat label="Cluster Uptime" value={executorInfo.total_active_time} icon={Activity} />
             </div>
           ) : (
             <div className="text-zinc-500 text-center py-10">
