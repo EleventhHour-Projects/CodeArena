@@ -8,7 +8,7 @@
 package utils
 
 import (
-	"errors"
+	"context"
 	"flag"
 	"sync"
 	"time"
@@ -37,6 +37,8 @@ var GITHUB_TOKEN string
 var INTERNAL_KEY string
 var WSSIP string
 
+var WorkerCTX context.Context
+
 // CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
 var CustomWorkerPoolSize int
 
@@ -58,6 +60,7 @@ type CodeConfig struct {
 	BattleID    bson.ObjectID          `json:"battle_id,omitempty"`
 	Problem     Problem                `json:"problem,omitempty"`
 	Type        string                 `json:"type,omitempty"`
+	StopSignal  *bool
 }
 
 // WorkerPool is a struct that manages the worker pool for executing code tasks
@@ -162,18 +165,6 @@ func (wp *WorkerPool) GetTask() CodeConfig {
 	return <-wp.channel
 }
 
-// ErrorHandler is a utility function that panics if the provided error is not nil
-// It is used throughout the application to handle errors in a consistent manner
-// err is the error to be checked. If err is not nil, the function will panic with the error message
-func ErrorHandler(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func FakeError() error {
-	return errors.New("fake error")
-}
 
 // FlagUsage is a function that prints the usage information for the command-line flags of the application, providing users with guidance on how to run the application and what options are available for configuration
 // It displays the usage syntax, available options, and examples of how to run the application with different configurations, helping users understand how to use the command-line flags effectively when starting the code executor service
