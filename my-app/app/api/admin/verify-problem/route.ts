@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       code,
       language: language || 'cpp',
       userId: "60d0fe4f5311236168a109ca", // Placeholder Admin ID or fetch from session
+      battleId: "60d0fe4f5311236168a109cb", // Placeholder Battle ID for admin verification
       problem: { difficulty, id: problemId },
       testcases: testcases, // These are the cases to run against
       status: "Pending",
