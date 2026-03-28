@@ -1,0 +1,72 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "2 2\n1 0\n0 3\n2\n0 1",
+                "output": "true"
+            },
+            {
+                "input": "1 2\n1 0\n2\n2 0",
+                "output": "false"
+            },
+            {
+                "input": "1 2\n2 0\n2\n1 0",
+                "output": "false"
+            }
+        ],
+        "submit": [
+            {
+                "input": "5 2\n5 0\n-10 -2\n0 -5\n-2 -2\n-7 1\n2\n7 7",
+                "output": "false"
+            },
+            {
+                "input": "2 2\n1 0\n0 3\n2\n0 1",
+                "output": "true"
+            },
+            {
+                "input": "1 2\n0 0\n2\n1 1",
+                "output": "false"
+            },
+            {
+                "input": "1 2\n10000 10000\n2\n1 1",
+                "output": "true"
+            },
+            {
+                "input": "1 2\n-10000 -10000\n2\n-1 -1",
+                "output": "true"
+            },
+            {
+                "input": "2 2\n1 1\n1 1\n2\n2 2",
+                "output": "false"
+            },
+            {
+                "input": "1 2\n1 1\n2\n2 2",
+                "output": "false"
+            },
+            {
+                "input": "1 2\n3 0\n2\n1 0",
+                "output": "true"
+            },
+            {
+                "input": "3 2\n5 5\n2 3\n10 10\n2\n4 4",
+                "output": "false"
+            },
+            {
+                "input": "3 2\n1 0\n2 0\n3 0\n2\n4 0",
+                "output": "false"
+            },
+            {
+                "input": "1 2\n9999 9999\n2\n10000 10000",
+                "output": "false"
+            },
+            {
+                "input": "3 2\n1 0\n2 0\n3 0\n2\n4 0",
+                "output": "false"
+            },
+            {
+                "input": "3 2\n2 2\n3 3\n4 4\n2\n5 5",
+                "output": "false"
+            }
+        ]
+    }
+}
