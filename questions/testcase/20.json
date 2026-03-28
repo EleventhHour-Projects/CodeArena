@@ -1,0 +1,56 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "ABFCACDB",
+                "output": "2"
+            },
+            {
+                "input": "ACBBD",
+                "output": "5"
+            }
+        ],
+        "submit": [
+            {
+                "input": "CCADDADDDBBCDDBABACADABAABADCABDCCBDACBDBAADDABCABBCABBDDAABCBCBBCCCDBCDDDADAACBCACDDBBA",
+                "output": "62"
+            },
+            {
+                "input": "DCDCBCBDACBBABDABABCCCBABCCCCCCCBDDBCDACDADABADDCDBBC",
+                "output": "35"
+            },
+            {
+                "input": "BBBDCADCDACACDBBCACDACDABCBCDDADCDCACCDDBCACCDDDCCBCDBDCBDDCBCBBCCBBBAACBBB",
+                "output": "47"
+            },
+            {
+                "input": "BCDDBCCCCBACCADDCBDADDCCABCCCBACAADDADCDAACABDDDDABBACBABCABCCDCABBA",
+                "output": "48"
+            },
+            {
+                "input": "RZAAAACCCCCAABBDDDDDBBBBYAAAAAAACAACAACACCAAAACCACCDDBDDBBBBDDBDBBDBBDBBBBBBBMBSCACCACDBDDBDACCDDBCD",
+                "output": "6"
+            },
+            {
+                "input": "DCAACCCCCCACCCAACAABBDBBDDDBDDDDDDBBDPCAACAAACAAAAAACDBBBBBBDBBBDBBDACCCAAABBBDDDAACACDBDBBCAACDBBDP",
+                "output": "4"
+            },
+            {
+                "input": "AXFCCCCCACCACCCAACAACACACAACCAAABBBDDBBDBDBDBBDBBDDDBDDBDDDDDCCACDBDDCABD",
+                "output": "3"
+            },
+            {
+                "input": "ACACACACACACACACACACACACACACACACACACACACACACACACACDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDBDB",
+                "output": "0"
+            },
+            {
+                "input": "BJKDKABJ",
+                "output": "6"
+            },
+            {
+                "input": "C",
+                "output": "1"
+            }
+        ]
+    }
+}
