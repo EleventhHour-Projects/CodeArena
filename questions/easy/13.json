@@ -1,0 +1,15 @@
+{
+    "id": 13,
+    "slug": "flip-square-submatrix-vertically",
+    "tags": [
+        "Array",
+        "Two Pointers",
+        "Matrix"
+    ],
+    "title": "Flip Square Submatrix Vertically",
+    "difficulty": "Easy",
+    "description": "You are given an m × n integer matrix grid, along with three integers x, y, and k.\n\n(x, y) represents the top-left corner of a square submatrix.\nk represents the side length of that submatrix.\n\nYour task is to flip this k × k submatrix vertically, meaning you reverse the order of its rows while keeping the columns unchanged.\n\nReturn the updated matrix after performing this operation.\n\nExamples\n\nExample 1\nInput:\ngrid = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]\nx = 1, y = 0, k = 3\n\nOutput:\n[[1,2,3,4],[13,14,15,8],[9,10,11,12],[5,6,7,16]]\n\nExplanation:\nThe 3 × 3 submatrix starting at (1, 0) is:\n\n[5, 6, 7]\n[9,10,11]\n[13,14,15]\n\nAfter flipping vertically:\n\n[13,14,15]\n[9,10,11]\n[5, 6, 7]\n\nExample 2\nInput:\ngrid = [[3,4,2,3],[2,3,4,2]]\nx = 0, y = 2, k = 2\n\nOutput:\n[[3,4,4,2],[2,3,2,3]]\n\nExplanation:\nThe selected submatrix is:\n\n[2,3]\n[4,2]\n\nAfter vertical flip:\n\n[4,2]\n[2,3]\nConstraints\nm == grid.length\nn == grid[i].length\n1 ≤ m, n ≤ 50\n1 ≤ grid[i][j] ≤ 100\n0 ≤ x \u003c m\n0 ≤ y \u003c n\n1 ≤ k ≤ min(m - x, n - y)",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
