@@ -122,13 +122,13 @@ export default function BattlePage({ params }: PageProps) {
           break;
         case "USER_SOLVED":
           if (isOpponent) {
-            setOpponentSolvedProblems(prev => new Set(prev).add(Number(event.problemId)));
+            setOpponentSolvedProblems(prev => new Set(prev).add(event.problemId));
             setCrackLevel(prev => Math.min(prev + 1, 3));
             setFloatingMsg("Opponent solved a problem ⚡");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();
           } else {
-            setMySolvedProblems(prev => new Set(prev).add(Number(event.problemId)));
+            setMySolvedProblems(prev => new Set(prev).add(event.problemId));
             setFloatingMsg("You solved a problem 🚀");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();
@@ -227,26 +227,6 @@ export default function BattlePage({ params }: PageProps) {
           const currentUserId = (session.user as any).id;
           const isP1 = String(battle.player1) === String(currentUserId);
           setDrawsSent(isP1 ? (battle.drawOffersA || 0) : (battle.drawOffersB || 0));
-
-          // Initialize solved problems state from battle details on reload
-          const initialMySolved = new Set<number>();
-          const initialOppSolved = new Set<number>();
-
-          if (data.successfulSubmissions && Array.isArray(data.successfulSubmissions)) {
-            data.successfulSubmissions.forEach((sub: any) => {
-               if (sub.problem?.id) {
-                   if (String(sub.userId) === String(currentUserId)) {
-                       initialMySolved.add(sub.problem.id);
-                   } else {
-                       initialOppSolved.add(sub.problem.id);
-                   }
-               }
-            });
-          }
-
-          setMySolvedProblems(initialMySolved);
-          setOpponentSolvedProblems(initialOppSolved);
-          setCrackLevel(Math.min(initialOppSolved.size, 3));
         }
 
         if (battle.status === "Completed") {

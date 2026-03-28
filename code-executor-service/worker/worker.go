@@ -216,7 +216,6 @@ func worker(ctx context.Context) {
 			UserID:       task.UserID,
 			BattleID:     task.BattleID,
 			SubmissionID: nil,
-			ProblemID:    task.Problem.ID,
 			Event:        utils.EVENTTYPE(eventType),
 		})
 

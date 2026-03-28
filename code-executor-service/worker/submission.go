@@ -50,7 +50,6 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		UserID:       task.UserID,
 		BattleID:     task.BattleID,
 		SubmissionID: subID,
-		ProblemID:    task.Problem.ID,
 		Event:        utils.EVENTTYPE(event),
 	})
 	return nil
