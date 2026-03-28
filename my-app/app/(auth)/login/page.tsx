@@ -28,9 +28,9 @@ export default async function LoginPage() {
                     </div>
                     <div className="text-center space-y-2">
                         <h1 className="text-5xl font-black tracking-tighter text-white">
-                            Code<span className="text-primary">Arena</span>
+                            Code<span className="text-zinc-900 dark:text-zinc-400">Arena</span>
                         </h1>
-                        <p className="text-zinc-500 font-medium tracking-widest uppercase text-xs">
+                        <p className="text-zinc-900 dark:text-zinc-400 font-medium tracking-widest uppercase text-xs">
                             Ultimate Coding Battles
                         </p>
                     </div>
