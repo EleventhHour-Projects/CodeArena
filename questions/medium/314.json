@@ -1,0 +1,15 @@
+{
+    "id": 314,
+    "slug": "number-of-people-aware-of-a-secret",
+    "tags": [
+        "Dynamic Programming",
+        "Queue",
+        "Simulation"
+    ],
+    "title": "Number of People Aware of a Secret",
+    "difficulty": "Medium",
+    "description": "On day 1, a single person discovers a secret.\n\nYou are given three integers:\n\nn: the total number of days\ndelay: the number of days after which a person starts sharing the secret\nforget: the number of days after which a person forgets the secret\nRules\nEach person can start sharing the secret only after delay days from when they learned it.\nEach person will forget the secret after forget days.\nA person cannot share the secret on the day they forget it or any day after.\nEvery day, a person who is eligible to share will share the secret with one new person.\nTask\n\nReturn the number of people who still remember the secret at the end of day n.\n\nSince the answer can be large, return it modulo:\n\n10⁹ + 7\nExamples\n\nExample 1\nInput: n = 6, delay = 2, forget = 4\nOutput: 5\n\nExplanation:\n\nDay 1: A knows the secret → 1\nDay 2: A → 1\nDay 3: A shares with B → 2\nDay 4: A shares with C → 3\nDay 5: A forgets, B shares with D → 3\nDay 6: B shares with E, C shares with F → 5\n\nExample 2\nInput: n = 4, delay = 1, forget = 3\nOutput: 6\n\nExplanation:\n\nDay 1: A → 1\nDay 2: A → B → 2\nDay 3: A, B → C, D → 4\nDay 4: A forgets; B, C, D → share → 6\nConstraints\n2 ≤ n ≤ 1000\n1 ≤ delay \u003c forget ≤ n",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
