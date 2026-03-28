@@ -58,34 +58,6 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
-  const handleSpawnWorker = async () => {
-    try {
-      const res = await fetch("/api/admin/executor/spawn", { method: "POST" });
-      if (res.ok) {
-        toast.success("Worker spawned successfully");
-        fetchData();
-      } else {
-        toast.error("Failed to spawn worker");
-      }
-    } catch (err) {
-      toast.error("An error occurred while spawning worker");
-    }
-  };
-
-  const handleStopWorker = async () => {
-    try {
-      const res = await fetch("/api/admin/executor/stop", { method: "POST" });
-      if (res.ok) {
-        toast.success("Worker stop signal sent");
-        fetchData();
-      } else {
-        toast.error("Failed to stop worker");
-      }
-    } catch (err) {
-      toast.error("An error occurred while stopping worker");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30 transition-colors">
       <div className="max-w-7xl mx-auto">
@@ -281,31 +253,9 @@ export default function AdminDashboard() {
               </h2>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSpawnWorker}
-                  size="sm"
-                  variant="outline"
-                  className="h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                >
-                  <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
-                  Spawn
-                </Button>
-                <Button
-                  onClick={handleStopWorker}
-                  size="sm"
-                  variant="outline"
-                  className="h-8 border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
-                >
-                  <LogOut className="h-3.5 w-3.5 mr-1.5 rotate-90" />
-                  Stop
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 bg-emerald-400/5 border border-emerald-400/10 rounded-full">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live
-              </div>
+            <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 bg-emerald-400/5 border border-emerald-400/10 rounded-full">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
             </div>
           </div>
 
