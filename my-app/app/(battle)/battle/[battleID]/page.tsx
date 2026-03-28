@@ -150,19 +150,15 @@ export default function BattlePage({ params }: PageProps) {
             }
           } else {
             setMySolvedProblems(prev => new Set(prev).add(Number(event.problemId)));
-            if (realTimeInfoEnabled) {
-              setFloatingMsg("You solved a problem 🚀");
-              setTimeout(() => setFloatingMsg(""), 3000);
-              if (soundEnabledRef.current) playSuccessSound();
-            }
+            setFloatingMsg("You solved a problem 🚀");
+            setTimeout(() => setFloatingMsg(""), 3000);
+            if (soundEnabledRef.current) playSuccessSound();
           }
           break;
         case "MATCH_COMPLETE":
-          if (realTimeInfoEnabled) {
-            setCrackLevel(4);
-            setFloatingMsg("Battle completed!");
-            setTimeout(() => setFloatingMsg(""), 3000);
-          }
+          setCrackLevel(4);
+          setFloatingMsg("Battle completed!");
+          setTimeout(() => setFloatingMsg(""), 3000);
           break;
         case "USER_SURRENDER":
           if (isOpponent) {
