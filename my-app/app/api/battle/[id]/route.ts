@@ -22,7 +22,14 @@ export async function GET(
             return NextResponse.json({ success: false, error: 'Battle not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, battle });
+        // Fetch successful submissions for both players to calculate initial progress correctly on frontend
+        const SubmissionModel = mongoose.models.Submission || mongoose.model("Submission", new mongoose.Schema({}), "submissions");
+        const successfulSubmissions = await SubmissionModel.find({
+            battleId: new mongoose.Types.ObjectId(id),
+            status: "Accepted"
+        }).select('userId problem.id').lean();
+
+        return NextResponse.json({ success: true, battle, successfulSubmissions });
     } catch (error) {
         console.error('Error fetching battle details:', error);
         return NextResponse.json(

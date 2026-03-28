@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Code Arena - Battle",
   description: "Battle ON!",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function BattleLayout({
