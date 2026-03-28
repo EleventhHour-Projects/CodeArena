@@ -1,0 +1,15 @@
+{
+    "id": 311,
+    "slug": "best-time-to-buy-and-sell-stock-with-transaction-fee",
+    "tags": [
+        "Array",
+        "Dynamic Programming",
+        "Greedy"
+    ],
+    "title": "Best Time to Buy and Sell Stock with Transaction Fee",
+    "difficulty": "Medium",
+    "description": "You are given an integer array prices, where prices[i] represents the price of a stock on the i-th day, and an integer fee representing the transaction fee.\n\nYou can perform as many transactions as you want (buy and sell multiple times), but with the following conditions:\n\nYou must sell the stock before buying again (no overlapping transactions).\nEach transaction (buy + sell) incurs a fixed fee, applied once per transaction.\n\nReturn the maximum profit you can achieve.\n\nExamples\n\nExample 1\nInput: prices = [1,3,2,8,4,9], fee = 2\nOutput: 8\nExplanation:\n\nBuy at 1, sell at 8 → profit = (8 - 1) - 2 = 5\nBuy at 4, sell at 9 → profit = (9 - 4) - 2 = 3\nTotal profit = 5 + 3 = 8\n\nExample 2\nInput: prices = [1,3,7,5,10,3], fee = 3\nOutput: 6\n\nConstraints\n1 ≤ prices.length ≤ 5 × 10⁴\n1 ≤ prices[i] \u003c 5 × 10⁴\n0 ≤ fee \u003c 5 × 10⁴",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
