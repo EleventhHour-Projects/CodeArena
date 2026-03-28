@@ -207,12 +207,6 @@ func worker(ctx context.Context) {
 	}
 	for {
 		task := utils.WorkerPoolData.GetTask()
-		if task.StopSignal != nil && *task.StopSignal {
-			fmt.Println(utils.Yellow+"Worker received stop signal, shutting down container:"+utils.Reset, containerName)
-			KillContainerByID(ctx, containerName)
-			utils.WorkerPoolData.Decrement()
-			return
-		}
 		fmt.Println("Worker received task:", task.TaskID)
 		eventType := utils.EVENTTYPERUN
 		if task.Type == "Submit" {
