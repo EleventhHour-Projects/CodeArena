@@ -1,0 +1,15 @@
+{
+    "id": 14,
+    "slug": "is-subsequence",
+    "tags": [
+        "Two Pointers",
+        "String",
+        "Dynamic Programming"
+    ],
+    "title": "Is Subsequence",
+    "difficulty": "Easy",
+    "description": "Given two strings s and t, determine whether s is a subsequence of t.\n\nA string s is a subsequence of t if it can be formed by deleting some (or no) characters from t without changing the relative order of the remaining characters.\n\nExamples\n\nExample 1\nInput: s = \"abc\", t = \"ahbgdc\"\nOutput: true\nExplanation:\nBy removing characters 'h', 'g', and 'd' from t, we get \"abc\".\n\nExample 2\nInput: s = \"axc\", t = \"ahbgdc\"\nOutput: false\nExplanation:\nThe order of characters in s cannot be matched in t.\n\nConstraints\n0 ≤ s.length ≤ 100\n0 ≤ t.length ≤ 10⁴\nBoth s and t consist of lowercase English letters.\nFollow-up\n\nSuppose there are many queries: s₁, s₂, ..., sₖ where k ≥ 10⁹, and you need to check each one against the same string t.",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
