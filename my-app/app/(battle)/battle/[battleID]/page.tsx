@@ -80,6 +80,7 @@ export default function BattlePage({ params }: PageProps) {
   const [drawOffer, setDrawOffer] = useState<{ fromUserId: string } | null>(null);
   const [isSurrenderOpen, setIsSurrenderOpen] = useState(false);
   const [drawsSent, setDrawsSent] = useState(0);
+  const battleFinishedRef = useRef(false);
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
@@ -280,7 +281,7 @@ export default function BattlePage({ params }: PageProps) {
   const handleBattleComplete = async (currentBattle: any, resultOverride?: string) => {
     if (isBattleOver) return;
     setIsBattleOver(true);
-    toast.info("Battle has ended! Computing final results...");
+    toast.info("Battle has ended! Computing final results...", { id: "battle_end" });
     try {
       // Clear localStorage for this battle
       if (currentBattle?.problems) {
@@ -436,7 +437,8 @@ export default function BattlePage({ params }: PageProps) {
     setExecutionResult(null); // Clear previous results
     
     // Create a loading toast and capture its ID
-    const toastId = toast.loading(`${type} initiated. Polling for results...`);
+    const toastId = "submission_status";
+    toast.loading(`${type} initiated. Polling for results...`, { id: toastId });
     
     try {
       const response = await fetch('/api/battle/exec-code', {
@@ -603,6 +605,27 @@ export default function BattlePage({ params }: PageProps) {
   const scrollbarClasses = "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-700/50 hover:[&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full";
 
   const isMePlayer1 = session?.user && battleDetails?.player1 && String(battleDetails.player1) === String((session.user as any).id);
+
+  // Auto-complete battle when a player solves all problems
+  useEffect(() => {
+    if (isBattleOver || battleFinishedRef.current || !battleDetails || !problems || problems.length === 0) return;
+
+    if (mySolvedProblems.size === problems.length) {
+      battleFinishedRef.current = true;
+      toast.dismiss("battle_end");
+      toast.dismiss("submission_status");
+      toast.success("Woah! You solved all problems! 🔥🏆", { id: "battle_finish_msg" });
+      const winnerResult = isMePlayer1 ? "player1" : "player2";
+      handleBattleComplete(battleDetails, winnerResult);
+    } else if (opponentSolvedProblems.size === problems.length) {
+      battleFinishedRef.current = true;
+      toast.dismiss("battle_end");
+      toast.dismiss("submission_status");
+      toast.error("Oops... opponent solved all problems 😭⚡", { id: "battle_finish_msg" });
+      const winnerResult = isMePlayer1 ? "player2" : "player1";
+      handleBattleComplete(battleDetails, winnerResult);
+    }
+  }, [mySolvedProblems.size, opponentSolvedProblems.size, problems.length, battleDetails, isBattleOver, isMePlayer1]);
   const myStats = isMePlayer1 ? battleStats?.player1 : battleStats?.player2;
   const opponentStats = isMePlayer1 ? battleStats?.player2 : battleStats?.player1;
   const myScore = isMePlayer1 ? battleStats?.scoreA : battleStats?.scoreB;
