@@ -1,0 +1,13 @@
+{
+    "id": 19,
+    "slug": "sum-multiples",
+    "tags": [
+        "Math"
+    ],
+    "title": "Sum Multiples",
+    "difficulty": "Easy",
+    "description": "You are given a positive integer n.\n\nConsider all integers in the range [1, n] (inclusive). Find the sum of all numbers that are divisible by 3, 5, or 7.\n\nTask\n\nReturn the total sum of all integers in [1, n] that satisfy:\n\ndivisible by 3, or\ndivisible by 5, or\ndivisible by 7\nExamples\n\nExample 1\nInput: n = 7\nOutput: 21\n\nExplanation:\nNumbers divisible by 3, 5, or 7 → 3, 5, 6, 7\nSum = 3 + 5 + 6 + 7 = 21\n\nExample 2\nInput: n = 10\nOutput: 40\n\nExplanation:\nNumbers → 3, 5, 6, 7, 9, 10\nSum = 40\n\nExample 3\nInput: n = 9\nOutput: 30\n\nExplanation:\nNumbers → 3, 5, 6, 7, 9\nSum = 30\n\nConstraints\n1 ≤ n ≤ 1000",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
