@@ -1,0 +1,19 @@
+{
+    "id": 309,
+    "slug": "maximum-total-damage-with-spell-casting",
+    "tags": [
+        "Array",
+        "Hash Table",
+        "Two Pointers",
+        "Binary Search",
+        "Dynamic Programming",
+        "Sorting",
+        "Counting"
+    ],
+    "title": "Maximum Total Damage With Spell Casting",
+    "difficulty": "Medium",
+    "description": "A magician has a collection of spells, each with a certain damage value.\n\nYou are given an integer array power, where power[i] represents the damage of the i-th spell. Multiple spells may have the same damage.\n\nHowever, there is a restriction:\n\nIf you cast a spell with damage d, you cannot cast any spell with damage:\n\nd - 2, d - 1, d + 1, or d + 2\n\nEach spell can be used at most once.\n\nReturn the maximum total damage the magician can achieve by selecting an optimal set of spells.\n\nExamples\n\nExample 1\nInput: power = [1,1,3,4]\nOutput: 6\nExplanation:\nCast spells with damage 1, 1, and 4.\nTotal damage = 1 + 1 + 4 = 6.\n\nExample 2\nInput: power = [7,1,6,6]\nOutput: 13\nExplanation:\nCast spells with damage 1, 6, and 6.\nTotal damage = 1 + 6 + 6 = 13.\n\nConstraints\n1 ≤ power.length ≤ 10⁵\n1 ≤ power[i] ≤ 10⁹",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
