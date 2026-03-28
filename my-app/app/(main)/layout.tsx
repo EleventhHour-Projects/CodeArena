@@ -37,8 +37,10 @@ export default function RootLayout({
         <Providers>
           <SidebarProvider>
             <AppSidebar />
-            <main className="w-full">
-              <SidebarTrigger />
+            <main className="w-full relative">
+              <div className="absolute top-4 left-4 z-50 overflow-hidden">
+                <SidebarTrigger />
+              </div>
               {children}
             </main>
           </SidebarProvider>
