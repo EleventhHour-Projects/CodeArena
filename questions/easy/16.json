@@ -1,0 +1,14 @@
+{
+    "id": 16,
+    "slug": "smallest-range-i",
+    "tags": [
+        "Array",
+        "Math"
+    ],
+    "title": "Smallest Range I",
+    "difficulty": "Easy",
+    "description": "You are given an integer array nums and an integer k.\n\nYou can perform the following operation at most once for each index:\n\nChoose an index i and replace nums[i] with nums[i] + x, where x is any integer in the range [-k, k].\nDefinition\n\nThe score of the array is defined as:\n\nmax(nums) - min(nums)\nTask\n\nReturn the minimum possible score after performing the allowed operations.\n\nExamples\n\nExample 1\nInput: nums = [1], k = 0\nOutput: 0\nExplanation:\nNo change is possible. Score = 1 - 1 = 0.\n\nExample 2\nInput: nums = [0,10], k = 2\nOutput: 6\nExplanation:\nAdjust to [2, 8].\nScore = 8 - 2 = 6.\n\nExample 3\nInput: nums = [1,3,6], k = 3\nOutput: 0\nExplanation:\nAdjust to [4, 4, 4].\nScore = 0.\n\nConstraints\n1 ≤ nums.length ≤ 10⁴\n0 ≤ nums[i] ≤ 10⁴\n0 ≤ k ≤ 10⁴",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
