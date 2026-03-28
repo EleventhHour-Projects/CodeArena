@@ -61,16 +61,16 @@ export async function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent hover:bg-muted/50 transition-colors data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex items-center justify-center rounded-lg text-sidebar-primary-foreground overflow-hidden h-9 w-auto">
-                <Logo width={132} height={36} />
+              <div className="flex items-center justify-center rounded-lg text-sidebar-primary-foreground overflow-hidden h-8 w-8 shrink-0">
+                <Logo width={24} height={18} />
               </div>
-              <div className="flex flex-col justify-center pl-1">
+              <div className="flex flex-col justify-center pl-1 group-data-[collapsible=icon]:hidden">
                 <div className="flex items-center gap-2">
                   <span className="truncate font-bold text-lg tracking-tight text-foreground">CodeArena</span>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)] shrink-0" />
                 </div>
-                <span className="text-[10px] text-zinc-500 tracking-wider uppercase font-semibold mt-0.1">
-                  EleventhHour
+                <span className="text-[10px] text-zinc-500 tracking-wider font-semibold mt-0.1">
+                  By-Eleventh_Hour
                 </span>
               </div>
             </SidebarMenuButton>

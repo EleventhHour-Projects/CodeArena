@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Code Arena - Battle",
-  description: "Join the coding arena and challenge your friends.",
+  description: "Battle ON!",
 };
 
 export default function BattleLayout({

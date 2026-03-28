@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Code Arena",
   description: "Created by MS & DM",
+  icons: {
+    icon: "/logo.svg"
+  }
 };
 
 export default function RootLayout({
