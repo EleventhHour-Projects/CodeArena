@@ -79,6 +79,9 @@ export default function BattlePage({ params }: PageProps) {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [drawOffer, setDrawOffer] = useState<{ fromUserId: string } | null>(null);
   const [isSurrenderOpen, setIsSurrenderOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [drawsSent, setDrawsSent] = useState(0);
   const battleFinishedRef = useRef(false);
 
@@ -475,6 +478,40 @@ export default function BattlePage({ params }: PageProps) {
     setIsSurrenderOpen(true);
   };
 
+  const handleReportSubmit = async () => {
+    if (!reportReason.trim()) {
+      toast.error("Please provide a reason for reporting");
+      return;
+    }
+    const opponentId = isMePlayer1 ? battleDetails?.player2 : battleDetails?.player1;
+    if (!opponentId) return;
+
+    setIsSubmittingReport(true);
+    try {
+      const res = await fetch("/api/battle/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportedId: opponentId,
+          battleId: battleID,
+          reason: reportReason
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Player reported successfully");
+        setIsReportOpen(false);
+        setReportReason("");
+      } else {
+        toast.error(data.message || "Failed to submit report");
+      }
+    } catch (error) {
+      toast.error("An error occurred while submitting the report");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   const confirmSurrender = () => {
     if (!socket || !session?.user || isBattleOver) return;
     const currentUserId = (session.user as any).id;
@@ -711,7 +748,7 @@ export default function BattlePage({ params }: PageProps) {
         <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-500">
-              <Flag className="w-5 h-5" />
+              <span className="w-5 h-5 flex items-center justify-center">☠</span>
               Surrender Battle?
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
@@ -731,6 +768,45 @@ export default function BattlePage({ params }: PageProps) {
               className="bg-red-600 hover:bg-red-500 text-white"
             >
               Surrender
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Player Dialog */}
+      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-500">
+              <Flag className="w-5 h-5" />
+              Report Player
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Please provide a valid reason for reporting your opponent. False reports may lead to penalties.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+             <textarea 
+               className="w-full bg-[#09090b] border border-white/10 rounded-lg p-3 text-sm text-zinc-300 outline-none focus:border-rose-500/50 resize-none h-24"
+               placeholder="e.g., Using prohibited tools, inappropriate behavior..."
+               value={reportReason}
+               onChange={(e) => setReportReason(e.target.value)}
+             />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsReportOpen(false)}
+              className="border-white/10 hover:bg-zinc-800 text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReportSubmit}
+              disabled={isSubmittingReport}
+              className="bg-rose-600 hover:bg-rose-500 text-white"
+            >
+              {isSubmittingReport ? "Submitting..." : "Submit Report"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -971,6 +1047,10 @@ export default function BattlePage({ params }: PageProps) {
             <button onClick={handleSurrender} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-red-400 font-medium hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20">
               <span className="w-4 h-4 text-red-400 flex items-center justify-center">☠</span>
               Surrender
+            </button>
+            <button onClick={() => setIsReportOpen(true)} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md text-amber-500 font-medium hover:bg-amber-500/10 transition-colors border border-transparent hover:border-amber-500/20">
+              <Flag className="w-3.5 h-3.5" />
+              Report
             </button>
             <div className="w-px h-5 bg-white/10 mx-1"></div>
             <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-1.5 rounded-md hover:bg-white/10 text-zinc-400 transition-colors" title={soundEnabled ? "Mute Sounds" : "Enable Sounds"}>
@@ -1336,7 +1416,7 @@ export default function BattlePage({ params }: PageProps) {
                                         <div className="space-y-2">
                                            <div className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider ml-1">Expected Output</div>
                                            <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10 font-mono text-xs whitespace-pre-wrap text-emerald-100/80">
-                                             {testcases.find(t => t.input === executionResult.failed_test_case)?.output || "N/A"}
+                                             {executionResult.expected_output || testcases.find(t => t.input === executionResult.failed_test_case)?.output || "N/A"}
                                            </div>
                                         </div>
                                         <div className="space-y-2">

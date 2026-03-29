@@ -22,5 +22,6 @@ export interface Submission {
         runTimeMs: number;
         memoryUsedMB: number;
         actualOutput?: string;
+        expectedOutput?: string;
     }
 }
