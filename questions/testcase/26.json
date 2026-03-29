@@ -1,0 +1,80 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "abccbaacz",
+                "output": "c"
+            },
+            {
+                "input": "abcdd",
+                "output": "d"
+            }
+        ],
+        "submit": [
+            {
+                "input": "aa",
+                "output": "a"
+            },
+            {
+                "input": "abca",
+                "output": "a"
+            },
+            {
+                "input": "abcda",
+                "output": "a"
+            },
+            {
+                "input": "abcbad",
+                "output": "b"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyza",
+                "output": "a"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz",
+                "output": "a"
+            },
+            {
+                "input": "zzxyzz",
+                "output": "z"
+            },
+            {
+                "input": "ppqqrrsspp",
+                "output": "p"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzzy",
+                "output": "z"
+            },
+            {
+                "input": "mnopqrstuvwxyzaabcdefghijklmn",
+                "output": "a"
+            },
+            {
+                "input": "mnopqrstuvwxyzaabcdefghijklmn",
+                "output": "a"
+            },
+            {
+                "input": "abcdeffghijklmnopqrstuvwxyzabcde",
+                "output": "f"
+            },
+            {
+                "input": "qwertyuiopasdfghjklzxcvbnmq",
+                "output": "q"
+            },
+            {
+                "input": "abcdefghijklmnoqrstuvwxypzabcdefghijkl",
+                "output": "a"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzzabcdefghijklmnopqrstuvwxy",
+                "output": "z"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzbcdefghijklmnopqrstuvwxyzabcdefghiuvwxyzaabcdefghijklmnopqrstuvwxy",
+                "output": "b"
+            }
+        ]
+    }
+}
