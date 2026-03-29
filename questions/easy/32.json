@@ -1,0 +1,13 @@
+{
+    "id": 32,
+    "slug": "find-center-of-star-graph",
+    "tags": [
+        "Graph Theory"
+    ],
+    "title": "Find Center of Star Graph",
+    "difficulty": "Easy",
+    "description": "You are given an undirected graph that forms a star shape.\n\nThere are n nodes labeled from 1 to n\nThere is one center node\nAll other nodes are connected only to this center\n\nYou are given the edges of the graph.\n\nTask\n\nFind and return the center node.\n\nKey Idea\nThe center node appears in every edge\nSo, it will be the common node between edges\nExamples\n\nExample 1\n\nInput: [[1,2],[2,3],[4,2]]\nOutput: 2\n\nExample 2\n\nInput: [[1,2],[5,1],[1,3],[1,4]]\nOutput: 1\nConstraints\n3 ≤ n ≤ 100000\nedges.length = n - 1\nEach edge has 2 different nodes\nInput always forms a valid star graph",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
