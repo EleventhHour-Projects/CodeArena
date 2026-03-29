@@ -46,6 +46,15 @@ func execCommand(ctx context.Context, cli *client.Client, containerID string, cm
 	return stdout.String(), stderr.String(), nil
 }
 
+func normalizeOutput(s string) string {
+	lines := strings.Split(s, "\n")
+	var cleanLines []string
+	for _, line := range lines {
+		cleanLines = append(cleanLines, strings.TrimRight(line, " \t\r"))
+	}
+	return strings.TrimSpace(strings.Join(cleanLines, "\n"))
+}
+
 func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
 	var failedInfo FailedInfo
 
@@ -112,8 +121,8 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 			return err
 		}
 
-		actual := strings.TrimSpace(output)
-		exp := strings.TrimSpace(fmt.Sprint(expected))
+		actual := normalizeOutput(output)
+		exp := normalizeOutput(fmt.Sprint(expected))
 
 		if exp == "true" || exp == "false" {
 			if actual == "0" {

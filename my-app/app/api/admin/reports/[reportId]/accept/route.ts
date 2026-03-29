@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import ReportModel from "@/lib/models/Report";
 import BattleModel from "@/lib/models/Battle";
 import { UserModel } from "@/lib/models/User";
+import { NotificationModel } from "@/lib/models/Notification";
 import mongoose from "mongoose";
 
 export async function POST(
@@ -60,6 +61,19 @@ export async function POST(
                 
                 await reporter.save({ session });
                 await reported.save({ session });
+
+                // Create notifications
+                await NotificationModel.create([{
+                    userId: reporter._id,
+                    message: "Thank you for reporting. The cheater's rating has been reset and your rating has been reverted.",
+                    type: "report_accepted"
+                }], { session });
+
+                await NotificationModel.create([{
+                    userId: reported._id,
+                    message: `You have been reported for cheating in battle ${battle._id}. Your rating has been reset to 0.`,
+                    type: "report_accepted"
+                }], { session });
             }
         });
         isSuccess = true;
