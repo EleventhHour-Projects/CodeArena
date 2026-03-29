@@ -78,7 +78,7 @@ func MergePR(c fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 	}
 	type RequestBody struct {
-		PRNumber int `json:"pr_number"`
+		PRNumber []int `json:"pr_number"`
 	}
 	var body RequestBody
 	b := c.Body()

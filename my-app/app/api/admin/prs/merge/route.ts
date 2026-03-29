@@ -4,9 +4,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.pr_number) {
+    if (!body.pr_number || !Array.isArray(body.pr_number)) {
       return NextResponse.json(
-        { error: 'pr_number is required' },
+        { error: 'pr_number must be an array of integers' },
         { status: 400 }
       );
     }

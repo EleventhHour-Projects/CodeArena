@@ -5,6 +5,7 @@ import (
 	"executor-service/utils"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v84/github"
 	"golang.org/x/oauth2"
@@ -159,25 +160,31 @@ func GetNumberOfQuestionByLabel(ctx context.Context, label string) (int, error) 
 	return count, nil
 }
 
-func MergeBotPR(ctx context.Context, client *utils.GitHubClient, prNumber int) error {
-	pr, _, err := client.Client.PullRequests.Get(ctx, client.Owner, client.Repo, prNumber)
-	if err != nil {
-		return err
-	}
+func MergeBotPR(ctx context.Context, client *utils.GitHubClient, prNumber []int) error {
+	for _, num := range prNumber {
+		pr, _, err := client.Client.PullRequests.Get(ctx, client.Owner, client.Repo, num)
+		if err != nil {
+			return err
+		}
 
-	opts := &github.PullRequestOptions{
-		MergeMethod: "squash",
-		CommitTitle: pr.GetTitle(),
-	}
-	_, _, err = client.Client.PullRequests.Merge(ctx, client.Owner, client.Repo, prNumber, "", opts)
-	if err != nil {
-		return err
-	}
+		opts := &github.PullRequestOptions{
+			MergeMethod: "squash",
+			CommitTitle: pr.GetTitle(),
+		}
+		_, _, err = client.Client.PullRequests.Merge(ctx, client.Owner, client.Repo, num, "", opts)
+		if err != nil {
+			return err
+		}
 
-	// delete the branch after merging
-	branchName := pr.GetHead().GetRef()
-	_, err = client.Client.Git.DeleteRef(ctx, client.Owner, client.Repo, "refs/heads/"+branchName)
-	return err
+		// delete the branch after merging
+		branchName := pr.GetHead().GetRef()
+		_, err = client.Client.Git.DeleteRef(ctx, client.Owner, client.Repo, "refs/heads/"+branchName)
+		if err != nil {
+			return err
+		}
+		time.Sleep(time.Millisecond * 300) // Sleep for 300ms to avoid hitting GitHub API rate limits
+	}
+	return nil
 }
 
 func ListAllPrs(ctx context.Context, client *utils.GitHubClient) ([]*github.PullRequest, error) {
