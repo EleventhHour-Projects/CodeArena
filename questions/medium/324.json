@@ -1,0 +1,15 @@
+{
+    "id": 324,
+    "slug": "difference-between-ones-and-zeros-in-row-and-column",
+    "tags": [
+        "Array",
+        "Matrix",
+        "Simulation"
+    ],
+    "title": "Difference Between Ones and Zeros in Row and Column",
+    "difficulty": "Medium",
+    "description": "You are given a 0-indexed binary matrix grid of size m × n.\n\nDefinitions\n\nFor each row i and column j:\n\nonesRow[i] = number of 1s in row i\nzerosRow[i] = number of 0s in row i\nonesCol[j] = number of 1s in column j\nzerosCol[j] = number of 0s in column j\nFormula\n\nFor each cell (i, j), define:\n\ndiff[i][j] = onesRow[i] + onesCol[j] - zerosRow[i] - zerosCol[j]\nTask\n\nReturn the resulting matrix diff.\n\nExamples\n\nExample 1\nInput:\n\n[[0,1,1],\n [1,0,1],\n [0,0,1]]\n\nOutput:\n\n[[0,0,4],\n [0,0,4],\n [-2,-2,2]]\n\nExample 2\nInput:\n\n[[1,1,1],\n [1,1,1]]\n\nOutput:\n\n[[5,5,5],\n [5,5,5]]\nConstraints\n1 ≤ m, n ≤ 10⁵\n1 ≤ m × n ≤ 10⁵\ngrid[i][j] ∈ {0,1}",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
