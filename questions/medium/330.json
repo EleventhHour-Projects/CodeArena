@@ -1,0 +1,15 @@
+{
+    "id": 330,
+    "slug": "spiral-matrix",
+    "tags": [
+        "Array",
+        "Matrix",
+        "Simulation"
+    ],
+    "title": "Spiral Matrix",
+    "difficulty": "Medium",
+    "description": "You are given a matrix of size m × n.\n\nTraverse the matrix in spiral order and return all elements.\n\nWhat is Spiral Order?\n\nStart from the top-left corner and move:\n\nLeft → Right\nTop → Bottom\nRight → Left\nBottom → Top\n\nRepeat this pattern, moving inward layer by layer.\n\nTask\n\nReturn a list of all elements in the order you visit them.\n\nExamples\n\nExample 1\n\n[[1,2,3],\n [4,5,6],\n [7,8,9]]\n\n→ [1,2,3,6,9,8,7,4,5]\n\nExample 2\n\n[[1,2,3,4],\n [5,6,7,8],\n [9,10,11,12]]\n\n→ [1,2,3,4,8,12,11,10,9,5,6,7]\nConstraints\n1 ≤ m, n ≤ 10\nValues range from -100 to 100",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
