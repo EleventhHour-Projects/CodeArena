@@ -1,0 +1,76 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "abcacbd",
+                "output": "1"
+            },
+            {
+                "input": "abc",
+                "output": "1"
+            },
+            {
+                "input": "abcdab",
+                "output": "-1"
+            }
+        ],
+        "submit": [
+            {
+                "input": "a",
+                "output": "0"
+            },
+            {
+                "input": "ab",
+                "output": "-1"
+            },
+            {
+                "input": "aa",
+                "output": "0"
+            },
+            {
+                "input": "qwertyuiopasdfghjklzxcvbnm",
+                "output": "-1"
+            },
+            {
+                "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "output": "0"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyza",
+                "output": "0"
+            },
+            {
+                "input": "bcdefghijklmnopqrstuvwxyza",
+                "output": "-1"
+            },
+            {
+                "input": "azbycxdw",
+                "output": "-1"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
+                "output": "-1"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyza",
+                "output": "0"
+            },
+            {
+                "input": "bcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyza",
+                "output": "-1"
+            },
+            {
+                "input": "abababababababababababababababababababababababababababababababababababababababababababababababab",
+                "output": "-1"
+            },
+            {
+                "input": "abcdefghijklmnopqrstuvwxyzzabcdefghijklmnopqrstuvwxyy",
+                "output": "26"
+            },
+            {
+                "input": "zyxwvutsrqponmlkjihgfedcbaabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr",
+                "output": "-1"
+            }
+        ]
+    }
+}
