@@ -97,6 +97,7 @@ func CreatePR(client *utils.GitHubClient, ctx context.Context, branchName, title
 	return pr, err
 }
 
+// GetAllPRs fetches all open PRs from the repository. If a label is provided, it filters the PRs to include only those with the specified label. This allows clients to easily retrieve PRs based on their categorization, such as difficulty level or type of change.
 func GetAllPRs(ctx context.Context, lable *string) ([]*github.PullRequest, error) {
 	opt := &github.PullRequestListOptions{
 		State: "open",
@@ -120,6 +121,8 @@ func GetAllPRs(ctx context.Context, lable *string) ([]*github.PullRequest, error
 		return prs, nil
 	}
 }
+
+// GetNumberOfQuestionByLabel counts the number of question files in the repository that are categorized under a specific label (e.g., "easy", "medium", "hard"). It does this by fetching the contents of the corresponding directory in the GitHub repository and counting the number of JSON files, which represent individual questions. This function helps clients understand how many questions are available for each difficulty level, aiding in task assignment and workload management.
 func GetNumberOfQuestionByLabel(ctx context.Context, label string) (int, error) {
 	if label == "" {
 		return 0, nil
@@ -160,6 +163,7 @@ func GetNumberOfQuestionByLabel(ctx context.Context, label string) (int, error) 
 	return count, nil
 }
 
+// MergeBotPR merges the specified PRs using the "squash" method, which combines all commits from the PR into a single commit on the base branch. After merging, it deletes the source branch to keep the repository clean. This function is essential for automating the PR merging process, ensuring that code changes are integrated smoothly while maintaining a tidy commit history. The 300ms sleep between merges helps to avoid hitting GitHub API rate limits when merging multiple PRs in quick succession.
 func MergeBotPR(ctx context.Context, client *utils.GitHubClient, prNumber []int) error {
 	for _, num := range prNumber {
 		pr, _, err := client.Client.PullRequests.Get(ctx, client.Owner, client.Repo, num)
@@ -187,6 +191,7 @@ func MergeBotPR(ctx context.Context, client *utils.GitHubClient, prNumber []int)
 	return nil
 }
 
+// ListAllPrs retrieves all open pull requests from the GitHub repository. This function is useful for clients that need to display or process the list of active PRs, allowing them to stay informed about ongoing contributions and changes in the codebase. By providing a comprehensive list of PRs, clients can make informed decisions about which PRs to review, merge, or prioritize based on their content and labels.
 func ListAllPrs(ctx context.Context, client *utils.GitHubClient) ([]*github.PullRequest, error) {
 	opt := &github.PullRequestListOptions{
 		State: "open",
