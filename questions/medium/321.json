@@ -1,0 +1,15 @@
+{
+    "id": 321,
+    "slug": "max-increase-to-keep-city-skyline",
+    "tags": [
+        "Array",
+        "Greedy",
+        "Matrix"
+    ],
+    "title": "Max Increase to Keep City Skyline",
+    "difficulty": "Medium",
+    "description": "You are given an n × n grid grid, where grid[r][c] represents the height of a building at position (r, c).\n\nEach building is a vertical square prism, and the city’s skyline is defined as the outer contour when viewed from the four cardinal directions:\n\nNorth\nSouth\nEast\nWest\nSkyline Definition\nFrom the left/right (west/east) → skyline is determined by the maximum value in each row\nFrom the top/bottom (north/south) → skyline is determined by the maximum value in each column\nOperation\n\nYou may increase the height of any building by any amount (including buildings with height 0).\n\nHowever:\n\nThe skyline from all four directions must remain unchanged\nTask\n\nReturn the maximum total increase in building heights such that the skyline is preserved.\n\nExamples\n\nExample 1\nInput:\n\n[[3,0,8,4],\n [2,4,5,7],\n [9,2,6,3],\n [0,3,1,0]]\n\nOutput: 35\n\nExplanation:\nHeights can be increased without exceeding:\n\nrow maximum\ncolumn maximum\n\nResulting grid:\n\n[[8,4,8,7],\n [7,4,7,7],\n [9,4,8,7],\n [3,3,3,3]]\n\nExample 2\nInput:\n\n[[0,0,0],\n [0,0,0],\n [0,0,0]]\n\nOutput: 0\n\nExplanation:\nAny increase would change the skyline.\n\nConstraints\nn == grid.length == grid[r].length\n2 ≤ n ≤ 50\n0 ≤ grid[r][c] ≤ 100",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
