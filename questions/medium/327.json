@@ -1,0 +1,16 @@
+{
+    "id": 327,
+    "slug": "number-of-provinces",
+    "tags": [
+        "Depth-First Search",
+        "Breadth-First Search",
+        "Union-Find",
+        "Graph Theory"
+    ],
+    "title": "Number of Provinces",
+    "difficulty": "Medium",
+    "description": "You are given n cities and a matrix isConnected of size n × n.\n\nisConnected[i][j] = 1 → city i and city j are directly connected\nisConnected[i][j] = 0 → no direct connection\nDefinition\n\nA province is a group of cities that are:\n\nDirectly connected, or\nIndirectly connected (through other cities)\nTask\n\nReturn the number of provinces (connected groups of cities).\n\nExamples\n\nExample 1\n\n[[1,1,0],\n [1,1,0],\n [0,0,1]]\n→ 2\n\nExample 2\n\n[[1,0,0],\n [0,1,0],\n [0,0,1]]\n→ 3\nConstraints\n1 ≤ n ≤ 200\nMatrix is:\nSymmetric (i ↔ j)\nDiagonal always 1",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
