@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"executor-service/gh"
 	"executor-service/utils"
 	"executor-service/worker"
 	"fmt"
@@ -60,6 +62,37 @@ func StopAnyOneWorker(c fiber.Ctx) error {
 	return c.SendStatus(200)
 }
 
+func GetPRList(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	prs, err := gh.GetAllPRs(context.Background(), nil)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error fetching PR list: %v", err))
+	}
+	return c.Status(fiber.StatusOK).JSON(prs)
+}
+
+func MergePR(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	type RequestBody struct {
+		PRNumber int `json:"pr_number"`
+	}
+	var body RequestBody
+	b := c.Body()
+	err := json.Unmarshal(b, &body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+	}
+	err = gh.MergeBotPR(context.Background(), utils.GhClient, body.PRNumber)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error merging PR: %v", err))
+	}
+	return c.SendStatus(200)
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -89,11 +122,13 @@ func StartService() {
 `+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
 `+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.CustomWorkerPoolSize+3, os.Getpid(), utils.CustomWorkerPoolSize)
+`, utils.CustomWorkerPoolSize+7, os.Getpid(), utils.CustomWorkerPoolSize)
 	app.Post("/go/api/queue", AddToQueue)
 	app.Get("/info", GetTaskInfo)
 	app.Post("/api/admin/problem", SaveProblem)
 	app.Get("/api/internal/spawn", SpawnOneWorker)
 	app.Get("/api/internal/stop", StopAnyOneWorker)
+	app.Get("/api/internal/prs", GetPRList)
+	app.Post("/api/internal/merge", MergePR)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

@@ -158,3 +158,35 @@ func GetNumberOfQuestionByLabel(ctx context.Context, label string) (int, error) 
 
 	return count, nil
 }
+
+func MergeBotPR(ctx context.Context, client *utils.GitHubClient, prNumber int) error {
+	pr, _, err := client.Client.PullRequests.Get(ctx, client.Owner, client.Repo, prNumber)
+	if err != nil {
+		return err
+	}
+
+	opts := &github.PullRequestOptions{
+		MergeMethod: "squash",
+		CommitTitle: pr.GetTitle(),
+	}
+	_, _, err = client.Client.PullRequests.Merge(ctx, client.Owner, client.Repo, prNumber, "", opts)
+	if err != nil {
+		return err
+	}
+
+	// delete the branch after merging
+	branchName := pr.GetHead().GetRef()
+	_, err = client.Client.Git.DeleteRef(ctx, client.Owner, client.Repo, "refs/heads/"+branchName)
+	return err
+}
+
+func ListAllPrs(ctx context.Context, client *utils.GitHubClient) ([]*github.PullRequest, error) {
+	opt := &github.PullRequestListOptions{
+		State: "open",
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+	prs, _, err := client.Client.PullRequests.List(ctx, client.Owner, client.Repo, opt)
+	return prs, err
+}
