@@ -1,0 +1,14 @@
+{
+    "id": 319,
+    "slug": "partitioning-into-minimum-number-of-deci-binary-numbers",
+    "tags": [
+        "String",
+        "Greedy"
+    ],
+    "title": "Partitioning Into Minimum Number Of Deci-Binary Numbers",
+    "difficulty": "Medium",
+    "description": "A deci-binary number is a number where:\n\nEach digit is either 0 or 1\nIt has no leading zeros\n\nExamples:\n\nValid: 101, 1100\nInvalid: 112, 3001\nTask\n\nYou are given a string n representing a positive decimal integer.\n\nReturn the minimum number of positive deci-binary numbers needed such that their sum equals n.\n\nExamples\n\nExample 1\nInput: n = \"32\"\nOutput: 3\n\nExplanation:\n10 + 11 + 11 = 32\n\nExample 2\nInput: n = \"82734\"\nOutput: 8\n\nExample 3\nInput: n = \"27346209830709182346\"\nOutput: 9\n\nConstraints\n1 ≤ n.length ≤ 10⁵\nn contains only digits (0–9)\nn has no leading zeros",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
