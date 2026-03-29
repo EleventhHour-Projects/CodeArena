@@ -1,0 +1,16 @@
+{
+    "id": 25,
+    "slug": "divide-array-into-equal-pairs",
+    "tags": [
+        "Array",
+        "Hash Table",
+        "Bit Manipulation",
+        "Counting"
+    ],
+    "title": "Divide Array Into Equal Pairs",
+    "difficulty": "Easy",
+    "description": "You are given an integer array nums of size 2n.\n\nTask\n\nDetermine whether it is possible to divide the array into exactly n pairs such that:\n\nEach element is used exactly once\nBoth elements in every pair are equal\n\nReturn true if such a division is possible, otherwise return false.\n\nExamples\n\nExample 1\nInput: nums = [3,2,3,2,2,2]\nOutput: true\n\nExplanation:\nPossible pairs → (2,2), (3,3), (2,2)\n\nExample 2\nInput: nums = [1,2,3,4]\nOutput: false\n\nExplanation:\nNo way to form equal pairs.\n\nConstraints\nnums.length == 2 * n\n1 ≤ n ≤ 500\n1 ≤ nums[i] ≤ 500",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
