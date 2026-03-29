@@ -1,0 +1,15 @@
+{
+    "id": 326,
+    "slug": "keys-and-rooms",
+    "tags": [
+        "Depth-First Search",
+        "Breadth-First Search",
+        "Graph Theory"
+    ],
+    "title": "Keys and Rooms",
+    "difficulty": "Medium",
+    "description": "You have n rooms numbered from 0 to n-1.\n\nRoom 0 is unlocked\nAll other rooms are locked\n\nEach room may contain keys to other rooms.\n\nRules\nWhen you enter a room, you can collect all keys inside it\nA key lets you unlock and enter another room\nYou can visit rooms in any order as long as you have the key\nTask\n\nReturn:\n\ntrue → if you can visit all rooms\nfalse → if some rooms remain locked\nExamples\n\nExample 1\n\n[[1],[2],[3],[]]\n→ true\n\nExample 2\n\n[[1,3],[3,0,1],[2],[0]]\n→ false\nConstraints\n2 ≤ n ≤ 1000\nTotal keys ≤ 3000\nKeys are valid room numbers\nNo duplicate keys in a room",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
