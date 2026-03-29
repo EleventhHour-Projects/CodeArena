@@ -1,0 +1,76 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "4 1\n1\n2\n3\n",
+                "output": "true"
+            },
+            {
+                "input": "4 2\n1 3\n3 0 1\n2\n0",
+                "output": "false"
+            }
+        ],
+        "submit": [
+            {
+                "input": "4 1\n1\n2\n3\n",
+                "output": "true"
+            },
+            {
+                "input": "4 2\n1 3\n3 0 1\n2\n0",
+                "output": "false"
+            },
+            {
+                "input": "3 1\n2\n\n1",
+                "output": "true"
+            },
+            {
+                "input": "5 2\n1 3\n1 4\n2 3 4 1\n\n4 3 2",
+                "output": "true"
+            },
+            {
+                "input": "4 1\n1\n\n0 3\n1",
+                "output": "false"
+            },
+            {
+                "input": "20 0\n\n1 15 18\n16\n2 3 9 11 17 5\n15 19 8 12 14\n10 1 6\n12 9 11\n\n7\n13\n3\n16 2\n4\n18 13\n7 17\n6\n14 4\n5\n8 19\n10",
+                "output": "false"
+            },
+            {
+                "input": "4 1\n1\n\n0 3\n1",
+                "output": "false"
+            },
+            {
+                "input": "5 2\n1 3\n1 4\n2 3 4 1\n\n4 3 2",
+                "output": "true"
+            },
+            {
+                "input": "10 1\n4\n3\n\n2 5 7\n1\n\n8 9\n\n\n6",
+                "output": "false"
+            },
+            {
+                "input": "4 2\n1 3\n3 0 1\n2\n0",
+                "output": "false"
+            },
+            {
+                "input": "3 1\n2\n\n0",
+                "output": "false"
+            },
+            {
+                "input": "5 2\n2 4\n\n0\n3\n4 3",
+                "output": "false"
+            },
+            {
+                "input": "20 0\n\n1 15 18\n16\n2 3 9 11 17 5\n15 19 8 12 14\n10 1 6\n12 9 11\n\n7\n13\n3\n16 2\n4\n18 13\n7 17\n6\n14 4\n5\n8 19\n10",
+                "output": "false"
+            },
+            {
+                "input": "5 2\n1 3\n1 4\n2 3 4 1\n\n4 3 2",
+                "output": "true"
+            },
+            {
+                "input": "10 1\n4\n3\n\n2 5 7\n1\n\n8 9\n\n\n6",
+                "output": "false"
+            }
+        ]
+    }
+}
