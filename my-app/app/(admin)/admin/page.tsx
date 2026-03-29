@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Users, Swords, Activity, Server, Clock, LogOut, Code, PlusCircle, Shield, Flag
+  Users, Swords, Activity, Server, Clock, LogOut, Code, PlusCircle, Shield, Flag, GitPullRequest
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -127,6 +127,15 @@ export default function AdminDashboard() {
             >
               <Flag className="h-4 w-4" />
               Reports
+            </Button>
+
+            <Button
+              onClick={() => router.push("/admin/prs")}
+              variant="outline"
+              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
+            >
+              <GitPullRequest className="h-4 w-4" />
+              Pull Requests
             </Button>
 
             <Button
