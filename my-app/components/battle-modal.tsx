@@ -33,7 +33,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, in
   const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
   const [difficulty, setDifficulty] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "sending" | "waiting">("idle");
-  const [timeLeft, setTimeLeft] = useState(180);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [inviteId, setInviteId] = useState<string | null>(null);
 
   // Sync initialOpponent to state when modal opens
@@ -78,7 +78,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, in
       toast.success("Invitation sent successfully!");
       setInviteId(data.inviteId);
       setStatus("waiting");
-      setTimeLeft(180);
+      setTimeLeft(60);
 
     } catch (err) {
       console.error(err);

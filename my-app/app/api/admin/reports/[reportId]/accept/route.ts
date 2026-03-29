@@ -51,12 +51,12 @@ export async function POST(
                 // Who is who?
                 if (battle.player1.toString() === reporter._id.toString()) {
                     // reporter is A
-                    reporter.rating = Math.max(0, (reporter.rating ?? 0) - ratingChangeA);
-                    reported.rating = 0;
+                    reporter.rating = (reporter.rating ?? 0) - ratingChangeA;
+                    reported.rating = (reported.rating ?? 0) - 100;
                 } else if (battle.player2.toString() === reporter._id.toString()) {
                     // reporter is B
-                    reporter.rating = Math.max(0, (reporter.rating ?? 0) - ratingChangeB);
-                    reported.rating = 0;
+                    reporter.rating = (reporter.rating ?? 0) - ratingChangeB;
+                    reported.rating = (reported.rating ?? 0) - 100;
                 }
                 
                 await reporter.save({ session });
@@ -65,13 +65,19 @@ export async function POST(
                 // Create notifications
                 await NotificationModel.create([{
                     userId: reporter._id,
-                    message: "Thank you for reporting. The cheater's rating has been reset and your rating has been reverted.",
+                    message: "Thank you for reporting. The opponent has been penalized -100 in rating and your rating has been reverted.",
                     type: "report_accepted"
                 }], { session });
 
+                const battleDate = battle.createdAt ? new Date(battle.createdAt).toLocaleDateString('en-US', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                }) : 'Unknown Date';
+
                 await NotificationModel.create([{
                     userId: reported._id,
-                    message: `You have been reported for cheating in battle ${battle._id}. Your rating has been reset to 0.`,
+                    message: `You were suspected of using AI tools in the battle against ${reporter.username} on ${battleDate}, so unfortunately ur rating has been penalized with -100. Its crucial to maintain fairness among battles`,
                     type: "report_accepted"
                 }], { session });
             }
