@@ -1,0 +1,72 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "4\ndog cat dad good\n9\na a c d d d g o o\n26\n1 0 9 5 0 0 3 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "23"
+            },
+            {
+                "input": "4\nxxxz ax bx cx\n7\nz a b c x x x\n26\n4 4 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 10",
+                "output": "27"
+            },
+            {
+                "input": "1\nleetcode\n6\nl e t c o d\n26\n0 0 1 1 1 0 0 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 0 0",
+                "output": "0"
+            }
+        ],
+        "submit": [
+            {
+                "input": "14\nabcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno abcdefghijklmno\n100\na b c d e f g h i j k l m n o a b c d e f g h i j k l m n o a b c d e f g h i j k l m n o a b c d e f g h i j k l m n o a b c d e f g h i j k l m n o a b c d e f g h i j k l m n o a b c d e f g h i j\n26\n10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "900"
+            },
+            {
+                "input": "3\nhello world leetcode\n13\nl e t c o d e h o r l w d\n26\n1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6",
+                "output": "22"
+            },
+            {
+                "input": "1\nleetcode\n6\nl e t c o d\n26\n0 0 1 1 1 0 0 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 0 0",
+                "output": "0"
+            },
+            {
+                "input": "4\na aa aaa aaaa\n4\na a a a\n26\n1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "4"
+            },
+            {
+                "input": "7\ndbccbcb bdacbae eaa aeccedc ecaeaa ebeec abcb\n23\na a a a b b b b b b b c c d d d d d d e e e e\n26\n4 10 4 2 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "70"
+            },
+            {
+                "input": "6\nadbc caaa deadc ecbd ecdd abdb\n20\na a a a b b b b b b c c d d d d e e e e\n26\n6 2 8 8 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "78"
+            },
+            {
+                "input": "9\ne baedbebcbc d dde ecadbdabaa bee dbd dab eedc\n32\na a a a a a a a b b b b c c c c c c c d d d d d d e e e e e e e\n26\n7 3 3 10 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "148"
+            },
+            {
+                "input": "12\nabdggigjhha jdabjibheg ghabfafaajj fcgbedgijjj aageaiidijfc fjeihibgcjad hbbjfeidbciajai jhajjjgagfabgc jecaifhdgjgf adbcbacfehdhi cefhjid cdbbegbbjeajfae\n58\na a a a a b b b b b b b b c c c c c c c d d d d d d d e e e e f f f g g g g g h h h h h h h i i i i i j j j j j j j\n26\n9 4 9 1 9 1 1 6 4 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "196"
+            },
+            {
+                "input": "1\na\n1\na\n26\n1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "1"
+            },
+            {
+                "input": "2\na b\n1\na\n26\n1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "1"
+            },
+            {
+                "input": "2\naa bb\n2\na b\n26\n2 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "0"
+            },
+            {
+                "input": "3\nabcd efgh ijkl\n8\na b c d e f g h\n26\n1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
+                "output": "8"
+            },
+            {
+                "input": "4\nabc abd acd bcd\n8\na b c d a b c d\n26\n2 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "output": "12"
+            }
+        ]
+    }
+}
