@@ -1,0 +1,15 @@
+{
+    "id": 325,
+    "slug": "flip-columns-for-maximum-number-of-equal-rows",
+    "tags": [
+        "Array",
+        "Hash Table",
+        "Matrix"
+    ],
+    "title": "Flip Columns For Maximum Number of Equal Rows",
+    "difficulty": "Medium",
+    "description": "You are given a binary matrix matrix of size m × n.\n\nYou can:\n\nChoose any column\nFlip that entire column (change 0 → 1 and 1 → 0 for all rows)\nTask\n\nAfter performing any number of column flips, return the maximum number of rows that become identical\n(i.e., all values in those rows are the same as each other).\n\nKey Idea\nYou are trying to make as many rows as possible look exactly the same\nYou can flip columns to help match rows\nExamples\n\nExample 1\n\nInput: [[0,1],[1,1]]\nOutput: 1\n\nExample 2\n\nInput: [[0,1],[1,0]]\nOutput: 2\n\nExample 3\n\nInput: [[0,0,0],[0,0,1],[1,1,0]]\nOutput: 2\nConstraints\n1 ≤ m, n ≤ 300\nEach cell is 0 or 1",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
