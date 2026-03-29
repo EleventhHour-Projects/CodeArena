@@ -75,6 +75,8 @@ type WorkerPool struct {
 	mu sync.Mutex
 	// channel is a channel that allows tasks to be added to the worker pool and retrieved by workers for processing
 	channel chan CodeConfig
+	auto    bool
+	muauto  sync.Mutex
 }
 
 // ExecutionCode is a struct that represents the structure of the execution code document in the MongoDB collection
@@ -128,7 +130,7 @@ type Submission struct {
 	Result          *Result       `bson:"result,omitempty"`
 }
 
-var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig)}
+var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}}
 
 // Increment increments the active worker count by 1 in a thread-safe manner
 func (wp *WorkerPool) Increment() {
@@ -164,7 +166,6 @@ func (wp *WorkerPool) AddTask(task CodeConfig) {
 func (wp *WorkerPool) GetTask() CodeConfig {
 	return <-wp.channel
 }
-
 
 // FlagUsage is a function that prints the usage information for the command-line flags of the application, providing users with guidance on how to run the application and what options are available for configuration
 // It displays the usage syntax, available options, and examples of how to run the application with different configurations, helping users understand how to use the command-line flags effectively when starting the code executor service
@@ -229,4 +230,22 @@ func GetEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func (wp *WorkerPool) SetAuto(auto bool) {
+	wp.muauto.Lock()
+	defer wp.muauto.Unlock()
+	wp.auto = auto
+}
+
+func (wp *WorkerPool) GetAuto() bool {
+	wp.muauto.Lock()
+	defer wp.muauto.Unlock()
+	return wp.auto
+}
+
+func (wp *WorkerPool) GetChannelLength() int {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	return len(wp.channel)
 }

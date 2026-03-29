@@ -170,6 +170,8 @@ func main() {
 		// Give a buffer time to start process of spawing workers
 		time.Sleep(1 * time.Second)
 		go worker.SpawnWorkers(ctx)
+		time.Sleep(1 * time.Second)
+		go api.Auto()
 	}
 
 	// Exit Process (Ctrl + C)
