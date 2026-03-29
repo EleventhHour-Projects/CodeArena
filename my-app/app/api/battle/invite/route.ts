@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Create a document in BattleInvite with expiration date (Date.now() + 3 minutes)
-        const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
+        // Create a document in BattleInvite with expiration date (Date.now() + 60 seconds)
+        const expiresAt = new Date(Date.now() + 60 * 1000);
 
         // if a document already exists with player1Id = curUserId and player2Id = opponentUserId and has not expired
         const existingInvite = await BattleInviteModel.findOne({
