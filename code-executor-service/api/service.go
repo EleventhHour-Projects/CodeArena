@@ -20,15 +20,16 @@ import (
 // If the request body is invalid or cannot be unmarshaled into a CodeConfig struct, the function returns a 400 Bad Request response with an error message
 // If the task is successfully added to the worker pool, the function returns a success message indicating that the task has been added to the queue
 func AddToQueue(c fiber.Ctx) error {
-	var task utils.CodeConfig
-	b := c.Body()
-	err := json.Unmarshal(b, &task)
+	return c.Status(fiber.StatusOK).SendString("This endpoint is deprecated and will be removed in the future. Please use the frontend to submit tasks.")
+	// var task utils.CodeConfig
+	// b := c.Body()
+	// err := json.Unmarshal(b, &task)
 
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
-	}
-	utils.WorkerPoolData.AddTask(task)
-	return c.SendString("Task added to queue")
+	// if err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+	// }
+	// utils.WorkerPoolData.AddTask(task)
+	// return c.SendString("Task added to queue")
 }
 
 // GetTaskInfo is a handler function that retrieves information about the task execution, such as the average execution time and total number of tasks processed, and returns it as a JSON response
@@ -55,6 +56,9 @@ func SpawnOneWorker(c fiber.Ctx) error {
 func StopAnyOneWorker(c fiber.Ctx) error {
 	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	if utils.WorkerPoolData.GetCount() <= 0 {
+		return c.Status(fiber.StatusBadRequest).SendString("No workers to stop")
 	}
 	p := true
 	utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
@@ -93,6 +97,32 @@ func MergePR(c fiber.Ctx) error {
 	return c.SendStatus(200)
 }
 
+func SetAuto(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	type RequestBody struct {
+		Auto bool `json:"auto"`
+	}
+	var body RequestBody
+	b := c.Body()
+	err := json.Unmarshal(b, &body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+	}
+	utils.WorkerPoolData.SetAuto(body.Auto)
+	return c.SendStatus(200)
+}
+
+func GetAutoStatus(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"auto": utils.WorkerPoolData.GetAuto(),
+	})
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -122,13 +152,15 @@ func StartService() {
 `+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
 `+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.CustomWorkerPoolSize+7, os.Getpid(), utils.CustomWorkerPoolSize)
-	app.Post("/go/api/queue", AddToQueue)
+`, utils.CustomWorkerPoolSize+9, os.Getpid(), utils.CustomWorkerPoolSize)
+	app.Post("/go/api/queue", AddToQueue) // Deprecated endpoint for adding tasks to the queue, will be removed in the future
 	app.Get("/info", GetTaskInfo)
 	app.Post("/api/admin/problem", SaveProblem)
 	app.Get("/api/internal/spawn", SpawnOneWorker)
 	app.Get("/api/internal/stop", StopAnyOneWorker)
 	app.Get("/api/internal/prs", GetPRList)
 	app.Post("/api/internal/merge", MergePR)
+	app.Post("/api/internal/auto", SetAuto)
+	app.Get("/api/internal/auto", GetAutoStatus)
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

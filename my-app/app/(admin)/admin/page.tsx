@@ -3,11 +3,20 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Users, Swords, Activity, Server, Clock, LogOut, Code, PlusCircle, Shield, Flag, GitPullRequest
+  Users, Swords, Activity, Server, Clock, LogOut, Code, PlusCircle, Shield, Flag, GitPullRequest, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 
 type DashboardStats = {
   totalUsers: number;
@@ -30,16 +39,24 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [executorInfo, setExecutorInfo] = useState<ExecutorInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuto, setIsAuto] = useState<boolean>(false);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [showAutoWarning, setShowAutoWarning] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [statsRes, execRes] = await Promise.all([
+      const [statsRes, execRes, autoRes] = await Promise.all([
         fetch("/api/admin/stats"),
-        fetch("/api/admin/executor-info")
+        fetch("/api/admin/executor-info"),
+        fetch("/api/admin/executor/auto")
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
       if (execRes.ok) setExecutorInfo(await execRes.json());
+      if (autoRes.ok) {
+        const data = await autoRes.json();
+        setIsAuto(data.auto);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -59,6 +76,10 @@ export default function AdminDashboard() {
   };
 
   const handleSpawnWorker = async () => {
+    if (isAuto) {
+      toast.error("Manual spawn disabled. Please turn OFF Auto Scale first.");
+      return;
+    }
     try {
       const res = await fetch("/api/admin/executor/spawn", { method: "POST" });
       if (res.ok) {
@@ -73,6 +94,10 @@ export default function AdminDashboard() {
   };
 
   const handleStopWorker = async () => {
+    if (isAuto) {
+      toast.error("Manual stop disabled. Please turn OFF Auto Scale first.");
+      return;
+    }
     try {
       const res = await fetch("/api/admin/executor/stop", { method: "POST" });
       if (res.ok) {
@@ -83,6 +108,36 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       toast.error("An error occurred while stopping worker");
+    }
+  };
+
+  const handleToggleAuto = () => {
+    if (!isAuto) {
+      setShowAutoWarning(true);
+    } else {
+      confirmToggleAuto(false);
+    }
+  };
+
+  const confirmToggleAuto = async (targetState: boolean) => {
+    setIsAutoLoading(true);
+    setShowAutoWarning(false);
+    try {
+      const res = await fetch("/api/admin/executor/auto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auto: targetState })
+      });
+      if (res.ok) {
+        setIsAuto(targetState);
+        toast.success(`Auto scale ${targetState ? "enabled" : "disabled"}`);
+      } else {
+        toast.error("Failed to update auto scale status");
+      }
+    } catch (err) {
+      toast.error("An error occurred while updating auto scale status");
+    } finally {
+      setIsAutoLoading(false);
     }
   };
 
@@ -270,7 +325,7 @@ export default function AdminDashboard() {
                             {b.status.toUpperCase()}
                           </span>
                         </td>
-                         <td className="p-4 text-[10px] text-muted-foreground font-mono text-right">
+                        <td className="p-4 text-[10px] text-muted-foreground font-mono text-right">
                           {new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                       </tr>
@@ -300,12 +355,49 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Premium Auto Scale Toggle */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-4 bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-2 pl-4 pr-3 transition-all hover:border-primary/20 group/auto"
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg transition-colors ${isAuto ? "bg-primary/20 text-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]" : "bg-zinc-800 text-zinc-500"}`}>
+                      <Zap className={`h-3.5 w-3.5 ${isAuto ? "fill-primary/20" : ""}`} />
+                    </div>
+                    <span className="text-[11px] font-bold tracking-tight uppercase text-zinc-300 group-hover/auto:text-foreground transition-colors">
+                      Auto Scale
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={!isAutoLoading ? handleToggleAuto : undefined}
+                  className={`relative w-11 h-6 rounded-full cursor-pointer transition-all duration-300 ${isAuto ? "bg-primary/20 border-primary/30" : "bg-zinc-800 border-zinc-700"} border p-0.5 overflow-hidden active:scale-95`}
+                >
+                  <motion.div
+                    animate={{
+                      x: isAuto ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className={`w-4.5 h-4.5 aspect-square rounded-full flex items-center justify-center shadow-lg transition-colors ${isAuto ? "bg-primary" : "bg-zinc-500"}`}
+                  >
+                    {isAutoLoading ? (
+                      <div className="w-2.5 h-2.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <div className={`w-1.5 h-1.5 rounded-full ${isAuto ? "bg-white/80" : "bg-zinc-800/40"}`} />
+                    )}
+                  </motion.div>
+                </div>
+              </motion.div>
+
               <div className="flex gap-2">
                 <Button
                   onClick={handleSpawnWorker}
                   size="sm"
                   variant="outline"
-                  className="h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                  className={`h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 ${isAuto ? "opacity-30 cursor-not-allowed" : ""}`}
                 >
                   <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
                   Spawn
@@ -314,7 +406,7 @@ export default function AdminDashboard() {
                   onClick={handleStopWorker}
                   size="sm"
                   variant="outline"
-                  className="h-8 border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+                  className={`h-8 border-rose-500/30 text-rose-400 hover:bg-rose-500/10 ${isAuto ? "opacity-30 cursor-not-allowed" : ""}`}
                 >
                   <LogOut className="h-3.5 w-3.5 mr-1.5 rotate-90" />
                   Stop
@@ -344,6 +436,37 @@ export default function AdminDashboard() {
         </motion.div>
 
       </div>
+
+      <Dialog open={showAutoWarning} onOpenChange={setShowAutoWarning}>
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800">
+          <DialogHeader className="flex flex-col items-center gap-3 py-4">
+            <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 transition-all animate-pulse">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-xl font-bold tracking-tight">Experimental Feature</DialogTitle>
+            <DialogDescription className="text-center text-zinc-400">
+              Worker Auto-Scaling is currently in <b className="text-amber-500/80">Beta</b>. It relies on a 10-second polling window to spawn or stop workers based on traffic volume.
+              <br /><br />
+              Using this in production may lead to unstable worker counts. Do you wish to proceed?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAutoWarning(false)}
+              className="border-zinc-800 text-zinc-400 hover:bg-zinc-900 px-8"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => confirmToggleAuto(true)}
+              className="bg-amber-500 text-black hover:bg-amber-400 font-bold px-8 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+            >
+              Enable Anyway
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
