@@ -1,0 +1,64 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "RLRRLLRLRL",
+                "output": "4"
+            },
+            {
+                "input": "RLRRRLLRLL",
+                "output": "2"
+            },
+            {
+                "input": "LLLLRRRR",
+                "output": "1"
+            }
+        ],
+        "submit": [
+            {
+                "input": "LR",
+                "output": "1"
+            },
+            {
+                "input": "RL",
+                "output": "1"
+            },
+            {
+                "input": "RLRL",
+                "output": "2"
+            },
+            {
+                "input": "RRLL",
+                "output": "1"
+            },
+            {
+                "input": "RLRRLLRLRL",
+                "output": "4"
+            },
+            {
+                "input": "LRLRLRLR",
+                "output": "4"
+            },
+            {
+                "input": "RRRRLLLL",
+                "output": "1"
+            },
+            {
+                "input": "RLLRLRRL",
+                "output": "4"
+            },
+            {
+                "input": "LRLRLRLRLRLRLRLRLRLR",
+                "output": "10"
+            },
+            {
+                "input": "RRLLRRLLRRLLRRLLRRLL",
+                "output": "5"
+            },
+            {
+                "input": "LRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLRLR",
+                "output": "500"
+            }
+        ]
+    }
+}
