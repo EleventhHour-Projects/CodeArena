@@ -101,6 +101,15 @@ export default function AdminPRs() {
     }
   };
 
+  const getDisplayName = (username: string) => {
+    const map: Record<string, string> = {
+      'codearena-bot-eh': 'CodeArenaBot',
+      'Not-Dhananjay-Mishra': 'DhananjayMishra',
+      'ManavSharma142': 'ManavSharma'
+    };
+    return map[username] || username;
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30 transition-colors">
       <div className="max-w-7xl mx-auto">
@@ -220,8 +229,8 @@ export default function AdminPRs() {
                       </td>
                       <td className="px-6 py-5 align-top">
                         <div className="flex items-center gap-3">
-                          <img src={pr.user.avatar_url} alt={pr.user.login} className="w-8 h-8 rounded-full border border-border" />
-                          <span className="font-medium text-sm">{pr.user.login}</span>
+                          <img src={pr.user.avatar_url} alt={getDisplayName(pr.user.login)} className="w-8 h-8 rounded-full border border-border" />
+                          <span className="font-medium text-sm">{getDisplayName(pr.user.login)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 align-top">
