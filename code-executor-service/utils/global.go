@@ -101,8 +101,7 @@ type Problem struct {
 	ID         int    `bson:"id"`
 }
 
-// Result is a struct that represents the result of a code execution task, including whether it resulted in a time limit exceeded (TLE) or memory limit exceeded (MLE), the failed test case number if applicable, and the runtime and memory usage
-// TLE is a boolean that indicates whether the code execution resulted in a time limit exceeded error, MLE is a boolean that indicates whether the code execution resulted in a memory limit exceeded error, FailedTestCaseNumber is a pointer to a string that holds the number of the failed test case if applicable, RunTimeMs is an integer that represents the runtime of the code execution in milliseconds, and MemoryUsedMB is an integer that represents the memory used by the code execution in megabytes
+// Result is a struct that represents the result of a code execution task...
 type Result struct {
 	TLE                  bool    `bson:"tle,omitempty"`
 	MLE                  bool    `bson:"mle,omitempty"`
@@ -111,6 +110,7 @@ type Result struct {
 	MemoryUsedMB         int     `bson:"memoryUsedMB,omitempty"`
 	ErrorMSG             string  `bson:"errorMsg,omitempty"`
 	ActualOutput         string  `bson:"actualOutput,omitempty"`
+	ExpectedOutput       string  `bson:"expectedOutput,omitempty"`
 }
 
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission

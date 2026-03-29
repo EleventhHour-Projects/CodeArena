@@ -29,11 +29,30 @@ export async function GET(
         // Ensure database connection
         await dbConnect();
 
-        // 3. Query Database
-        // Use lean() for performance since this is purely a read operation
+        // Check if a Submission record exists (for "Submit" type)
         const submission = await SubmissionModel.findOne({ execCodeId: exec_id }).lean();
 
         if (!submission) {
+            // If there's no Submission record, check if it's a "Run" completed in the ExecutionCode model
+            const ExecutionCodeModel = mongoose.models.ExecutionCode || require("@/lib/models/ExecutionCode").default;
+            const execCode = await ExecutionCodeModel.findById(exec_id).lean();
+
+            if (execCode && execCode.type === "Run" && execCode.status !== "Pending") {
+                const responseData = {
+                    success: true,
+                    status: execCode.status, // "Accepted" or "Rejected"
+                    exec_id: execCode._id,
+                    user_id: execCode.userId,
+                    problem_id: execCode.problem?.id,
+                    language: execCode.language,
+                    created_at: execCode.createdAt,
+                    // Note: 'Run' result details (memory, runtime, output) are not currently saved in the DB by the worker
+                };
+                
+                await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+                return NextResponse.json(responseData, { status: 200 });
+            }
+
             // No record found means execution is in progress or not persisted yet
             const pendingResponse = { success: true, status: "PENDING" };
             
@@ -49,7 +68,7 @@ export async function GET(
             status: submission.status,
             exec_id: submission.execCodeId,
             user_id: submission.userId,
-            problem_id: submission.problemId,
+            problem_id: submission.problemId || submission.problem?.id,
             language: submission.language,
             code: submission.code, // include based on privacy rules
             exec_time: submission.result?.runTimeMs,
@@ -58,8 +77,9 @@ export async function GET(
             failed_test_case: submission.result?.failedTestCaseNumber,
             mle: submission.result?.mle,
             tle: submission.result?.tle,
-            actual_output: (submission.result as any)?.actualOutput,
-            errorMsg: (submission.result as any)?.errorMsg,
+            actual_output: submission.result?.actualOutput,
+            errorMsg: submission.result?.errorMsg,
+            expected_output: submission.result?.expectedOutput,
         };
 
         // Complete/terminal submissions are largely immutable, cache for longer (e.g., 5 mins)

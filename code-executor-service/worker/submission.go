@@ -9,10 +9,11 @@ import (
 // FailedInfo is a struct that holds information about whether a test case failed, the error message if it failed, and the test case number that caused the failure
 // Internal Use Only: This struct is used internally within the worker package to track the results of test case executions and determine whether a submission passed or failed based on the test cases
 type FailedInfo struct {
-	isFailed     bool
-	ErrorMessage string
-	TestCase     string
-	ActualOutput string
+	isFailed       bool
+	ErrorMessage   string
+	TestCase       string
+	ActualOutput   string
+	ExpectedOutput string
 }
 
 // SaveSubmissionResult is a function that saves the result of a code submission to the MongoDB database, including the execution time, memory used, and whether the submission passed or failed based on the test cases
@@ -35,6 +36,7 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		MemoryUsedMB:         memory,
 		ErrorMSG:             failed.ErrorMessage,
 		ActualOutput:         failed.ActualOutput,
+		ExpectedOutput:       failed.ExpectedOutput,
 	}
 	event := utils.EVENTTYPESUBMITPASS
 	if failed.isFailed {

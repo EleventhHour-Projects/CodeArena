@@ -131,10 +131,11 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 			}
 
 			failedInfo = FailedInfo{
-				isFailed:     true,
-				ErrorMessage: errorMsg,
-				TestCase:     input,
-				ActualOutput: actual,
+				isFailed:       true,
+				ErrorMessage:   errorMsg,
+				TestCase:       input,
+				ActualOutput:   actual,
+				ExpectedOutput: exp,
 			}
 			break
 		}
