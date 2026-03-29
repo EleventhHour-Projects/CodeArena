@@ -1,0 +1,11 @@
+{
+    "id": 35,
+    "slug": "minimum-absolute-difference-between-two-values",
+    "tags": [],
+    "title": "Minimum Absolute Difference Between Two Values",
+    "difficulty": "Easy",
+    "description": "You are given an array nums containing only 0, 1, and 2.\n\nA pair (i, j) is valid if:\n\nnums[i] == 1\nnums[j] == 2\nTask\n\nFind the minimum absolute difference:\n\nabs(i - j)\n\namong all valid pairs.\n\nIf no such pair exists, return -1.\n\nExamples\n\nExample 1\n\n[1,0,0,2,0,1]\n→ 2\n\nExample 2\n\n[1,0,1,0]\n→ -1\nConstraints\n1 ≤ n ≤ 100\nElements are only 0, 1, 2",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
