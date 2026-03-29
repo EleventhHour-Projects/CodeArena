@@ -1,0 +1,44 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "3\nMary John Emma\n3\n180 165 170",
+                "output": "Mary Emma John"
+            },
+            {
+                "input": "3\nAlice Bob Bob\n3\n155 185 150",
+                "output": "Bob Alice Bob"
+            }
+        ],
+        "submit": [
+            {
+                "input": "52\nA B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z\n52\n214 372 404 47 215 263 205 369 470 432 225 403 201 147 476 86 60 328 150 187 151 171 352 259 423 194 304 19 437 283 465 23 209 156 207 374 269 97 230 358 84 153 376 331 129 364 124 278 441 414 300 125",
+                "output": "O I e w c J Y x C L q j B H t n W r R a y d v k F X m K E A g i G M Z T V h p U S N s z u l P o Q D f b"
+            },
+            {
+                "input": "177\nAbcd Efgh Ijkl Mnop Qrst Uvwx Yzab Cdef Ghij Klmno Pqrs Tuvw Xyza Bcde Fgij Hijk Lmno Opqr Rstu Vwxy Zabc Adef Bghi Cjkl Dmnk Eopq Frst Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tfgh Uijk Vnop Wqrs Xstu Yuvw Zxyz Abcd Befg Chij Dklm Eopq Fqrs Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tefg Uijk Vnop Wqrs Xstu Yuvw Zxyz Abcd Befg Chij Dklm Eopq Fqrs Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tefg Uijk Vnop Wqrs Xstu Yuvw Zxyz Abcd Befg Chij Dklm Eopq Fqrs Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tefg Uijk Vnop Wqrs Xstu Yuvw Zxyz Abcd Befg Chij Dklm Eopq Fqrs Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tefg Uijk Vnop Wqrs Xstu Yuvw Zxyz Abcd Befg Chij Dklm Eopq Fqrs Guvw Hxyz Ijab Jcde Kfgh Lijk Mnop Nqrs Ostu Puvw Qxyz Rabc Stde Tefg Uijk Vnop Wqrs Xstu Yuvw Zxyz\n177\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177",
+                "output": "Zxyz Yuvw Xstu Wqrs Vnop Uijk Tefg Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Fqrs Eopq Dklm Chij Befg Abcd Zxyz Yuvw Xstu Wqrs Vnop Uijk Tefg Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Fqrs Eopq Dklm Chij Befg Abcd Zxyz Yuvw Xstu Wqrs Vnop Uijk Tefg Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Fqrs Eopq Dklm Chij Befg Abcd Zxyz Yuvw Xstu Wqrs Vnop Uijk Tefg Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Fqrs Eopq Dklm Chij Befg Abcd Zxyz Yuvw Xstu Wqrs Vnop Uijk Tefg Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Fqrs Eopq Dklm Chij Befg Abcd Zxyz Yuvw Xstu Wqrs Vnop Uijk Tfgh Stde Rabc Qxyz Puvw Ostu Nqrs Mnop Lijk Kfgh Jcde Ijab Hxyz Guvw Frst Eopq Dmnk Cjkl Bghi Adef Zabc Vwxy Rstu Opqr Lmno Hijk Fgij Bcde Xyza Tuvw Pqrs Klmno Ghij Cdef Yzab Uvwx Qrst Mnop Ijkl Efgh Abcd"
+            },
+            {
+                "input": "280\nAabc Bdef Cghi Dijk Eklm Fnop Gqrs Hijk Lmno Pqrs Tuvw Xyza Bcdf Efgh Ghij Ijkl Jklm Klmn Lmno Mnop Opqr Pqrs Qrstu Rstu Stuv Tuvw Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Bdef Cghi Dijk Eklm Fnop Gqrs Hijk Lmno Pqrs Tuvw Xyza Bcdf Efgh Ghij Ijkl Jklm Klmn Lmno Mnop Opqr Pqrs Qrstu Rstu Stuv Tuvw Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno Mnop Nopq Opqr Pqrs Qrstu Rstuv Stuvw Tuvwx Uvwx Vwxy Wxyz Xyza Yzab Zabc Abcd Bcde Cdef Defg Efgh Fgij Ghij Hijk Ijkl Jklm Klmno Lmno\n280\n52984 16037 75422 10294 58172 78912 98427 40925 75822 27218 37546 67985 24834 59817 39485 59281 88344 19827 47392 96558 28547 41672 63839 91043 20495 51781 92743 67012 18460 49107 60594 18842 74393 20154 52389 76482 30518 29130 81567 76320 45719 68413 96540 32874 73421 98246 73950 65247 29484 37495 12073 40692 25073 54862 29952 92705 34177 20834 94565 37291 78659 55184 66923 51372 19381 72465 92037 40872 21463 36751 52094 76021 13857 93810 47596 26985 82754 18762 48534 79031 19983 45722 70162 26744 16387 95163 54291 17496 20893 73926 73195 46381 22065 34820 89027 62984 31846 70612 85371 29048 39276 57759 19240 14279 41892 23954 12456 19407 36817 27398 61412 38972 73243 95071 13769 82584 31475 92670 58542 45128 41755 26359 25840 70495 48231 35184 59127 67015 34829 31572 25176 45270 96758 41293 82724 29395 15867 93242 82603 41492 73955 27748 21830 45593 26178 42864 30497 17629 85246 70143 27893 14026 38482 18739 35097 82715 51183 67930 49817 50846 23619 48550 59094 37851 27384 19588 23344 28592 30865 56032 93154 61734 59321 96432 25092 59194 48927 71815 14267 18754 30684 45873 51760 18937 47012 61685 21492 96246 72655 82745 29391 31957 47231 51291 25663 50714 80354 31167 98134 29461 44297 41746 93510 12134 14088 43163 30348 13795 86914 15980 69747 14683 27234 20743 15628 69721 83014 23058 24345 51309 15486 94927 42593 16289 95238 89273 73812 48136 17963 21755 96047 17491 16409 92831 80437 21025 43292 29468 78571 13923 93259 80522 24048 44776 49129 41896 72589 53624 42498 36745 87093 34256 81747 18576 54628 28374 48264 70649 81327 19453 15395 91384 71930 35768 16594 53894 70314 13457 16276 33491 49155 15948 81336 46283 40781 69762 56241 37395 80272 87394",
+                "output": "Gqrs Nopq Ghij Wxyz Mnop Klmno Lmno Dijk Opqr Ijkl Bcde Defg Fgij Abcd Pqrs Lmno Yzab Bcde Ijkl Rstuv Uvwx Xyza Hijk Ijkl Tuvwx Rstu Jklm Klmno Jklm Lmno Ijkl Stuv Opqr Mnop Abcd Stuvw Fnop Yzab Tuvwx Cdef Fgij Klmno Ghij Efgh Qrstu Zabc Stuvw Bcdf Klmno Vwxy Fnop Cdef Wxyz Defg Hijk Nopq Lmno Cghi Abcd Efgh Opqr Fgij Klmno Mnop Cdef Ghij Eklm Efgh Hijk Uvwx Pqrs Pqrs Nopq Nopq Yzab Yzab Nopq Hijk Uvwx Zabc Jklm Xyza Vwxy Rstuv Vwxy Efgh Pqrs Qrstu Lmno Jklm Bdef Abcd Yzab Efgh Klmno Ijkl Nopq Qrstu Abcd Ijkl Eklm Rstuv Ijkl Hijk Defg Vwxy Mnop Cdef Xyza Fgij Aabc Cdef Mnop Tuvw Uvwx Fgij Defg Pqrs Uvwx Xyza Xyza Wxyz Cdef Cdef Xyza Opqr Zabc Uvwx Opqr Opqr Lmno Qrstu Lmno Lmno Wxyz Hijk Fgij Tuvwx Xyza Ijkl Hijk Vwxy Jklm Bcde Jklm Uvwx Pqrs Jklm Ghij Ghij Defg Uvwx Klmno Klmn Pqrs Defg Xyza Hijk Jklm Ghij Tuvwx Ghij Qrstu Bcde Qrstu Bcde Tuvw Rstuv Jklm Bcde Yzab Lmno Hijk Vwxy Pqrs Stuvw Stuvw Jklm Jklm Yzab Bcde Lmno Hijk Mnop Tuvwx Ghij Efgh Ghij Stuvw Efgh Klmno Qrstu Wxyz Qrstu Vwxy Ijkl Zabc Gqrs Fgij Pqrs Fgij Opqr Nopq Opqr Fgij Zabc Cdef Wxyz Pqrs Rstuv Zabc Lmno Ijkl Mnop Tuvw Uvwx Mnop Uvwx Bcdf Cdef Abcd Vwxy Yzab Efgh Bcde Ijkl Ghij Nopq Cghi Klmno Tuvwx Efgh Zabc Xyza Stuv Bcde Wxyz Klmn Defg Rstuv Xyza Ghij Stuvw Vwxy Zabc Tuvwx Rstuv Rstuv Lmno Wxyz Mnop Lmno Defg Pqrs Wxyz Qrstu Abcd Hijk Abcd Bdef Tuvw Defg Abcd Yzab Efgh Stuvw Vwxy Tuvwx Qrstu Opqr Pqrs Xyza Opqr Rstu Efgh Zabc Wxyz Mnop Stuvw Dijk"
+            },
+            {
+                "input": "4\nEmma Olivia Ava Isabella\n4\n160 158 155 162",
+                "output": "Isabella Emma Olivia Ava"
+            },
+            {
+                "input": "4\nAnna Elsa Olaf Kristoff\n4\n150 140 160 170",
+                "output": "Kristoff Olaf Anna Elsa"
+            },
+            {
+                "input": "8\nGXLVEHVABFOGSFXUYYR TUHxnsxmu X OOYBLVKmzlaeaxbprc ARNLAPtfvmutkfsa XPMKPDUWOQEEILtbdjip QICEutjbr R\n8\n11578 89340 73785 12096 55734 89484 59775 72652",
+                "output": "XPMKPDUWOQEEILtbdjip TUHxnsxmu X R QICEutjbr ARNLAPtfvmutkfsa OOYBLVKmzlaeaxbprc GXLVEHVABFOGSFXUYYR"
+            },
+            {
+                "input": "8\nIEO Sgizfdfrims QTASHKQ Vk RPJOFYZUBFSIYp EPCFFt VOYGWWNCf WSpmqvb\n8\n17233 32521 14087 42738 46669 65662 43204 8224",
+                "output": "EPCFFt RPJOFYZUBFSIYp VOYGWWNCf Vk Sgizfdfrims IEO QTASHKQ WSpmqvb"
+            }
+        ]
+    }
+}
