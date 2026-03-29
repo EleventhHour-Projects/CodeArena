@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/Logo"
 import Image from "next/image"
 import { ThemeToggleSidebarItem } from "@/components/theme-toggle-sidebar-item"
+import { NotificationsMenu } from "@/components/notifications-menu"
 
 const navItems = [
   { title: "Home", url: "/", icon: Home },
@@ -103,10 +104,11 @@ export async function AppSidebar() {
         <SidebarMenu>
           {/* RATING PLACEHOLDER (Above avatar) */}
           {session && (
-            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden px-2 py-1">
+            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden px-2 py-1 flex items-center justify-between">
               <div className="text-xs text-muted-foreground font-medium">
                 Rating: <span className="text-primary ">{userRating}</span>
               </div>
+              <NotificationsMenu />
             </SidebarMenuItem>
           )}
 
