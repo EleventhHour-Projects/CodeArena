@@ -32,6 +32,8 @@ type ExecutorInfo = {
   total_active_time: string;
   total_tasks: number;
   total_time_to_execute_task_inSec: number;
+  cpu_usage?: string;
+  memory_usage?: string;
 };
 
 export default function AdminDashboard() {
@@ -45,14 +47,23 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, execRes, autoRes] = await Promise.all([
+      const [statsRes, execRes, autoRes, usageRes] = await Promise.all([
         fetch("/api/admin/stats"),
         fetch("/api/admin/executor-info"),
-        fetch("/api/admin/executor/auto")
+        fetch("/api/admin/executor/auto"),
+        fetch("/api/admin/executor/usage")
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
-      if (execRes.ok) setExecutorInfo(await execRes.json());
+      
+      let executorData = {};
+      if (execRes.ok) executorData = await execRes.json();
+      if (usageRes.ok) {
+        const usageData = await usageRes.json();
+        executorData = { ...executorData, ...usageData };
+      }
+      if (Object.keys(executorData).length > 0) setExecutorInfo(executorData as ExecutorInfo);
+
       if (autoRes.ok) {
         const data = await autoRes.json();
         setIsAuto(data.auto);
@@ -347,7 +358,7 @@ export default function AdminDashboard() {
         >
           {/* header */}
           <div className="flex justify-between items-center mb-10 pb-4 border-b border-border/20">
-            <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="flex items-center gap-3 text-muted-foreground mr-auto">
               <Server className="h-4 w-4" />
               <h2 className="text-md font-bold uppercase tracking-widest italic">
                 Cluster Monitor
@@ -355,6 +366,15 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-4">
+              <Button
+                onClick={() => window.open("/api/admin/executor/metrics", "_blank")}
+                size="sm"
+                variant="outline"
+                className="h-8 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+              >
+                <Activity className="h-3.5 w-3.5 mr-1.5" />
+                Performance Metrics
+              </Button>
               {/* Premium Auto Scale Toggle */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -421,12 +441,21 @@ export default function AdminDashboard() {
 
           {/* grid */}
           {executorInfo ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               <Stat label="Workers" value={executorInfo.active_worker} icon={Activity} />
               <Stat label="Tasks" value={executorInfo.total_tasks} icon={Code} />
               <Stat label="Avg Time" value={`${executorInfo.average_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
-              <Stat label="Total Time" value={`${executorInfo.total_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
-              <Stat label="Cluster Uptime" value={executorInfo.total_active_time} icon={Activity} />
+              <Stat
+                label="Uptime"
+                value={executorInfo.total_active_time.replace(/(\d+)\.\d+s/, "$1s").replace(/(\d+[hms])/g, "$1 ").trim()}
+                icon={Activity}
+              />
+              <Stat label="CPU" value={executorInfo.cpu_usage || "N/A"} icon={Zap} color="text-amber-400" />
+              <Stat label="Memory" value={executorInfo.memory_usage || "N/A"} icon={Server} color="text-emerald-400" />
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition flex flex-col justify-center">
+                <p className="text-zinc-500 text-[10px] uppercase tracking-wider mb-2">Total Time</p>
+                <h3 className="text-lg font-semibold truncate">{executorInfo.total_time_to_execute_task_inSec.toFixed(2)}s</h3>
+              </div>
             </div>
           ) : (
             <div className="text-zinc-500 text-center py-10">
@@ -472,14 +501,14 @@ export default function AdminDashboard() {
 }
 
 /* reusable stat */
-function Stat({ label, value, icon: Icon }: any) {
+function Stat({ label, value, icon: Icon, color }: any) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition">
       <div className="flex justify-between items-center mb-3">
-        <p className="text-zinc-500 text-xs uppercase tracking-wider">
+        <p className="text-zinc-500 text-[10px] uppercase tracking-wider mb-2">
           {label}
         </p>
-        <Icon className="h-4 w-4 text-zinc-400" />
+        <Icon className={`h-4 w-4 ${color || "text-zinc-400"}`} />
       </div>
       <h3 className="text-xl font-semibold">{value}</h3>
     </div>

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"executor-service/cpu"
 	"executor-service/gh"
 	"executor-service/utils"
 	"executor-service/worker"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gofiber/contrib/monitor"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -123,6 +125,25 @@ func GetAutoStatus(c fiber.Ctx) error {
 	})
 }
 
+func GetServerUsageInfo(c fiber.Ctx) error {
+	if c.Get("X-Internal-Key") != utils.INTERNAL_KEY {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+	// Placeholder for actual server usage info, such as CPU and memory usage
+	cpuUsage, err := cpu.GetCPUUsage()
+	if err != nil {
+		cpuUsage = "N/A"
+	}
+	memoryUsage, err := cpu.GetMemoryUsage()
+	if err != nil {
+		memoryUsage = "N/A"
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"cpu_usage":    cpuUsage,
+		"memory_usage": memoryUsage,
+	})
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -152,7 +173,7 @@ func StartService() {
 `+utils.Lime+`INFO`+utils.Reset+` Total process count:       1
 `+utils.Lime+`INFO`+utils.Reset+` Worker pool size:          %d
 --------------------------------------------------
-`, utils.CustomWorkerPoolSize+9, os.Getpid(), utils.CustomWorkerPoolSize)
+`, utils.CustomWorkerPoolSize+11, os.Getpid(), utils.CustomWorkerPoolSize)
 	app.Post("/go/api/queue", AddToQueue) // Deprecated endpoint for adding tasks to the queue, will be removed in the future
 	app.Get("/info", GetTaskInfo)
 	app.Post("/api/admin/problem", SaveProblem)
@@ -162,5 +183,7 @@ func StartService() {
 	app.Post("/api/internal/merge", MergePR)
 	app.Post("/api/internal/auto", SetAuto)
 	app.Get("/api/internal/auto", GetAutoStatus)
+	app.Get("/api/internal/usage", GetServerUsageInfo)
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "ParkProof Go Backend Monitor"}))
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }
