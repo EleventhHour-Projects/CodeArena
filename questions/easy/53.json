@@ -1,0 +1,14 @@
+{
+    "id": 53,
+    "slug": "toeplitz-matrix",
+    "tags": [
+        "Array",
+        "Matrix"
+    ],
+    "title": "Toeplitz Matrix",
+    "difficulty": "Easy",
+    "description": "You are given a matrix matrix of size m × n.\n\nA matrix is called Toeplitz if:\n\nEvery diagonal (from top-left to bottom-right) has the same value\n\nYour task:\n\nReturn true if the matrix is Toeplitz\nOtherwise, return false\n\nExample 1\nInput:\n[[1,2,3,4], [5,1,2,3], [9,5,1,2]]\n\nOutput: true\n\nExample 2\nInput:\n[[1,2], [2,2]]\n\nOutput: false\n\nConstraints:\n\n1 \u003c= m, n \u003c= 20\n0 \u003c= matrix[i][j] \u003c= 99",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
