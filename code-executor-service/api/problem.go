@@ -13,6 +13,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// ProblemPayload represents the structure of the payload received when creating a new problem,
+// containing fields such as slug, tags, title, difficulty, description, and testcases,
+// which are essential for defining the details of the problem to be added to the system.
 type ProblemPayload struct {
 	Slug        string      `json:"slug"`
 	Tags        []string    `json:"tags"`
@@ -22,6 +25,9 @@ type ProblemPayload struct {
 	Testcases   interface{} `json:"testcases"`
 }
 
+// QuestionJson represents the structure of the question details that will be saved in a JSON file,
+// containing fields such as ID, slug, tags, title, difficulty, description, input format, output format, and constraints,
+// which are essential for defining the problem statement and its associated metadata for use in the code execution service.
 type QuestionJson struct {
 	ID           int      `json:"id"`
 	Slug         string   `json:"slug"`
@@ -34,6 +40,9 @@ type QuestionJson struct {
 	Constraints  string   `json:"constraints"`
 }
 
+// getNextId calculates the next available ID for a new problem based on the specified difficulty level,
+// by retrieving the current count of questions with the same difficulty from GitHub and considering any pending pull requests,
+// ensuring that the new problem is assigned a unique ID within the defined range for its difficulty level (easy: 1-299, medium: 300-599, hard: 600-899).
 func getNextId(difficulty string) (int, error) {
 	d := strings.ToLower(difficulty)
 
@@ -137,6 +146,8 @@ func SaveProblem(c fiber.Ctx) error {
 	})
 }
 
+// PushToGithub pushes the question and testcases to GitHub by creating a new pull request with the provided details,
+// allowing for seamless integration of new problems into the GitHub repository, where the function constructs the necessary files and metadata for the problem and utilizes the GitHub client to create a pull request with the appropriate branch name, title, body, and file contents, ensuring that the new problem is added to the repository in an organized and efficient manner.
 func PushToGithub(questionBytes, testcaseBytes []byte, difficulty string, id int, title string) error {
 	if utils.GhClient == nil {
 		return fmt.Errorf("github client not initialized")

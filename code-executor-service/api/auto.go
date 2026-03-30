@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+// KeepXWorkers adjusts the number of active worker goroutines to match the specified count,
+// allowing for dynamic scaling of worker resources based on the current workload in the code execution service
+// If the current number of workers is less than the desired count, it spawns additional workers until the desired count is reached.
+// If the current number of workers is greater than the desired count, it sends stop signals to excess workers to gracefully reduce the worker pool size,
+// ensuring efficient resource utilization and optimal performance in handling code execution tasks.
 func KeepXWorkers(n int) {
 	currentWorkers := utils.WorkerPoolData.GetCount()
 	if currentWorkers < n {
@@ -21,6 +26,11 @@ func KeepXWorkers(n int) {
 	}
 }
 
+// Auto continuously monitors the workload of the code execution service and automatically adjusts
+// the number of active worker goroutines based on the number of tasks processed in a given time period,
+// allowing for dynamic scaling of worker resources to efficiently handle varying workloads and optimize performance in the code execution service
+// The function runs in a loop, checking for the auto-scaling flag and calculating the number of tasks processed in a defined time interval,
+// then adjusts the worker pool size accordingly using the KeepXWorkers function to ensure efficient resource utilization and optimal performance in handling code execution tasks.
 func Auto() {
 	for {
 		if !utils.WorkerPoolData.GetAuto() {
