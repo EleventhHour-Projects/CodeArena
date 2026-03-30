@@ -211,14 +211,15 @@ func worker(ctx context.Context) {
 		fmt.Println(utils.Red+"Error creating container L129 :"+utils.Reset, err)
 		return
 	}
-	defer utils.WorkerPoolData.IsCleaned(resp.ID)
+	defer utils.WorkerPoolData.UnregisterWorker(resp.ID)
+	utils.WorkerPoolData.RegisterWorker(resp.ID)
+
 	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		utils.WorkerPoolData.Decrement()
 		KillContainerByID(ctx, containerName)
 		SpawnWorkerFailed(ctx)
 		return
-		//panic(err)
 	}
 	for {
 		task := utils.WorkerPoolData.GetTask()
@@ -240,22 +241,35 @@ func worker(ctx context.Context) {
 			Event:        utils.EVENTTYPE(eventType),
 		})
 
+		// Register the current task for tracking
+		utils.WorkerPoolData.SetActiveTask(resp.ID, &task)
+
 		// 10 seconds is more reasonable for compilation + multiple test cases
 		runCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
-			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
+			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err)
 			KillContainerByID(ctx, containerName)
 			utils.WorkerPoolData.Decrement()
-			if !utils.WorkerPoolData.IsCleaned(resp.ID) {
+
+			// Check if this was an intentional cleanup by AutoClean
+			if utils.WorkerPoolData.IsWorkerRegistered(resp.ID) {
+				fmt.Println("Natural failure - spawning replacement and re-queuing task")
 				SpawnWorkerFailed(ctx)
+				utils.WorkerPoolData.AddTask(task)
+			} else {
+				fmt.Println("Worker was cleaned externally, task recovery handled by cleaner")
 			}
-			utils.WorkerPoolData.AddTask(task)
+
+			// Clean up active task registration
+			utils.WorkerPoolData.ClearActiveTask(resp.ID)
+
 			cancel() // cancel context before breaking
 			break
 		} else {
 			fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
+			utils.WorkerPoolData.ClearActiveTask(resp.ID)
 		}
 		cancel() // Manual cancel to avoid defer leak in loop
 	}

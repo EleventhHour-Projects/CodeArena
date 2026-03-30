@@ -78,7 +78,7 @@ func AutoClean() {
 			continue
 		}
 		intital, _ := docker.GetWorkerDetails()
-		time.Sleep(time.Minute * 10)
+		time.Sleep(time.Minute * 1)
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
@@ -96,15 +96,27 @@ func AutoClean() {
 
 					if overThreshold {
 						utils.WorkerPoolData.ScalingMuLock()
-						// Directly kill the over-threshold container.
 						fmt.Printf("AutoClean: Replacing over-threshold container %s (CPU: %.2f%%, Mem: %d bytes)\n", workerf.ID, workerf.CPUUsage, workerf.MemoryUsage)
-						// Mark this worker as being cleaned to prevent double-spawning
-						utils.WorkerPoolData.MarkCleaned(workerf.ID)
-						// 1. Kill old
+
+						// 1. Rescue task if worker was busy
+						task := utils.WorkerPoolData.StealActiveTask(workerf.ID)
+						if task == nil {
+							// For idle workers, we must unregister them explicitly
+							utils.WorkerPoolData.UnregisterWorker(workerf.ID)
+						}
+
+						// 2. Perform the replacement
 						worker.KillContainerByID(utils.WorkerCTX, workerf.ID)
-						// 2. Immediately spawn new to maintain capacity
 						worker.SpawnWorkerFailed(utils.WorkerCTX)
+
+						// 3. Release the scaling lock BEFORE task re-queuing
 						utils.WorkerPoolData.ScalingMuUnlock()
+
+						// 4. Re-queue the rescued task (if any)
+						if task != nil {
+							fmt.Printf("AutoClean: Rescuing task %s from container %s\n", task.TaskID, workerf.ID)
+							utils.WorkerPoolData.AddTask(*task)
+						}
 					}
 				}
 			}
