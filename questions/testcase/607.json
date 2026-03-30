@@ -1,0 +1,76 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "31\n8\n2019",
+                "output": "Saturday"
+            },
+            {
+                "input": "18\n7\n1999",
+                "output": "Sunday"
+            },
+            {
+                "input": "15\n8\n1993",
+                "output": "Sunday"
+            }
+        ],
+        "submit": [
+            {
+                "input": "1\n1\n1971",
+                "output": "Friday"
+            },
+            {
+                "input": "31\n12\n2100",
+                "output": "Friday"
+            },
+            {
+                "input": "29\n2\n1972",
+                "output": "Tuesday"
+            },
+            {
+                "input": "28\n2\n1973",
+                "output": "Wednesday"
+            },
+            {
+                "input": "1\n3\n2000",
+                "output": "Wednesday"
+            },
+            {
+                "input": "31\n1\n1999",
+                "output": "Sunday"
+            },
+            {
+                "input": "30\n4\n2020",
+                "output": "Thursday"
+            },
+            {
+                "input": "31\n12\n1999",
+                "output": "Friday"
+            },
+            {
+                "input": "10\n11\n2005",
+                "output": "Thursday"
+            },
+            {
+                "input": "14\n2\n2006",
+                "output": "Tuesday"
+            },
+            {
+                "input": "10\n11\n2026",
+                "output": "Tuesday"
+            },
+            {
+                "input": "14\n2\n2027",
+                "output": "Sunday"
+            },
+            {
+                "input": "28\n2\n2026",
+                "output": "Saturday"
+            },
+            {
+                "input": "29\n2\n2020",
+                "output": "Saturday"
+            }
+        ]
+    }
+}

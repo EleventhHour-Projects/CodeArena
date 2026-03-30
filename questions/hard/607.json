@@ -1,0 +1,13 @@
+{
+    "id": 607,
+    "slug": "day-of-the-week",
+    "tags": [
+        "Math"
+    ],
+    "title": "Day of the Week",
+    "difficulty": "Hard",
+    "description": "You are given a date as:\n\nday\nmonth\nyear\n\nYour task is to:\n\nReturn the day of the week for that date\n\nPossible outputs:\n\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"\n\nNote:\n\nJanuary 1, 1971 was a Friday\n\nExample 1\nInput: 31, 8, 2019\nOutput: \"Saturday\"\n\nExample 2\nInput: 18, 7, 1999\nOutput: \"Sunday\"\n\nExample 3\nInput: 15, 8, 1993\nOutput: \"Sunday\"\n\nConstraints:\n\nDates are valid\n1971 \u003c= year \u003c= 2100",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
