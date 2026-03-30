@@ -26,14 +26,34 @@ type DashboardStats = {
   recentBattles: any[];
 };
 
+type WorkerDetail = {
+  id: string;
+  name: string;
+  image: string;
+  state: string;
+  status: string;
+  cpu_usage: number;
+  memory_usage: number;
+  memory_limit: number;
+};
+
 type ExecutorInfo = {
   active_worker: number;
   average_time_to_execute_task_inSec: number;
   total_active_time: string;
   total_tasks: number;
   total_time_to_execute_task_inSec: number;
+  worker_details?: WorkerDetail[];
   cpu_usage?: string;
   memory_usage?: string;
+};
+
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 export default function AdminDashboard() {
@@ -55,7 +75,7 @@ export default function AdminDashboard() {
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
-      
+
       let executorData = {};
       if (execRes.ok) executorData = await execRes.json();
       if (usageRes.ok) {
@@ -77,7 +97,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -441,21 +461,85 @@ export default function AdminDashboard() {
 
           {/* grid */}
           {executorInfo ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <Stat label="Workers" value={executorInfo.active_worker} icon={Activity} />
-              <Stat label="Tasks" value={executorInfo.total_tasks} icon={Code} />
-              <Stat label="Avg Time" value={`${executorInfo.average_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
-              <Stat
-                label="Uptime"
-                value={executorInfo.total_active_time.replace(/(\d+)\.\d+s/, "$1s").replace(/(\d+[hms])/g, "$1 ").trim()}
-                icon={Activity}
-              />
-              <Stat label="CPU" value={executorInfo.cpu_usage || "N/A"} icon={Zap} color="text-amber-400" />
-              <Stat label="Memory" value={executorInfo.memory_usage || "N/A"} icon={Server} color="text-emerald-400" />
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition flex flex-col justify-center">
-                <p className="text-zinc-500 text-[10px] uppercase tracking-wider mb-2">Total Time</p>
-                <h3 className="text-lg font-semibold truncate">{executorInfo.total_time_to_execute_task_inSec.toFixed(2)}s</h3>
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                <Stat label="Workers" value={executorInfo.active_worker} icon={Activity} />
+                <Stat label="Tasks" value={executorInfo.total_tasks} icon={Code} />
+                <Stat label="Avg Time" value={`${executorInfo.average_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />
+                <Stat
+                  label="Uptime"
+                  value={executorInfo.total_active_time.replace(/(\d+)\.\d+s/, "$1s").replace(/(\d+[hms])/g, "$1 ").trim()}
+                  icon={Activity}
+                />
+                <Stat label="CPU" value={executorInfo.cpu_usage || "N/A"} icon={Zap} color="text-amber-400" />
+                <Stat label="Memory" value={executorInfo.memory_usage || "N/A"} icon={Server} color="text-emerald-400" />
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition flex flex-col justify-center">
+                  <p className="text-zinc-500 text-[10px] uppercase tracking-wider mb-2">Total Time</p>
+                  <h3 className="text-lg font-semibold truncate">{executorInfo.total_time_to_execute_task_inSec.toFixed(2)}s</h3>
+                </div>
               </div>
+
+              {/* Workers Detail List */}
+              {executorInfo.worker_details && executorInfo.worker_details.length > 0 && (
+                <div className="pt-6">
+                  <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
+                    <div className="h-1 w-8 bg-primary/40 rounded-full" />
+                    Active Worker Instances
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {executorInfo.worker_details.map((worker) => (
+                      <div key={worker.id} className="bg-card/50 border border-border/60 rounded-2xl p-6 hover:border-primary/30 transition-all group/worker">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="min-w-0">
+                            <h4 className="text-base font-bold truncate pr-3">{worker.name.replace(/^\//, "")}</h4>
+                            <p className="text-xs text-muted-foreground font-mono truncate tracking-tight">{worker.id.substring(0, 16)}</p>
+                          </div>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full border ${worker.state === 'running' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' : 'text-zinc-500 border-zinc-800 bg-zinc-900'}`}>
+                            {worker.state.toUpperCase()}
+                          </span>
+                        </div>
+
+                        <div className="space-y-6">
+                          {/* CPU */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">CPU Load</span>
+                              <span className="text-sm font-mono text-amber-400">{worker.cpu_usage.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(worker.cpu_usage * 2, 100)}%` }}
+                                className="h-full bg-gradient-to-r from-amber-500/80 to-amber-400 rounded-full"
+                              />
+                            </div>
+                          </div>
+
+                          {/* RAM */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">Memory Consumption</span>
+                              <span className="text-sm font-mono text-emerald-400 font-bold">{formatBytes(worker.memory_usage)} <span className="text-[10px] text-zinc-600 font-normal">/ {formatBytes(worker.memory_limit)}</span></span>
+                            </div>
+                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(worker.memory_usage / worker.memory_limit) * 100}%` }}
+                                className="h-full bg-gradient-to-r from-emerald-500/80 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex items-center justify-between border-t border-border/20 mt-2">
+                            <span className="text-xs text-zinc-500 font-medium">Status: <span className="text-zinc-300 ml-1">{worker.status}</span></span>
+                            <Server className="h-4 w-4 text-zinc-700 group-hover/worker:text-primary transition-colors" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-zinc-500 text-center py-10">
@@ -473,10 +557,24 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-6 w-6" />
             </div>
             <DialogTitle className="text-xl font-bold tracking-tight">Experimental Feature</DialogTitle>
-            <DialogDescription className="text-center text-zinc-400">
-              Worker Auto-Scaling is currently in <b className="text-amber-500/80">Beta</b>. It relies on a 10-second polling window to spawn or stop workers based on traffic volume.
-              <br /><br />
-              Using this in production may lead to unstable worker counts. Do you wish to proceed?
+            <DialogDescription className="text-left text-zinc-400 space-y-4">
+              <p>
+                Worker Auto-Scaling is an intelligent resource management system that dynamically adjusts your cluster size:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-xs">
+                <li>
+                  <b>Traffic-Based Scaling:</b> The system monitors task volume in 10-second windows. It scales from 1 worker (low traffic) up to 10 workers (high traffic, &gt;180 tasks/period).
+                </li>
+                <li>
+                  <b>Resource Protection:</b> An "Auto-Clean" routine runs regularly. If a worker maintains <b>&gt;80% CPU or Memory</b> usage over a 10-minute threshold, it is automatically retired and replaced.
+                </li>
+                <li>
+                  <b>Efficiency:</b> When traffic drops, the system automatically ramps down excess workers to save resources.
+                </li>
+              </ul>
+              <p className="pt-2 text-amber-500/80 font-medium">
+                Note: Manual Spawn/Stop controls are disabled while Auto Scale is active.
+              </p>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-2">

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"executor-service/docker"
 	"executor-service/utils"
 	"executor-service/worker"
 	"time"
@@ -34,7 +35,7 @@ func KeepXWorkers(n int) {
 func Auto() {
 	for {
 		if !utils.WorkerPoolData.GetAuto() {
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Minute * 1)
 			continue
 		}
 
@@ -68,6 +69,43 @@ func Auto() {
 			KeepXWorkers(9)
 		} else if tasksInPeriod > 180 {
 			KeepXWorkers(10)
+		}
+	}
+}
+
+// AutoClean continuously monitors the resource usage of worker containers and automatically stops containers that exceed defined CPU or memory usage thresholds, allowing for efficient resource management and preventing performance degradation in the code execution service
+// The function runs in a loop, checking for the auto-cleaning flag and fetching the details of active worker containers,
+// then compares the current CPU and memory usage of each container with predefined thresholds, and if any container exceeds those thresholds, it sends stop signals to gracefully terminate the container,
+// ensuring optimal performance and resource utilization in handling code execution tasks.
+func AutoClean() {
+	for {
+		if !utils.WorkerPoolData.GetAuto() {
+			time.Sleep(time.Minute * 1)
+			continue
+		}
+		intital, _ := docker.GetWorkerDetails()
+		time.Sleep(time.Minute * 10)
+		if !utils.WorkerPoolData.GetAuto() {
+			continue
+		}
+		final, _ := docker.GetWorkerDetails()
+
+		for _, workerf := range final {
+			for _, workeri := range intital {
+				if workerf.ID == workeri.ID {
+					if workerf.CPUUsage > 80.0 && workeri.CPUUsage > 80.0 {
+						p := true
+						utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
+						time.Sleep(time.Second * 1)
+						worker.SpawnWorkerFailed(utils.WorkerCTX)
+					} else if workerf.MemoryUsage > workerf.MemoryLimit*80/100 && workeri.MemoryUsage > workeri.MemoryLimit*80/100 {
+						p := true
+						utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
+						time.Sleep(time.Second * 1)
+						worker.SpawnWorkerFailed(utils.WorkerCTX)
+					}
+				}
+			}
 		}
 	}
 }

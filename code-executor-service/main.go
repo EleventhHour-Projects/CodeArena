@@ -182,6 +182,8 @@ func main() {
 		// Start Auto Scaling
 		// Default : False, can be enabled by API
 		go api.Auto()
+		// Start Auto Cleaning of containers whose usage are really high or are in exited state for long time (10 mins)
+		go api.AutoClean()
 	}
 
 	// Exit Process (Ctrl + C)

@@ -58,6 +58,10 @@ func normalizeOutput(s string) string {
 func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
 	var failedInfo FailedInfo
 
+	// Initial cleanup to ensure a fresh environment for the current task
+	cleanupCmd := []string{"rm", "-f", "/tmp/main.cpp", "/tmp/a.out"}
+	execCommand(ctx, cli, containerID, cleanupCmd, "")
+
 	writeCmd := []string{"sh", "-c", "cat > /tmp/main.cpp"}
 
 	_, _, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
