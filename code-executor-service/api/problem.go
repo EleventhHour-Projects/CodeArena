@@ -38,6 +38,7 @@ type QuestionJson struct {
 	InputFormat  string   `json:"input_format"`
 	OutputFormat string   `json:"output_format"`
 	Constraints  string   `json:"constraints"`
+	Verified     bool     `json:"verified"`
 }
 
 // getNextId calculates the next available ID for a new problem based on the specified difficulty level,
@@ -104,6 +105,7 @@ func SaveProblem(c fiber.Ctx) error {
 		InputFormat:  "Read from standard input. Format details depends on the problem.",
 		OutputFormat: "Print to standard output.",
 		Constraints:  "Please read problem description for constraints.",
+		Verified:     false,
 	}
 
 	questionsDir := filepath.Join("..", "questions")

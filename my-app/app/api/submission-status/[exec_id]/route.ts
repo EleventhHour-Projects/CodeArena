@@ -37,7 +37,7 @@ export async function GET(
             const ExecutionCodeModel = mongoose.models.ExecutionCode || require("@/lib/models/ExecutionCode").default;
             const execCode = await ExecutionCodeModel.findById(exec_id).lean();
 
-            if (execCode && execCode.type === "Run" && execCode.status !== "Pending") {
+            if (execCode && (execCode.type === "Run" || execCode.type === "Verify") && execCode.status !== "Pending") {
                 const responseData = {
                     success: true,
                     status: execCode.status, // "Accepted" or "Rejected"

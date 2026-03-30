@@ -1,11 +1,16 @@
 {
-    "id": 1,
-    "slug": "min-absolute-difference-pairs",
-    "tags": ["Array", "Sorting", "Binary Search"],
-    "title": "Closest Difference Pairs",
-    "difficulty": "Easy",
-    "description": "You are given an integer array consisting of distinct values. Your task is to identify all pairs of elements such that their absolute difference is as small as possible among all possible pairs.\n\nFor every valid pair (a, b), ensure that a < b. Return all such pairs sorted in ascending order. If multiple pairs share the same minimum difference, include all of them.\n",
-    "input_format": "The first line contains an integer n — the size of the array.\nThe second line contains n space-separated integers representing the array elements.",
-    "output_format": "Print all pairs with the minimum absolute difference. Each pair should be printed in a new line as two space-separated integers a and b, in ascending order of pairs.",
-    "constraints": "2 <= n <= 10^5\n-10^6 <= arr[i] <= 10^6\nAll elements in the array are distinct."
+  "id": 1,
+  "slug": "min-absolute-difference-pairs",
+  "tags": [
+    "Array",
+    "Sorting",
+    "Binary Search"
+  ],
+  "title": "Closest Difference Pairs",
+  "difficulty": "Easy",
+  "description": "You are given an integer array consisting of distinct values. Your task is to identify all pairs of elements such that their absolute difference is as small as possible among all possible pairs.\n\nFor every valid pair (a, b), ensure that a < b. Return all such pairs sorted in ascending order. If multiple pairs share the same minimum difference, include all of them.\n",
+  "input_format": "The first line contains an integer n — the size of the array.\nThe second line contains n space-separated integers representing the array elements.",
+  "output_format": "Print all pairs with the minimum absolute difference. Each pair should be printed in a new line as two space-separated integers a and b, in ascending order of pairs.",
+  "constraints": "2 <= n <= 10^5\n-10^6 <= arr[i] <= 10^6\nAll elements in the array are distinct.",
+  "verified": true
 }
