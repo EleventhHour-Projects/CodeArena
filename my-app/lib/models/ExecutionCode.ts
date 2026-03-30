@@ -21,6 +21,7 @@ executionCodeSchema.index({ userId: 1, createdAt: -1 });
 executionCodeSchema.index({ battleId: 1 });
 executionCodeSchema.index({ "problem.id": 1 });
 executionCodeSchema.index({ status: 1 });
+executionCodeSchema.index({ "createdAt": 1 }, { expireAfterSeconds: 5400 }); //delete documents after 1.5 hours
 
 // set the name of collection to executionCodes
 if (process.env.NODE_ENV === "development") {
