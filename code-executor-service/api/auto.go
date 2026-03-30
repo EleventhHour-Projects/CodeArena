@@ -4,6 +4,7 @@ import (
 	"executor-service/docker"
 	"executor-service/utils"
 	"executor-service/worker"
+	"fmt"
 	"time"
 )
 
@@ -95,10 +96,13 @@ func AutoClean() {
 
 					if overThreshold {
 						utils.WorkerPoolData.ScalingMuLock()
-						// Recycle: Stop one and spawn one
-						p := true
-						utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
-						time.Sleep(time.Second * 1)
+						// Directly kill the over-threshold container.
+						fmt.Printf("AutoClean: Replacing over-threshold container %s (CPU: %.2f%%, Mem: %d bytes)\n", workerf.ID, workerf.CPUUsage, workerf.MemoryUsage)
+						// Mark this worker as being cleaned to prevent double-spawning
+						utils.WorkerPoolData.MarkCleaned(workerf.ID)
+						// 1. Kill old
+						worker.KillContainerByID(utils.WorkerCTX, workerf.ID)
+						// 2. Immediately spawn new to maintain capacity
 						worker.SpawnWorkerFailed(utils.WorkerCTX)
 						utils.WorkerPoolData.ScalingMuUnlock()
 					}

@@ -211,6 +211,7 @@ func worker(ctx context.Context) {
 		fmt.Println(utils.Red+"Error creating container L129 :"+utils.Reset, err)
 		return
 	}
+	defer utils.WorkerPoolData.IsCleaned(resp.ID)
 	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		utils.WorkerPoolData.Decrement()
@@ -247,7 +248,9 @@ func worker(ctx context.Context) {
 			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err, "Spawning new worker")
 			KillContainerByID(ctx, containerName)
 			utils.WorkerPoolData.Decrement()
-			SpawnWorkerFailed(ctx)
+			if !utils.WorkerPoolData.IsCleaned(resp.ID) {
+				SpawnWorkerFailed(ctx)
+			}
 			utils.WorkerPoolData.AddTask(task)
 			cancel() // cancel context before breaking
 			break

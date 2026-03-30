@@ -90,6 +90,9 @@ type WorkerPool struct {
 	// scalingMu is a mutex to synchronize scaling operations (scaling up/down or recycling workers),
 	// ensuring that concurrent scaling routines (e.g., Auto and AutoClean) do not conflict.
 	scalingMu sync.Mutex
+	// CleanedWorkers is a map that tracks worker IDs that have been intentionally removed by AutoClean,
+	// preventing double-spawning of replacements.
+	CleanedWorkers map[string]bool
 }
 
 // ExecutionCode is a struct that represents the structure of the execution code document in the MongoDB collection
@@ -143,7 +146,7 @@ type Submission struct {
 	Result          *Result       `bson:"result,omitempty"`
 }
 
-var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}, scalingMu: sync.Mutex{}}
+var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}, scalingMu: sync.Mutex{}, CleanedWorkers: make(map[string]bool)}
 
 // Increment increments the active worker count by 1 in a thread-safe manner
 func (wp *WorkerPool) Increment() {
@@ -282,4 +285,20 @@ func (wp *WorkerPool) ScalingMuLock() {
 
 func (wp *WorkerPool) ScalingMuUnlock() {
 	wp.scalingMu.Unlock()
+}
+
+func (wp *WorkerPool) MarkCleaned(containerID string) {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	wp.CleanedWorkers[containerID] = true
+}
+
+func (wp *WorkerPool) IsCleaned(containerID string) bool {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	cleaned := wp.CleanedWorkers[containerID]
+	if cleaned {
+		delete(wp.CleanedWorkers, containerID)
+	}
+	return cleaned
 }
