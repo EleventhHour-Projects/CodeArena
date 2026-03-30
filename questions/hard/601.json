@@ -1,16 +1,17 @@
 {
-    "id": 601,
-    "slug": "reducing-dishes",
-    "tags": [
-        "Array",
-        "Dynamic Programming",
-        "Greedy",
-        "Sorting"
-    ],
-    "title": "Reducing Dishes",
-    "difficulty": "Hard",
-    "description": "You are given an integer array satisfaction, where satisfaction[i] represents the satisfaction level of the i-th dish.\n\nEach dish takes exactly 1 unit of time to cook.\n\nDefinition\n\nIf a dish is cooked at time t (1-based), its like-time coefficient is:\n\nt × satisfaction[i]\n\nThe total score is the sum of like-time coefficients of all cooked dishes.\n\nRules\nYou can cook dishes in any order\nYou may choose to discard some dishes\nEach dish can be cooked at most once\nTask\n\nReturn the maximum possible total like-time coefficient.\n\nExamples\n\nExample 1\nInput: satisfaction = [-1,-8,0,5,-9]\nOutput: 14\n\nExplanation:\nOptimal order: [-1, 0, 5]\nScore = (-1×1) + (0×2) + (5×3) = 14\n\nExample 2\nInput: satisfaction = [4,3,2]\nOutput: 20\n\nExplanation:\nOrder: [2,3,4]\nScore = 2×1 + 3×2 + 4×3 = 20\n\nExample 3\nInput: satisfaction = [-1,-4,-5]\nOutput: 0\n\nExplanation:\nBest to cook no dishes.\n\nConstraints\n1 ≤ n ≤ 500\n-1000 ≤ satisfaction[i] ≤ 1000",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 601,
+  "slug": "reducing-dishes",
+  "tags": [
+    "Array",
+    "Dynamic Programming",
+    "Greedy",
+    "Sorting"
+  ],
+  "title": "Reducing Dishes",
+  "difficulty": "Hard",
+  "description": "You are given an integer array satisfaction, where satisfaction[i] represents the satisfaction level of the i-th dish.\n\nEach dish takes exactly 1 unit of time to cook.\n\nDefinition\n\nIf a dish is cooked at time t (1-based), its like-time coefficient is:\n\nt × satisfaction[i]\n\nThe total score is the sum of like-time coefficients of all cooked dishes.\n\nRules\nYou can cook dishes in any order\nYou may choose to discard some dishes\nEach dish can be cooked at most once\nTask\n\nReturn the maximum possible total like-time coefficient.\n\nExamples\n\nExample 1\nInput: satisfaction = [-1,-8,0,5,-9]\nOutput: 14\n\nExplanation:\nOptimal order: [-1, 0, 5]\nScore = (-1×1) + (0×2) + (5×3) = 14\n\nExample 2\nInput: satisfaction = [4,3,2]\nOutput: 20\n\nExplanation:\nOrder: [2,3,4]\nScore = 2×1 + 3×2 + 4×3 = 20\n\nExample 3\nInput: satisfaction = [-1,-4,-5]\nOutput: 0\n\nExplanation:\nBest to cook no dishes.\n\nConstraints\n1 ≤ n ≤ 500\n-1000 ≤ satisfaction[i] ≤ 1000",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

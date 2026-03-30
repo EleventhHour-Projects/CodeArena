@@ -1,17 +1,18 @@
 {
-    "id": 322,
-    "slug": "maximum-number-of-coins-you-can-get",
-    "tags": [
-        "Array",
-        "Math",
-        "Greedy",
-        "Sorting",
-        "Game Theory"
-    ],
-    "title": "Maximum Number of Coins You Can Get",
-    "difficulty": "Medium",
-    "description": "You are given an array piles where piles[i] represents the number of coins in the i-th pile.\n\nThere are 3n piles in total.\n\nGame Rules\n\nIn each step:\n\nYou choose any 3 piles.\nFrom those 3 piles:\nAlice picks the pile with the maximum coins.\nYou pick the pile with the second maximum coins.\nBob picks the remaining (smallest) pile.\n\nRepeat this process until all piles are used.\n\nTask\n\nReturn the maximum number of coins you can collect.\n\nExamples\n\nExample 1\nInput: piles = [2,4,1,2,7,8]\nOutput: 9\n\nExplanation:\n\nPick (2,7,8) → Alice: 8, You: 7, Bob: 2\nPick (1,2,4) → Alice: 4, You: 2, Bob: 1\nTotal = 7 + 2 = 9\n\nExample 2\nInput: piles = [2,4,5]\nOutput: 4\n\nExample 3\nInput: piles = [9,8,7,6,5,1,2,3,4]\nOutput: 18\n\nConstraints\n3 ≤ piles.length ≤ 10⁵\npiles.length % 3 == 0\n1 ≤ piles[i] ≤ 10⁴",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 322,
+  "slug": "maximum-number-of-coins-you-can-get",
+  "tags": [
+    "Array",
+    "Math",
+    "Greedy",
+    "Sorting",
+    "Game Theory"
+  ],
+  "title": "Maximum Number of Coins You Can Get",
+  "difficulty": "Medium",
+  "description": "You are given an array piles where piles[i] represents the number of coins in the i-th pile.\n\nThere are 3n piles in total.\n\nGame Rules\n\nIn each step:\n\nYou choose any 3 piles.\nFrom those 3 piles:\nAlice picks the pile with the maximum coins.\nYou pick the pile with the second maximum coins.\nBob picks the remaining (smallest) pile.\n\nRepeat this process until all piles are used.\n\nTask\n\nReturn the maximum number of coins you can collect.\n\nExamples\n\nExample 1\nInput: piles = [2,4,1,2,7,8]\nOutput: 9\n\nExplanation:\n\nPick (2,7,8) → Alice: 8, You: 7, Bob: 2\nPick (1,2,4) → Alice: 4, You: 2, Bob: 1\nTotal = 7 + 2 = 9\n\nExample 2\nInput: piles = [2,4,5]\nOutput: 4\n\nExample 3\nInput: piles = [9,8,7,6,5,1,2,3,4]\nOutput: 18\n\nConstraints\n3 ≤ piles.length ≤ 10⁵\npiles.length % 3 == 0\n1 ≤ piles[i] ≤ 10⁴",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

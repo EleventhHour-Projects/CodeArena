@@ -1,15 +1,16 @@
 {
-    "id": 329,
-    "slug": "generate-parentheses",
-    "tags": [
-        "String",
-        "Dynamic Programming",
-        "Backtracking"
-    ],
-    "title": "Generate Parentheses",
-    "difficulty": "Medium",
-    "description": "You are given an integer n.\n\nYou need to generate all valid combinations of n pairs of parentheses.\n\nWhat is “valid”?\n\nA parentheses string is valid if:\n\nEvery ( has a matching )\nAt no point do closing brackets exceed opening ones\nTask\n\nReturn a list of all well-formed parentheses strings of length 2n.\n\nExamples\n\nExample 1\n\nn = 3\n→ [\"((()))\",\"(()())\",\"(())()\",\"()(())\",\"()()()\"]\n\nExample 2\n\nn = 1\n→ [\"()\"]\nConstraints\n1 ≤ n ≤ 8",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 329,
+  "slug": "generate-parentheses",
+  "tags": [
+    "String",
+    "Dynamic Programming",
+    "Backtracking"
+  ],
+  "title": "Generate Parentheses",
+  "difficulty": "Medium",
+  "description": "You are given an integer n.\n\nYou need to generate all valid combinations of n pairs of parentheses.\n\nWhat is “valid”?\n\nA parentheses string is valid if:\n\nEvery ( has a matching )\nAt no point do closing brackets exceed opening ones\nTask\n\nReturn a list of all well-formed parentheses strings of length 2n.\n\nExamples\n\nExample 1\n\nn = 3\n→ [\"((()))\",\"(()())\",\"(())()\",\"()(())\",\"()()()\"]\n\nExample 2\n\nn = 1\n→ [\"()\"]\nConstraints\n1 ≤ n ≤ 8",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

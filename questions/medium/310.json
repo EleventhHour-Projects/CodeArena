@@ -1,14 +1,15 @@
 {
-    "id": 310,
-    "slug": "integer-break",
-    "tags": [
-        "Math",
-        "Dynamic Programming"
-    ],
-    "title": "Integer Break",
-    "difficulty": "Medium",
-    "description": "Given an integer n, break it into the sum of at least two positive integers (k ≥ 2), and maximize the product of those integers.\n\nReturn the maximum product you can achieve.\n\nExamples\n\nExample 1\nInput: n = 2\nOutput: 1\nExplanation:\n2 = 1 + 1\nProduct = 1 × 1 = 1\n\nExample 2\nInput: n = 10\nOutput: 36\nExplanation:\n10 = 3 + 3 + 4\nProduct = 3 × 3 × 4 = 36\n\nConstraints\n2 ≤ n ≤ 58",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 310,
+  "slug": "integer-break",
+  "tags": [
+    "Math",
+    "Dynamic Programming"
+  ],
+  "title": "Integer Break",
+  "difficulty": "Medium",
+  "description": "Given an integer n, break it into the sum of at least two positive integers (k ≥ 2), and maximize the product of those integers.\n\nReturn the maximum product you can achieve.\n\nExamples\n\nExample 1\nInput: n = 2\nOutput: 1\nExplanation:\n2 = 1 + 1\nProduct = 1 × 1 = 1\n\nExample 2\nInput: n = 10\nOutput: 36\nExplanation:\n10 = 3 + 3 + 4\nProduct = 3 × 3 × 4 = 36\n\nConstraints\n2 ≤ n ≤ 58",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

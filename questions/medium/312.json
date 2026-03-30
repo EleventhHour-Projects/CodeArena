@@ -1,15 +1,16 @@
 {
-    "id": 312,
-    "slug": "count-square-submatrices-with-all-ones",
-    "tags": [
-        "Array",
-        "Dynamic Programming",
-        "Matrix"
-    ],
-    "title": "Count Square Submatrices with All Ones",
-    "difficulty": "Medium",
-    "description": "You are given an m × n binary matrix matrix, where each element is either 0 or 1.\n\nYour task is to count the total number of square submatrices that contain only ones.\n\nExamples\n\nExample 1\nInput:\n\n[\n  [0,1,1,1],\n  [1,1,1,1],\n  [0,1,1,1]\n]\n\nOutput: 15\n\nExplanation:\n\nSquares of size 1 → 10\nSquares of size 2 → 4\nSquares of size 3 → 1\nTotal = 10 + 4 + 1 = 15\n\nExample 2\nInput:\n\n[\n  [1,0,1],\n  [1,1,0],\n  [1,1,0]\n]\n\nOutput: 7\n\nExplanation:\n\nSquares of size 1 → 6\nSquares of size 2 → 1\nTotal = 6 + 1 = 7\nConstraints\n1 ≤ matrix.length ≤ 300\n1 ≤ matrix[0].length ≤ 300\nmatrix[i][j] ∈ {0, 1}",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 312,
+  "slug": "count-square-submatrices-with-all-ones",
+  "tags": [
+    "Array",
+    "Dynamic Programming",
+    "Matrix"
+  ],
+  "title": "Count Square Submatrices with All Ones",
+  "difficulty": "Medium",
+  "description": "You are given an m × n binary matrix matrix, where each element is either 0 or 1.\n\nYour task is to count the total number of square submatrices that contain only ones.\n\nExamples\n\nExample 1\nInput:\n\n[\n  [0,1,1,1],\n  [1,1,1,1],\n  [0,1,1,1]\n]\n\nOutput: 15\n\nExplanation:\n\nSquares of size 1 → 10\nSquares of size 2 → 4\nSquares of size 3 → 1\nTotal = 10 + 4 + 1 = 15\n\nExample 2\nInput:\n\n[\n  [1,0,1],\n  [1,1,0],\n  [1,1,0]\n]\n\nOutput: 7\n\nExplanation:\n\nSquares of size 1 → 6\nSquares of size 2 → 1\nTotal = 6 + 1 = 7\nConstraints\n1 ≤ matrix.length ≤ 300\n1 ≤ matrix[0].length ≤ 300\nmatrix[i][j] ∈ {0, 1}",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

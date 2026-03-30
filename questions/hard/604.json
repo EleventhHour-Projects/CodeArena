@@ -1,16 +1,17 @@
 {
-    "id": 604,
-    "slug": "allocate-mailboxes",
-    "tags": [
-        "Array",
-        "Math",
-        "Dynamic Programming",
-        "Sorting"
-    ],
-    "title": "Allocate Mailboxes",
-    "difficulty": "Hard",
-    "description": "You are given:\n\nAn array houses, where each value is the position of a house on a line\nAn integer k = number of mailboxes you can place\nTask\n\nPlace k mailboxes anywhere on the line such that:\n\nEvery house is assigned to its nearest mailbox\nThe total distance from each house to its nearest mailbox is minimized\n\nReturn this minimum total distance\n\nKey Idea\nEach house uses the closest mailbox\nYou can place mailboxes at any position (not necessarily at house positions)\nExamples\n\nExample 1\n\nhouses = [1,4,8,10,20], k = 3\nOutput: 5\n\nExample 2\n\nhouses = [2,3,5,12,18], k = 2\nOutput: 9\nConstraints\n1 ≤ k ≤ houses.length ≤ 100\n1 ≤ houses[i] ≤ 10000\nAll house positions are unique",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 604,
+  "slug": "allocate-mailboxes",
+  "tags": [
+    "Array",
+    "Math",
+    "Dynamic Programming",
+    "Sorting"
+  ],
+  "title": "Allocate Mailboxes",
+  "difficulty": "Hard",
+  "description": "You are given:\n\nAn array houses, where each value is the position of a house on a line\nAn integer k = number of mailboxes you can place\nTask\n\nPlace k mailboxes anywhere on the line such that:\n\nEvery house is assigned to its nearest mailbox\nThe total distance from each house to its nearest mailbox is minimized\n\nReturn this minimum total distance\n\nKey Idea\nEach house uses the closest mailbox\nYou can place mailboxes at any position (not necessarily at house positions)\nExamples\n\nExample 1\n\nhouses = [1,4,8,10,20], k = 3\nOutput: 5\n\nExample 2\n\nhouses = [2,3,5,12,18], k = 2\nOutput: 9\nConstraints\n1 ≤ k ≤ houses.length ≤ 100\n1 ≤ houses[i] ≤ 10000\nAll house positions are unique",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }
