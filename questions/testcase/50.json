@@ -1,0 +1,72 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "5",
+                "output": "2"
+            },
+            {
+                "input": "8",
+                "output": "3"
+            }
+        ],
+        "submit": [
+            {
+                "input": "1",
+                "output": "1"
+            },
+            {
+                "input": "3435543",
+                "output": "2620"
+            },
+            {
+                "input": "45",
+                "output": "9"
+            },
+            {
+                "input": "6",
+                "output": "3"
+            },
+            {
+                "input": "4645754",
+                "output": "3047"
+            },
+            {
+                "input": "6765",
+                "output": "115"
+            },
+            {
+                "input": "8",
+                "output": "3"
+            },
+            {
+                "input": "54743123",
+                "output": "10463"
+            },
+            {
+                "input": "111111",
+                "output": "470"
+            },
+            {
+                "input": "1223443",
+                "output": "1563"
+            },
+            {
+                "input": "123456789",
+                "output": "15712"
+            },
+            {
+                "input": "987654321",
+                "output": "44443"
+            },
+            {
+                "input": "2343",
+                "output": "67"
+            },
+            {
+                "input": "345464",
+                "output": "830"
+            }
+        ]
+    }
+}
