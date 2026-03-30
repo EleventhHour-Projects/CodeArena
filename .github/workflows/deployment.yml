@@ -13,4 +13,4 @@ jobs:
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
-        run: bash example-deployment.sh
+        run: bash deployment.sh
