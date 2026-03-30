@@ -1,0 +1,96 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "4",
+                "output": "false"
+            },
+            {
+                "input": "1",
+                "output": "true"
+            },
+            {
+                "input": "2",
+                "output": "true"
+            }
+        ],
+        "submit": [
+            {
+                "input": "2145",
+                "output": "true"
+            },
+            {
+                "input": "3543",
+                "output": "true"
+            },
+            {
+                "input": "65432",
+                "output": "false"
+            },
+            {
+                "input": "235",
+                "output": "true"
+            },
+            {
+                "input": "421248654",
+                "output": "true"
+            },
+            {
+                "input": "342457435",
+                "output": "true"
+            },
+            {
+                "input": "5345868",
+                "output": "false"
+            },
+            {
+                "input": "21353",
+                "output": "true"
+            },
+            {
+                "input": "1000000000",
+                "output": "false"
+            },
+            {
+                "input": "2147483647",
+                "output": "true"
+            },
+            {
+                "input": "102",
+                "output": "true"
+            },
+            {
+                "input": "103",
+                "output": "true"
+            },
+            {
+                "input": "80",
+                "output": "false"
+            },
+            {
+                "input": "44444444",
+                "output": "false"
+            },
+            {
+                "input": "444",
+                "output": "false"
+            },
+            {
+                "input": "422424",
+                "output": "false"
+            },
+            {
+                "input": "2147483644",
+                "output": "false"
+            },
+            {
+                "input": "2147483645",
+                "output": "true"
+            },
+            {
+                "input": "2147483646",
+                "output": "true"
+            }
+        ]
+    }
+}
