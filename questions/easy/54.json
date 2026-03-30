@@ -1,14 +1,15 @@
 {
-    "id": 54,
-    "slug": "maximize-cyclic-partition-score",
-    "tags": [
-        "Array",
-        "Dynamic Programming"
-    ],
-    "title": "Maximize Cyclic Partition Score",
-    "difficulty": "Easy",
-    "description": "You are given a circular array nums and an integer k.\n\nYour task is to:\n\nSplit nums into at most k subarrays\nSubarrays can wrap around (because the array is circular)\n\nFor each subarray:\n\nRange = max value − min value\n\nThe score of a partition = sum of ranges of all subarrays\n\nReturn the maximum possible score.\n\nExample 1\nInput: nums = [1,2,3,3], k = 2\nOutput: 3\n\nExample 2\nInput: nums = [1,2,3,3], k = 1\nOutput: 2\n\nExample 3\nInput: nums = [1,2,3,3], k = 4\nOutput: 3\n\nConstraints:\n\n1 \u003c= nums.length \u003c= 1000\n1 \u003c= nums[i] \u003c= 10^9\n1 \u003c= k \u003c= nums.length",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 54,
+  "slug": "maximize-cyclic-partition-score",
+  "tags": [
+    "Array",
+    "Dynamic Programming"
+  ],
+  "title": "Maximize Cyclic Partition Score",
+  "difficulty": "Easy",
+  "description": "You are given a circular array nums and an integer k.\n\nYour task is to:\n\nSplit nums into at most k subarrays\nSubarrays can wrap around (because the array is circular)\n\nFor each subarray:\n\nRange = max value − min value\n\nThe score of a partition = sum of ranges of all subarrays\n\nReturn the maximum possible score.\n\nExample 1\nInput: nums = [1,2,3,3], k = 2\nOutput: 3\n\nExample 2\nInput: nums = [1,2,3,3], k = 1\nOutput: 2\n\nExample 3\nInput: nums = [1,2,3,3], k = 4\nOutput: 3\n\nConstraints:\n\n1 <= nums.length <= 1000\n1 <= nums[i] <= 10^9\n1 <= k <= nums.length",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

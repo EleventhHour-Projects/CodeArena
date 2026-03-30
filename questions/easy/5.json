@@ -1,11 +1,14 @@
 {
-    "id": 5,
-    "slug": "check-sorted-rotated",
-    "tags": ["Array"],
-    "title": "Check Sorted Circular Shift",
-    "difficulty": "Easy",
-    "description": "You are given an array of integers. Determine whether the array can be obtained by taking a non-decreasing sorted array and applying a circular shift (rotation) any number of times, including zero.\n\nIn other words, check if the array was originally sorted and then rotated.\n\nDuplicates are allowed in the array.\n\nYou must read input from standard input and print the result accordingly.",
-    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers.",
-    "output_format": "Print \"true\" if the array can be obtained by rotating a non-decreasing sorted array, otherwise print \"false\".",
-    "constraints": "1 <= n <= 100\n1 <= arr[i] <= 100"
+  "id": 5,
+  "slug": "check-sorted-rotated",
+  "tags": [
+    "Array"
+  ],
+  "title": "Check Sorted Circular Shift",
+  "difficulty": "Easy",
+  "description": "You are given an array of integers. Determine whether the array can be obtained by taking a non-decreasing sorted array and applying a circular shift (rotation) any number of times, including zero.\n\nIn other words, check if the array was originally sorted and then rotated.\n\nDuplicates are allowed in the array.\n\nYou must read input from standard input and print the result accordingly.",
+  "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers.",
+  "output_format": "Print \"true\" if the array can be obtained by rotating a non-decreasing sorted array, otherwise print \"false\".",
+  "constraints": "1 <= n <= 100\n1 <= arr[i] <= 100",
+  "verified": true
 }

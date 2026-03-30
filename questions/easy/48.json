@@ -1,15 +1,16 @@
 {
-    "id": 48,
-    "slug": "buy-two-chocolates",
-    "tags": [
-        "Array",
-        "Greedy",
-        "Sorting"
-    ],
-    "title": "Buy Two Chocolates",
-    "difficulty": "Easy",
-    "description": "You are given:\n\nAn array prices → cost of chocolates\nAn integer money → your budget\nTask\nYou must buy exactly 2 chocolates\nTotal cost must be ≤ money (no debt)\nAmong all valid pairs, choose the pair with the minimum total cost\nOutput\nReturn:\nmoney - (cost of chosen 2 chocolates)\nIf you cannot buy 2 chocolates without exceeding money, return:\nmoney\nExamples\n\nExample 1\n\nprices = [1,2,2], money = 3\n→ 0\n\nExample 2\n\nprices = [3,2,3], money = 3\n→ 3\nConstraints\n2 ≤ n ≤ 50\n1 ≤ prices[i], money ≤ 100",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 48,
+  "slug": "buy-two-chocolates",
+  "tags": [
+    "Array",
+    "Greedy",
+    "Sorting"
+  ],
+  "title": "Buy Two Chocolates",
+  "difficulty": "Easy",
+  "description": "You are given:\n\nAn array prices → cost of chocolates\nAn integer money → your budget\nTask\nYou must buy exactly 2 chocolates\nTotal cost must be ≤ money (no debt)\nAmong all valid pairs, choose the pair with the minimum total cost\nOutput\nReturn:\nmoney - (cost of chosen 2 chocolates)\nIf you cannot buy 2 chocolates without exceeding money, return:\nmoney\nExamples\n\nExample 1\n\nprices = [1,2,2], money = 3\n→ 0\n\nExample 2\n\nprices = [3,2,3], money = 3\n→ 3\nConstraints\n2 ≤ n ≤ 50\n1 ≤ prices[i], money ≤ 100",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

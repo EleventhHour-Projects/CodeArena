@@ -1,17 +1,18 @@
 {
-    "id": 41,
-    "slug": "fruits-into-baskets-ii",
-    "tags": [
-        "Array",
-        "Binary Search",
-        "Segment Tree",
-        "Simulation",
-        "Ordered Set"
-    ],
-    "title": "Fruits Into Baskets II",
-    "difficulty": "Easy",
-    "description": "You are given two arrays of size n:\n\nfruits[i] → quantity of fruit type i\nbaskets[j] → capacity of basket j\nRules\n\nProcess fruits from left to right:\n\nFor each fruit, find the leftmost unused basket such that:\nbasket capacity ≥ fruit quantity\nEach basket can be used only once\nIf no basket can hold a fruit → it remains unplaced\nTask\n\nReturn the number of unplaced fruits\n\nExamples\n\nExample 1\n\nfruits = [4,2,5]\nbaskets = [3,5,4]\n→ 1\n\nExample 2\n\nfruits = [3,6,1]\nbaskets = [6,4,7]\n→ 0\nConstraints\n1 ≤ n ≤ 100\n1 ≤ fruits[i], baskets[i] ≤ 1000",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 41,
+  "slug": "fruits-into-baskets-ii",
+  "tags": [
+    "Array",
+    "Binary Search",
+    "Segment Tree",
+    "Simulation",
+    "Ordered Set"
+  ],
+  "title": "Fruits Into Baskets II",
+  "difficulty": "Easy",
+  "description": "You are given two arrays of size n:\n\nfruits[i] → quantity of fruit type i\nbaskets[j] → capacity of basket j\nRules\n\nProcess fruits from left to right:\n\nFor each fruit, find the leftmost unused basket such that:\nbasket capacity ≥ fruit quantity\nEach basket can be used only once\nIf no basket can hold a fruit → it remains unplaced\nTask\n\nReturn the number of unplaced fruits\n\nExamples\n\nExample 1\n\nfruits = [4,2,5]\nbaskets = [3,5,4]\n→ 1\n\nExample 2\n\nfruits = [3,6,1]\nbaskets = [6,4,7]\n→ 0\nConstraints\n1 ≤ n ≤ 100\n1 ≤ fruits[i], baskets[i] ≤ 1000",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

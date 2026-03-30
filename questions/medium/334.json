@@ -1,15 +1,16 @@
 {
-    "id": 334,
-    "slug": "maximize-happiness-of-selected-children",
-    "tags": [
-        "Array",
-        "Greedy",
-        "Sorting"
-    ],
-    "title": "Maximize Happiness of Selected Children",
-    "difficulty": "Medium",
-    "description": "You are given an array happiness and an integer k.\n\nEach element represents the happiness of a child.\n\nYou will select k children, one per turn.\n\nRules:\n\nWhen you pick a child, you gain their current happiness\nAfter each pick, all remaining (unpicked) children:\nlose 1 happiness\nbut never go below 0\n\nYour task:\n\nChoose k children to maximize total happiness\n\nExample 1\nInput: [1,2,3], k = 2\nOutput: 4\n\nExample 2\nInput: [1,1,1,1], k = 2\nOutput: 1\n\nExample 3\nInput: [2,3,4,5], k = 1\nOutput: 5\n\nConstraints:\n\n1 \u003c= n \u003c= 2 * 10^5\n1 \u003c= happiness[i] \u003c= 10^8\n1 \u003c= k \u003c= n",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 334,
+  "slug": "maximize-happiness-of-selected-children",
+  "tags": [
+    "Array",
+    "Greedy",
+    "Sorting"
+  ],
+  "title": "Maximize Happiness of Selected Children",
+  "difficulty": "Medium",
+  "description": "You are given an array happiness and an integer k.\n\nEach element represents the happiness of a child.\n\nYou will select k children, one per turn.\n\nRules:\n\nWhen you pick a child, you gain their current happiness\nAfter each pick, all remaining (unpicked) children:\nlose 1 happiness\nbut never go below 0\n\nYour task:\n\nChoose k children to maximize total happiness\n\nExample 1\nInput: [1,2,3], k = 2\nOutput: 4\n\nExample 2\nInput: [1,1,1,1], k = 2\nOutput: 1\n\nExample 3\nInput: [2,3,4,5], k = 1\nOutput: 5\n\nConstraints:\n\n1 <= n <= 2 * 10^5\n1 <= happiness[i] <= 10^8\n1 <= k <= n",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

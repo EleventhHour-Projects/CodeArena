@@ -1,11 +1,15 @@
 {
-    "id": 6,
-    "slug": "search-insert-position",
-    "tags": ["Array", "Binary Search"],
-    "title": "Search Insert Position",
-    "difficulty": "Easy",
-    "description": "You are given a sorted array of unique integers and a target value. Your task is to determine the index at which the target is present. If the target is not found, return the index where it should be inserted so that the array remains sorted.\n\nThe solution must run in O(log n) time complexity.\n\nInput should be read from standard input, and the result should be printed to standard output.",
-    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers.\nThe third line contains an integer target.",
-    "output_format": "Print the index where the target is found or should be inserted.",
-    "constraints": "1 <= n <= 10000\n-10000 <= nums[i] <= 10000\n-10000 <= target <= 10000"
+  "id": 6,
+  "slug": "search-insert-position",
+  "tags": [
+    "Array",
+    "Binary Search"
+  ],
+  "title": "Search Insert Position",
+  "difficulty": "Easy",
+  "description": "You are given a sorted array of unique integers and a target value. Your task is to determine the index at which the target is present. If the target is not found, return the index where it should be inserted so that the array remains sorted.\n\nThe solution must run in O(log n) time complexity.\n\nInput should be read from standard input, and the result should be printed to standard output.",
+  "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers.\nThe third line contains an integer target.",
+  "output_format": "Print the index where the target is found or should be inserted.",
+  "constraints": "1 <= n <= 10000\n-10000 <= nums[i] <= 10000\n-10000 <= target <= 10000",
+  "verified": true
 }

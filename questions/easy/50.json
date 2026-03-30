@@ -1,14 +1,15 @@
 {
-    "id": 50,
-    "slug": "arranging-coins",
-    "tags": [
-        "Math",
-        "Binary Search"
-    ],
-    "title": "Arranging Coins",
-    "difficulty": "Easy",
-    "description": "You are given n coins.\n\nYou want to arrange them in a staircase shape such that:\n\nRow 1 has 1 coin\nRow 2 has 2 coins\nRow 3 has 3 coins\nand so on...\n\nEach row must be completely filled before starting the next.\n\nReturn the number of complete rows you can build.\n\nExample 1\nInput: n = 5\nOutput: 2\nExplanation:\nRow 1 → 1 coin\nRow 2 → 2 coins\nRow 3 needs 3 coins but only 2 are left → incomplete\n\nExample 2\nInput: n = 8\nOutput: 3\nExplanation:\nRow 1 → 1\nRow 2 → 2\nRow 3 → 3\nRow 4 needs 4 coins but only 2 are left\n\nConstraints:\n\n1 \u003c= n \u003c= 2^31 - 1",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 50,
+  "slug": "arranging-coins",
+  "tags": [
+    "Math",
+    "Binary Search"
+  ],
+  "title": "Arranging Coins",
+  "difficulty": "Easy",
+  "description": "You are given n coins.\n\nYou want to arrange them in a staircase shape such that:\n\nRow 1 has 1 coin\nRow 2 has 2 coins\nRow 3 has 3 coins\nand so on...\n\nEach row must be completely filled before starting the next.\n\nReturn the number of complete rows you can build.\n\nExample 1\nInput: n = 5\nOutput: 2\nExplanation:\nRow 1 → 1 coin\nRow 2 → 2 coins\nRow 3 needs 3 coins but only 2 are left → incomplete\n\nExample 2\nInput: n = 8\nOutput: 3\nExplanation:\nRow 1 → 1\nRow 2 → 2\nRow 3 → 3\nRow 4 needs 4 coins but only 2 are left\n\nConstraints:\n\n1 <= n <= 2^31 - 1",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

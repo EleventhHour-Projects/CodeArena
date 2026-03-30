@@ -1,15 +1,16 @@
 {
-    "id": 44,
-    "slug": "find-missing-elements",
-    "tags": [
-        "Array",
-        "Hash Table",
-        "Sorting"
-    ],
-    "title": "Find Missing Elements",
-    "difficulty": "Easy",
-    "description": "You are given an array nums with unique integers.\n\nThe numbers originally formed a continuous range\nSome numbers may be missing\nThe smallest and largest values are still present\nTask\n\nReturn all missing numbers between:\n\nmin(nums) → max(nums)\nOutput should be sorted\nIf no numbers are missing → return:\n[-1]\nExamples\n\nExample 1\n\n[1,4,2,5]\n→ [3]\n\nExample 2\n\n[7,8,6,9]\n→ [-1]\n\nExample 3\n\n[5,1]\n→ [2,3,4]\nConstraints\n2 ≤ n ≤ 100\n1 ≤ nums[i] ≤ 100\nAll elements are unique",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 44,
+  "slug": "find-missing-elements",
+  "tags": [
+    "Array",
+    "Hash Table",
+    "Sorting"
+  ],
+  "title": "Find Missing Elements",
+  "difficulty": "Easy",
+  "description": "You are given an array nums with unique integers.\n\nThe numbers originally formed a continuous range\nSome numbers may be missing\nThe smallest and largest values are still present\nTask\n\nReturn all missing numbers between:\n\nmin(nums) → max(nums)\nOutput should be sorted\nIf no numbers are missing → return:\n[-1]\nExamples\n\nExample 1\n\n[1,4,2,5]\n→ [3]\n\nExample 2\n\n[7,8,6,9]\n→ [-1]\n\nExample 3\n\n[5,1]\n→ [2,3,4]\nConstraints\n2 ≤ n ≤ 100\n1 ≤ nums[i] ≤ 100\nAll elements are unique",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }
