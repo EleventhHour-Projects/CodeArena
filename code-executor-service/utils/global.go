@@ -87,6 +87,9 @@ type WorkerPool struct {
 	auto bool
 	// muauto is a mutex to ensure thread-safe access to the auto field, allowing for concurrent updates and retrievals of the auto-scaling setting for the worker pool without
 	muauto sync.Mutex
+	// scalingMu is a mutex to synchronize scaling operations (scaling up/down or recycling workers),
+	// ensuring that concurrent scaling routines (e.g., Auto and AutoClean) do not conflict.
+	scalingMu sync.Mutex
 }
 
 // ExecutionCode is a struct that represents the structure of the execution code document in the MongoDB collection
@@ -140,7 +143,7 @@ type Submission struct {
 	Result          *Result       `bson:"result,omitempty"`
 }
 
-var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}}
+var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}, scalingMu: sync.Mutex{}}
 
 // Increment increments the active worker count by 1 in a thread-safe manner
 func (wp *WorkerPool) Increment() {
@@ -271,4 +274,12 @@ func (wp *WorkerPool) GetChannelLength() int {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 	return len(wp.channel)
+}
+
+func (wp *WorkerPool) ScalingMuLock() {
+	wp.scalingMu.Lock()
+}
+
+func (wp *WorkerPool) ScalingMuUnlock() {
+	wp.scalingMu.Unlock()
 }

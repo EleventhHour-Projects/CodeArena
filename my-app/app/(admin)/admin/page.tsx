@@ -557,24 +557,26 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-6 w-6" />
             </div>
             <DialogTitle className="text-xl font-bold tracking-tight">Experimental Feature</DialogTitle>
-            <DialogDescription className="text-left text-zinc-400 space-y-4">
-              <p>
-                Worker Auto-Scaling is an intelligent resource management system that dynamically adjusts your cluster size:
-              </p>
-              <ul className="list-disc pl-5 space-y-2 text-xs">
-                <li>
-                  <b>Traffic-Based Scaling:</b> The system monitors task volume in 10-second windows. It scales from 1 worker (low traffic) up to 10 workers (high traffic, &gt;180 tasks/period).
-                </li>
-                <li>
-                  <b>Resource Protection:</b> An "Auto-Clean" routine runs regularly. If a worker maintains <b>&gt;80% CPU or Memory</b> usage over a 10-minute threshold, it is automatically retired and replaced.
-                </li>
-                <li>
-                  <b>Efficiency:</b> When traffic drops, the system automatically ramps down excess workers to save resources.
-                </li>
-              </ul>
-              <p className="pt-2 text-amber-500/80 font-medium">
-                Note: Manual Spawn/Stop controls are disabled while Auto Scale is active.
-              </p>
+            <DialogDescription asChild>
+              <div className="text-left text-zinc-400 space-y-4">
+                <p>
+                  Worker Auto-Scaling is an intelligent resource management system that dynamically adjusts your cluster size:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-xs">
+                  <li>
+                    <b>Traffic-Based Scaling:</b> The system monitors task volume in 10-second windows. It scales from 1 worker (low traffic) up to 10 workers (high traffic, &gt;180 tasks/period).
+                  </li>
+                  <li>
+                    <b>Resource Protection:</b> An "Auto-Clean" routine runs regularly. If a worker maintains <b>&gt;80% CPU or Memory</b> usage over a 10-minute threshold, it is automatically retired and replaced.
+                  </li>
+                  <li>
+                    <b>Efficiency:</b> When traffic drops, the system automatically ramps down excess workers to save resources.
+                  </li>
+                </ul>
+                <p className="pt-2 text-amber-500/80 font-medium">
+                  Note: Manual Spawn/Stop controls are disabled while Auto Scale is active.
+                </p>
+              </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-2">
