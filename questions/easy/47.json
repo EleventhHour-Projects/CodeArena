@@ -1,0 +1,16 @@
+{
+    "id": 47,
+    "slug": "intersection-of-multiple-arrays",
+    "tags": [
+        "Array",
+        "Hash Table",
+        "Sorting",
+        "Counting"
+    ],
+    "title": "Intersection of Multiple Arrays",
+    "difficulty": "Easy",
+    "description": "You are given a 2D array nums.\n\nEach nums[i] is a list of distinct positive integers\nTask\n\nFind all integers that are present in every array.\nIf not then return [-1]\nReturn them:\n\nIn ascending order\nExamples\n\nExample 1\n\n[[3,1,2,4,5],[1,2,3,4],[3,4,5,6]]\n→ [3,4]\n\nExample 2\n\n[[1,2,3],[4,5,6]]\n→ [-1]\nConstraints\n1 ≤ number of arrays ≤ 1000\nTotal elements ≤ 1000\n1 ≤ value ≤ 1000\nEach inner array has unique elements",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
