@@ -7,11 +7,11 @@
     "Union-Find",
     "Graph Theory"
   ],
-  "title": "Detect and Remove the Extra Edge in a Tree",
+  "title": "Redundant Link Identification in Quasi-Trees",
   "difficulty": "Medium",
-  "description": "Reworded Problem Description:\n\nA tree is defined as an undirected graph that is fully connected and contains no cycles.\n\nYou are given a graph that was originally a tree with n nodes labeled from 1 to n. However, one extra edge was added between two distinct nodes, creating exactly one cycle.\n\nThe graph is represented as an array edges of size n, where each element edges[i] = [a, b] indicates an undirected edge between nodes a and b.\n\nYour task is to identify and return one edge that can be removed so that the graph becomes a valid tree again (i.e., connected and acyclic).\n\nIf multiple edges could be removed to achieve this, return the one that appears last in the input array.",
-  "input_format": "The first line contains two integers n and m, where n is the number of edges and m is the number of elements in each edge (always 2).\nThe next n lines each contain two integers u and v, representing an undirected edge between nodes u and v.",
-  "output_format": "Print two space-separated integers representing the edge that was removed to make the graph a tree. If multiple such edges exist, return the one that appears last in the input.",
-  "constraints": "n == edges.length\n3 <= n <= 1000\nedges[i].length == 2\n1 <= ai < bi <= edges.length\nai != bi\nThere are no repeated edges.\nThe given graph is connected.",
+  "description": "A graph was originally a tree with n nodes labeled 1 to n, but one additional edge was added, creating exactly one cycle. Given the list of n edges, find the one edge that, if removed, would restore the tree structure. If there are multiple such edges, choose the one that appears last in the input.",
+  "input_format": "The first line contains two integers n and c (number of nodes and a constant 2).\nThe next n lines each contain two integers u and v, representing an undirected edge between nodes u and v.",
+  "output_format": "Print two space-separated integers representing the redundant edge discovered in the input. If multiple edges could be removed, print the one that occurs latest in the list.",
+  "constraints": "3 <= n <= 1000\n1 <= u, v <= n\nThere are no repeated edges.\nThe given graph is connected.",
   "verified": true
 }

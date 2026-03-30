@@ -6,11 +6,11 @@
     "Matrix",
     "Simulation"
   ],
-  "title": "Spiral Matrix",
+  "title": "Inner Helix Matrix Traversal",
   "difficulty": "Medium",
-  "description": "You are given a matrix of size m × n.\n\nTraverse the matrix in spiral order and return all elements.\n\nWhat is Spiral Order?\n\nStart from the top-left corner and move:\n\nLeft → Right\nTop → Bottom\nRight → Left\nBottom → Top\n\nRepeat this pattern, moving inward layer by layer.\n\nTask\n\nReturn a list of all elements in the order you visit them.\n\nExamples\n\nExample 1\n\n[[1,2,3],\n [4,5,6],\n [7,8,9]]\n\n→ [1,2,3,6,9,8,7,4,5]\n\nExample 2\n\n[[1,2,3,4],\n [5,6,7,8],\n [9,10,11,12]]\n\n→ [1,2,3,4,8,12,11,10,9,5,6,7]\nConstraints\n1 ≤ m, n ≤ 10\nValues range from -100 to 100",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given an m x n matrix, your objective is to perform a clockwise spiral traversal. Starting from the top-left corner (0,0), move right until the boundary, then move down, then left, and finally up. Continue this inward winding pattern until every element in the matrix has been visited exactly once.\n\nExample 1\nInput:\n3 3\n1 2 3\n4 5 6\n7 8 9\nOutput: 1 2 3 6 9 8 7 4 5\n\nExample 2\nInput:\n3 4\n1 2 3 4\n5 6 7 8\n9 10 11 12\nOutput: 1 2 3 4 8 12 11 10 9 5 6 7",
+  "input_format": "The first line contains two integers m and n, representing the number of rows and columns.\nThe next m lines each contain n space-separated integers, representing the matrix elements.",
+  "output_format": "Print all elements of the matrix in spiral order on a single line, separated by spaces.",
+  "constraints": "1 <= m, n <= 10\n-100 <= matrix[i][j] <= 100",
   "verified": true
 }

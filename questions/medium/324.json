@@ -6,11 +6,11 @@
     "Matrix",
     "Simulation"
   ],
-  "title": "Difference Between Ones and Zeros in Row and Column",
+  "title": "Matrix Balance Deviation Analysis",
   "difficulty": "Medium",
-  "description": "You are given a 0-indexed binary matrix grid of size m × n.\n\nDefinitions\n\nFor each row i and column j:\n\nonesRow[i] = number of 1s in row i\nzerosRow[i] = number of 0s in row i\nonesCol[j] = number of 1s in column j\nzerosCol[j] = number of 0s in column j\nFormula\n\nFor each cell (i, j), define:\n\ndiff[i][j] = onesRow[i] + onesCol[j] - zerosRow[i] - zerosCol[j]\nTask\n\nReturn the resulting matrix diff.\n\nExamples\n\nExample 1\nInput:\n\n[[0,1,1],\n [1,0,1],\n [0,0,1]]\n\nOutput:\n\n[[0,0,4],\n [0,0,4],\n [-2,-2,2]]\n\nExample 2\nInput:\n\n[[1,1,1],\n [1,1,1]]\n\nOutput:\n\n[[5,5,5],\n [5,5,5]]\nConstraints\n1 ≤ m, n ≤ 10⁵\n1 ≤ m × n ≤ 10⁵\ngrid[i][j] ∈ {0,1}",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Consider an m x n binary matrix 'grid'. For every row 'i' and column 'j', we define:\n- onesRow[i]: The count of 1s in row i.\n- zerosRow[i]: The count of 0s in row i.\n- onesCol[j]: The count of 1s in column j.\n- zerosCol[j]: The count of 0s in column j.\n\nYour task is to construct a difference matrix 'diff' of the same dimensions, where each element at (i, j) is calculated as:\ndiff[i][j] = onesRow[i] + onesCol[j] - zerosRow[i] - zerosCol[j]\n\nExample 1\nInput:\n3 3\n0 1 1\n1 0 1\n0 0 1\nOutput:\n0 0 4\n0 0 4\n-2 -2 2\nExplanation:\n- diff[0][0] = onesRow[0] + onesCol[0] - zerosRow[0] - zerosCol[0] = 2 + 1 - 1 - 2 = 0\n- diff[0][1] = onesRow[0] + onesCol[1] - zerosRow[0] - zerosCol[1] = 2 + 1 - 1 - 2 = 0\n- diff[0][2] = onesRow[0] + onesCol[2] - zerosRow[0] - zerosCol[2] = 2 + 3 - 1 - 0 = 4\n\nExample 2\nInput:\n2 3\n1 1 1\n1 1 1\nOutput:\n5 5 5\n5 5 5",
+  "input_format": "The first line contains two integers m and n, representing the number of rows and columns.\nThe next m lines each contain n space-separated integers, representing the elements of the binary matrix.",
+  "output_format": "Print the m x n difference matrix. Each row should be on a new line, and elements within a row should be space-separated.",
+  "constraints": "1 <= m, n <= 100000\n1 <= m * n <= 100000\ngrid[i][j] is either 0 or 1",
   "verified": true
 }

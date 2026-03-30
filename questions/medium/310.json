@@ -5,11 +5,11 @@
     "Math",
     "Dynamic Programming"
   ],
-  "title": "Integer Break",
+  "title": "Optimal Product Decomposition",
   "difficulty": "Medium",
-  "description": "Given an integer n, break it into the sum of at least two positive integers (k ≥ 2), and maximize the product of those integers.\n\nReturn the maximum product you can achieve.\n\nExamples\n\nExample 1\nInput: n = 2\nOutput: 1\nExplanation:\n2 = 1 + 1\nProduct = 1 × 1 = 1\n\nExample 2\nInput: n = 10\nOutput: 36\nExplanation:\n10 = 3 + 3 + 4\nProduct = 3 × 3 × 4 = 36\n\nConstraints\n2 ≤ n ≤ 58",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given a positive integer n, your goal is to partition it into the sum of k positive integers (where k >= 2) such that the product of these integers is maximized. Return the maximum possible product.\n\nExample 1\nInput: n = 2\nOutput: 1\n\nExample 2\nInput: n = 10\nOutput: 36",
+  "input_format": "The first line contains a single integer n.",
+  "output_format": "Print the maximum achievable product using at least two positive integers.",
+  "constraints": "2 <= n <= 58",
   "verified": true
 }

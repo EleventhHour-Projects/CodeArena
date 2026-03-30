@@ -6,11 +6,11 @@
     "Heap (Priority Queue)",
     "Shortest Path"
   ],
-  "title": "Shortest Path with One-Time Edge Reversal per Node",
+  "title": "Optimal Navigation with Selective Link Reversal",
   "difficulty": "Medium",
-  "description": "You are given a directed weighted graph consisting of n nodes numbered from 0 to n - 1. The graph is represented by an array edges, where each element edges[i] = [u, v, w] denotes a directed edge from node u to node v with a cost of w.\n\nEach node has a special ability (a switch) that can be used at most once. When you reach a node u, if you have not used its switch yet, you may choose to:\n\nPick any incoming edge v → u\nTemporarily reverse it to u → v\nImmediately traverse this reversed edge\n\nTraversing a reversed edge costs twice the original weight, i.e., 2 × w.\n\nNote:\n\nThe reversal is valid only for that single traversal.\nEach node’s switch can be used only once during the entire journey.\n\nYour task is to compute the minimum cost required to travel from node 0 to node n - 1.\nIf it is impossible to reach the destination, return -1.",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are navigating a directed weighted graph with n nodes. Each node has a unique \"switch\" that allows you to temporarily reverse one of its incoming edges into an outgoing edge for 2x the original cost. Each switch can be used at most once. Find the minimum total cost to travel from node 0 to node n-1. If it is impossible to reach the destination, return -1.",
+  "input_format": "The first line contains an integer n representing the number of nodes.\nThe second line contains two integers m and c (number of edges and a constant 3).\nThe next m lines each contain three integers u, v, w representing a directed edge from u to v with weight w.",
+  "output_format": "Print the minimum cost required to travel from node 0 to node n-1. If unreachable, print -1.",
+  "constraints": "2 <= n <= 10000\n1 <= m <= 20000\n1 <= w <= 1000000",
   "verified": true
 }

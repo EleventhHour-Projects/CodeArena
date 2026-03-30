@@ -6,11 +6,11 @@
     "Stack",
     "Monotonic Stack"
   ],
-  "title": "Daily Temperatures",
+  "title": "Warmth Latency Calculation",
   "difficulty": "Medium",
-  "description": "You are given an integer array temperatures, where temperatures[i] represents the temperature on the i-th day.\n\nTask\n\nFor each day i, determine how many days you must wait until a warmer temperature occurs.\n\nIf a warmer temperature exists in the future, set:\nanswer[i] = number of days to wait\nIf no such day exists, set:\nanswer[i] = 0\n\nReturn the resulting array answer.\n\nExamples\n\nExample 1\nInput: temperatures = [73,74,75,71,69,72,76,73]\nOutput: [1,1,4,2,1,1,0,0]\n\nExample 2\nInput: temperatures = [30,40,50,60]\nOutput: [1,1,1,0]\n\nExample 3\nInput: temperatures = [30,60,90]\nOutput: [1,1,0]\n\nConstraints\n1 ≤ temperatures.length ≤ 10⁵\n30 ≤ temperatures[i] ≤ 100",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given an array of daily temperatures, determine for each day the number of days you must wait until a warmer temperature occurs. If no warmer temperature is expected in the future, the waiting period for that day is 0.\n\nExample 1\nInput: temperatures = [73,74,75,71,69,72,76,73]\nOutput: [1,1,4,2,1,1,0,0]\n\nExample 2\nInput: temperatures = [30,40,50,60]\nOutput: [1,1,1,0]\n\nExample 3\nInput: temperatures = [30,60,90]\nOutput: [1,1,0]",
+  "input_format": "The first line contains an integer n representing the number of days.\nThe second line contains n space-separated integers representing daily temperatures.",
+  "output_format": "Print n space-separated integers representing the number of days to wait for a warmer temperature.",
+  "constraints": "1 <= n <= 100000\n30 <= temperatures[i] <= 100",
   "verified": true
 }

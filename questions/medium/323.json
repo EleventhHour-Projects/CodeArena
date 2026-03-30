@@ -6,11 +6,11 @@
     "Hash Table",
     "Counting"
   ],
-  "title": "Find Lucky Integer in an Array",
+  "title": "Identifying the Maximal Self-Referenced Lucky Value",
   "difficulty": "Medium",
-  "description": "You are given an integer array arr.\n\nDefinition\n\nAn integer x is called lucky if:\n\nfrequency of x in arr == x\nTask\n\nReturn the largest lucky integer in the array.\nIf no such integer exists, return -1.\n\nExamples\n\nExample 1\nInput: arr = [2,2,3,4]\nOutput: 2\n\nExplanation:\n\n2 appears 2 times → lucky\nOthers are not lucky\n\nExample 2\nInput: arr = [1,2,2,3,3,3]\nOutput: 3\n\nExplanation:\n\n1 appears once → lucky\n2 appears twice → lucky\n3 appears three times → lucky\nReturn the largest → 3\n\nExample 3\nInput: arr = [2,2,2,3,3]\nOutput: -1\n\nExplanation:\nNo number satisfies the condition.\n\nConstraints\n1 ≤ arr.length ≤ 500\n1 ≤ arr[i] ≤ 500",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Within an integer array 'arr', a value x is defined as a 'lucky integer' if its frequency—the number of times it appears in the array—is exactly equal to x itself.\n\nYour task is to examine the given array and determine the largest lucky integer present. If the array contains no lucky integers, output -1.\n\nExample 1\nInput:\n4\n2 2 3 4\nOutput: 2\nExplanation: The number 2 occurs 2 times, making it a lucky integer. 3 occurs once and 4 occurs once, so they are not lucky.\n\nExample 2\nInput:\n6\n1 2 2 3 3 3\nOutput: 3\nExplanation: 1 occurs once, 2 occurs twice, and 3 occurs three times. All are lucky integers, and 3 is the largest.\n\nExample 3\nInput:\n5\n2 2 2 3 3\nOutput: -1",
+  "input_format": "The first line contains an integer n representing the size of the array.\nThe second line contains n space-separated integers representing the elements of the array.",
+  "output_format": "Print the largest lucky integer found in the array, or -1 if no such integer exists.",
+  "constraints": "1 <= n <= 500\n1 <= arr[i] <= 500",
   "verified": true
 }

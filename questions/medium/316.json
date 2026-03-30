@@ -5,11 +5,11 @@
     "Array",
     "Math"
   ],
-  "title": "Escape The Ghosts",
+  "title": "Strategic Pursuit Evasion on 2D Grid",
   "difficulty": "Medium",
-  "description": "You are playing a simplified PAC-MAN game on an infinite 2D grid.\n\nYou start at position [0, 0].\nYou are given a target position target = [x_target, y_target].\nThere are multiple ghosts, where ghosts[i] = [xᵢ, yᵢ] represents the starting position of the i-th ghost.\nMovement Rules\n\nOn each turn:\n\nYou and all ghosts can independently:\nMove 1 unit in one of the four directions: up, down, left, right, or\nStay in the same position\nAll movements happen simultaneously\nEscape Condition\n\nYou successfully escape if and only if:\n\nYou reach the target strictly before any ghost reaches you\n\nImportant:\n\nIf a ghost reaches the same position as you at the same time, you do not escape\nThis applies to any position, including the target\nTask\n\nReturn true if it is possible to escape regardless of how the ghosts move, otherwise return false.\n\nExamples\n\nExample 1\nInput: ghosts = [[1,0],[0,3]], target = [0,1]\nOutput: true\nExplanation:\nYou reach the target in 1 move, while both ghosts need more time.\n\nExample 2\nInput: ghosts = [[1,0]], target = [2,0]\nOutput: false\nExplanation:\nThe ghost can intercept or reach the target no later than you.\n\nExample 3\nInput: ghosts = [[2,0]], target = [1,0]\nOutput: false\nExplanation:\nBoth you and the ghost can reach the target at the same time.\n\nConstraints\n1 ≤ ghosts.length ≤ 100\nghosts[i].length == 2\n-10⁴ ≤ xᵢ, yᵢ ≤ 10⁴\nMultiple ghosts may share the same position\ntarget.length == 2\n-10⁴ ≤ x_target, y_target ≤ 10⁴",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You start at (0, 0) on an infinite 2D grid and want to reach a target point (tx, ty). There are multiple ghosts at various starting positions [gx, gy]. In each turn, you and all ghosts can move one unit in any cardinal direction or stay still. You successfully escape if and only if you reach the target strictly before any ghost can catch you (occupy the same cell). All movements occur simultaneously. Return true if escape is guaranteed regardless of the ghosts' optimal strategies.\n\nExample 1\nInput: ghosts = [[1,0],[0,3]], target = [0,1]\nOutput: true\n\nExample 2\nInput: ghosts = [[1,0]], target = [2,0]\nOutput: false",
+  "input_format": "The first line contains two integers n and c representing the number of ghosts and the coordinates dimension (always 2).\nThe next n lines each contain c integers gx and gy representing a ghost's starting position.\nThe next line contains an integer c (dimension).\nThe last line contains c integers tx and ty for the target point.",
+  "output_format": "Print \"true\" (without quotes) if you can escape, otherwise \"false\".",
+  "constraints": "1 <= n <= 100\n-10000 <= tx, ty, gx, gy <= 10000",
   "verified": true
 }

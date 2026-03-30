@@ -6,11 +6,11 @@
     "Dynamic Programming",
     "Matrix"
   ],
-  "title": "Count Square Submatrices with All Ones",
+  "title": "Enumerating Homogeneous Square Subdomains",
   "difficulty": "Medium",
-  "description": "You are given an m × n binary matrix matrix, where each element is either 0 or 1.\n\nYour task is to count the total number of square submatrices that contain only ones.\n\nExamples\n\nExample 1\nInput:\n\n[\n  [0,1,1,1],\n  [1,1,1,1],\n  [0,1,1,1]\n]\n\nOutput: 15\n\nExplanation:\n\nSquares of size 1 → 10\nSquares of size 2 → 4\nSquares of size 3 → 1\nTotal = 10 + 4 + 1 = 15\n\nExample 2\nInput:\n\n[\n  [1,0,1],\n  [1,1,0],\n  [1,1,0]\n]\n\nOutput: 7\n\nExplanation:\n\nSquares of size 1 → 6\nSquares of size 2 → 1\nTotal = 6 + 1 = 7\nConstraints\n1 ≤ matrix.length ≤ 300\n1 ≤ matrix[0].length ≤ 300\nmatrix[i][j] ∈ {0, 1}",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given an m x n binary matrix consisting only of 0s and 1s, count the total number of square submatrices that are composed entirely of 1s.\n\nExample 1\nInput:\n[\n  [0,1,1,1],\n  [1,1,1,1],\n  [0,1,1,1]\n]\nOutput: 15\n\nExample 2\nInput:\n[\n  [1,0,1],\n  [1,1,0],\n  [1,1,0]\n]\nOutput: 7",
+  "input_format": "The first line contains two integers m and n representing the matrix dimensions.\nThe next m lines each contain n space-separated integers (0 or 1).",
+  "output_format": "Print the total count of square submatrices containing only integers value 1.",
+  "constraints": "1 <= m, n <= 300\nmatrix[i][j] is either 0 or 1",
   "verified": true
 }
