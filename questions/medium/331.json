@@ -1,0 +1,17 @@
+{
+    "id": 331,
+    "slug": "earliest-finish-time-for-land-and-water-rides-i",
+    "tags": [
+        "Array",
+        "Two Pointers",
+        "Binary Search",
+        "Greedy",
+        "Sorting"
+    ],
+    "title": "Earliest Finish Time for Land and Water Rides I",
+    "difficulty": "Medium",
+    "description": "You are given two types of rides:\n\nLand rides\nWater rides\n\nEach ride has:\n\na start time (when it opens)\na duration (how long it takes)\n\nYou must:\n\nTake exactly one land ride and one water ride\nYou can take them in any order\n\nRules:\n\nYou can start a ride at its start time or later\nIf you finish one ride, you can:\nstart the next immediately (if it’s open), or\nwait until it opens\n\nReturn the earliest time you can finish both rides.\n\nExample 1\nInput:\nlandStartTime = [2, 8], landDuration = [4, 1]\nwaterStartTime = [6], waterDuration = [3]\n\nOutput: 9\n\nExplanation:\nBest plan → Land ride (2→6), then Water ride (6→9)\n\nExample 2\nInput:\nlandStartTime = [5], landDuration = [3]\nwaterStartTime = [1], waterDuration = [10]\n\nOutput: 14\n\nExplanation:\nBest plan → Water ride (1→11), then Land ride (11→14)\n\nConstraints:\n\n1 \u003c= n, m \u003c= 100\n1 \u003c= startTime, duration \u003c= 1000",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
