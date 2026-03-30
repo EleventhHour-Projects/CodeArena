@@ -37,7 +37,14 @@ var GITHUB_TOKEN string
 var INTERNAL_KEY string
 var WSSIP string
 
+// WorkerCTX is a global variable that holds the context for the worker pool, allowing for cancellation and management of worker goroutines in a coordinated manner across the application
 var WorkerCTX context.Context
+
+// MainProcessID is a global variable that stores the process ID of the main server process, providing visibility into the server's process information for monitoring and management purposes
+var MainProcessID int
+
+// APIOnly is a global variable that indicates whether the service is running in API-only mode, which disables worker-related endpoints and functionality, allowing for a more lightweight deployment of the service when worker processing is not needed
+var APIOnly bool
 
 // CustomWorkerPoolSize is a global variable that can be used to override the default worker pool size defined by the WORKER_POOL_SIZE constant, allowing for dynamic configuration of the worker pool size based on runtime conditions or specific requirements of the application
 var CustomWorkerPoolSize int
@@ -75,8 +82,11 @@ type WorkerPool struct {
 	mu sync.Mutex
 	// channel is a channel that allows tasks to be added to the worker pool and retrieved by workers for processing
 	channel chan CodeConfig
-	auto    bool
-	muauto  sync.Mutex
+	// auto is a boolean that indicates whether the worker pool should automatically adjust the number of active workers based on the workload,
+	// allowing for dynamic scaling of worker resources to efficiently handle varying workloads and optimize performance in the code execution service
+	auto bool
+	// muauto is a mutex to ensure thread-safe access to the auto field, allowing for concurrent updates and retrievals of the auto-scaling setting for the worker pool without
+	muauto sync.Mutex
 }
 
 // ExecutionCode is a struct that represents the structure of the execution code document in the MongoDB collection
@@ -199,12 +209,15 @@ func (t *TaskProcessingInfo) GetAverageTime() float64 {
 	avg := t.TotalTime / time.Duration(t.TotalTaskDone)
 	return avg.Seconds()
 }
+
+// GetTotalTime returns the total time taken for processing tasks in seconds, allowing for monitoring of the overall time spent on processing code execution tasks and providing insights into the performance of the service
 func (t *TaskProcessingInfo) GetTotalTime() float64 {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.TotalTime.Seconds()
 }
 
+// GetTotalTasks returns the total number of tasks that have been processed in a thread-safe manner, allowing for monitoring and analysis of the workload handled by the code execution service
 func (t *TaskProcessingInfo) GetTotalTasks() int {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -217,14 +230,18 @@ var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, mu: sync.Mute
 // For Info API
 var StartTime time.Time
 
+// GithubClient is a global variable that holds the GitHub client for interacting with the GitHub API, allowing for operations such as fetching pull requests and merging them as part of the code execution service's integration with GitHub
 type GitHubClient struct {
 	Client *github.Client
 	Owner  string
 	Repo   string
 }
 
+// GhClient is a global variable that holds the instance of the GitHubClient, providing a centralized point of access for interacting with the GitHub API throughout the application, allowing for consistent and efficient management of GitHub-related operations such as fetching pull requests and merging them as part of the code execution service's functionality
 var GhClient *GitHubClient
 
+// GetEnv is a utility function that retrieves the value of an environment variable by its key, with an option to provide a fallback value if the environment variable is not set, allowing for flexible configuration of the application through environment variables while providing default values when necessary
+// key is the name of the environment variable to retrieve, and fallback is the value to return if the environment variable is not set, allowing for a convenient way to access configuration values from the environment with a fallback option for default values
 func GetEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
@@ -232,18 +249,24 @@ func GetEnv(key, fallback string) string {
 	return fallback
 }
 
+// SetAuto sets the auto-scaling feature of the worker pool to the specified boolean value in a thread-safe manner, allowing for dynamic control over the worker pool's behavior based on demand and resource availability
+// auto is a boolean value that indicates whether to enable or disable auto-scaling for the worker pool, and the function updates this setting in the WorkerPoolData struct while ensuring thread-safe access through the use of a mutex
 func (wp *WorkerPool) SetAuto(auto bool) {
 	wp.muauto.Lock()
 	defer wp.muauto.Unlock()
 	wp.auto = auto
 }
 
+// GetAuto retrieves the current status of the auto-scaling feature for the worker pool in a thread-safe manner, allowing for visibility into whether auto-scaling is enabled or disabled, and providing insights into the behavior of the worker pool based on demand and resource availability
+// The function accesses the auto-scaling setting in the WorkerPoolData struct while ensuring thread-safe access through the use of a mutex, allowing clients to monitor the auto-scaling status of the worker pool effectively
 func (wp *WorkerPool) GetAuto() bool {
 	wp.muauto.Lock()
 	defer wp.muauto.Unlock()
 	return wp.auto
 }
 
+// GetChannelLength returns the current length of the worker pool's channel in a thread-safe manner, allowing for monitoring of the number of tasks currently waiting in the worker pool for processing by workers
+// The function accesses the length of the channel while ensuring thread-safe access through the use of a mutex, providing insights into the workload and task queue of the worker pool for monitoring and analysis purposes
 func (wp *WorkerPool) GetChannelLength() int {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()

@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// sendToWSS sends a payload to the WebSocket server by making an HTTP POST request to the specified WebSocket endpoint, allowing for communication of events related to code execution and submission outcomes from the code execution service to the WebSocket server for real-time updates and notifications
+// The function constructs the HTTP request with the appropriate headers and payload, and handles the response to ensure successful communication with the WebSocket server, providing error handling for any issues that may arise during the request process.
 func sendToWSS(payload utils.WSSPayload) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -41,6 +43,8 @@ func sendToWSS(payload utils.WSSPayload) error {
 	return nil
 }
 
+// ListForEvents continuously listens for incoming payloads from the WebSocket channel and sends them to the WebSocket server using the sendToWSS function, allowing for real-time communication of events related to code execution and submission outcomes from the code execution service to the WebSocket server
+// The function runs in a loop, checking for cancellation of the context to gracefully exit when needed, and handles any errors that may occur during the sending of events to the WebSocket server, ensuring robust communication between the code execution service and the WebSocket server for real-time updates and notifications.
 func ListForEvents(ctx context.Context) {
 	for {
 		select {

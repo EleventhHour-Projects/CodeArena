@@ -106,7 +106,15 @@ func main() {
 	apiOnly := flag.Bool("api", false, "for starting server only in API mode")
 	flag.Usage = utils.FlagUsage
 	flag.Parse()
+	utils.MainProcessID = os.Getpid()
 	utils.CustomWorkerPoolSize = *workerCount
+
+	if *apiOnly {
+		utils.APIOnly = true
+		fmt.Println(utils.Yellow + "Starting in API only mode. Worker related endpoints will be disabled." + utils.Reset)
+	} else {
+		utils.APIOnly = false
+	}
 
 	if utils.CustomWorkerPoolSize <= 0 && !*apiOnly {
 		utils.CustomWorkerPoolSize = utils.WORKER_POOL_SIZE
@@ -171,6 +179,8 @@ func main() {
 		time.Sleep(1 * time.Second)
 		go worker.SpawnWorkers(ctx)
 		time.Sleep(1 * time.Second)
+		// Start Auto Scaling
+		// Default : False, can be enabled by API
 		go api.Auto()
 	}
 

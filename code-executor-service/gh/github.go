@@ -11,6 +11,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// NewGitHubClient creates a new GitHub client using the provided token, owner, and repository information, allowing for authenticated interactions with the GitHub API to manage pull requests, branches, and repository contents for the code execution service
+// The function initializes an OAuth2 token source with the provided token, creates an HTTP client using the token source, and then constructs a GitHub client that can be used for various operations on the specified repository.
 func NewGitHubClient(token, owner, repo string) *utils.GitHubClient {
 	ctx := context.Background()
 
@@ -28,10 +30,14 @@ func NewGitHubClient(token, owner, repo string) *utils.GitHubClient {
 	}
 }
 
+// InitGH initializes the global GitHub client by creating a new instance of the GitHub client using the provided token, owner,
+// and repository information from the environment variables, allowing for authenticated interactions with the
+// GitHub API throughout the code execution service for managing pull requests, branches, and repository contents.
 func InitGH() {
 	utils.GhClient = NewGitHubClient(utils.GITHUB_TOKEN, "EleventhHour-Projects", "CodeArena")
 }
 
+// CreatePR creates a new pull request on GitHub with the specified branch name, title, body, and file contents, allowing for seamless integration of new problems into the GitHub repository
 func CreatePR(client *utils.GitHubClient, ctx context.Context, branchName, title, body string, files map[string][]byte, lable string) (*github.PullRequest, error) {
 	// 1. Get the repository to find the default branch
 	repo, _, err := client.Client.Repositories.Get(ctx, client.Owner, client.Repo)
