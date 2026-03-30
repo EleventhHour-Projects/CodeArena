@@ -1,0 +1,16 @@
+{
+    "id": 332,
+    "slug": "shortest-bridge",
+    "tags": [
+        "Array",
+        "Depth-First Search",
+        "Breadth-First Search",
+        "Matrix"
+    ],
+    "title": "Shortest Bridge",
+    "difficulty": "Medium",
+    "description": "You are given an n × n grid of 0s and 1s:\n\n1 = land\n0 = water\n\nThere are exactly two islands (groups of connected 1s).\n\nYour task:\n\nConvert some 0s into 1s to connect the two islands\nReturn the minimum number of 0s you need to flip\n\nRules:\n\nIslands are connected up, down, left, right (4-directionally)\n\nExample 1\nInput: [[0,1],[1,0]]\nOutput: 1\n\nExample 2\nInput: [[0,1,0],[0,0,0],[0,0,1]]\nOutput: 2\n\nExample 3\nInput:\n[[1,1,1,1,1], [1,0,0,0,1], [1,0,1,0,1], [1,0,0,0,1], [1,1,1,1,1]]\nOutput: 1\n\nConstraints:\n\n2 \u003c= n \u003c= 100\nOnly 0 and 1\nExactly two islands exist",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
