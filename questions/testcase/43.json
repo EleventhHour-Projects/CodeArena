@@ -1,0 +1,68 @@
+{
+    "testcases": {
+        "run": [
+            {
+                "input": "is2 sentence4 This1 a3",
+                "output": "This is a sentence"
+            },
+            {
+                "input": "Myself2 Me1 I4 and3",
+                "output": "Me Myself and I"
+            }
+        ],
+        "submit": [
+            {
+                "input": "a1ccccb2",
+                "output": "a ccccb"
+            },
+            {
+                "input": "a1c",
+                "output": "a"
+            },
+            {
+                "input": "a1 c",
+                "output": "a"
+            },
+            {
+                "input": "a1ccccb2cc",
+                "output": "a ccccb"
+            },
+            {
+                "input": "a2 b1 c3",
+                "output": "b a c"
+            },
+            {
+                "input": "one1 two2 three3 four4 five5 six6 seven7 eight8 nine9",
+                "output": "one two three four five six seven eight nine"
+            },
+            {
+                "input": "word9 word8 word7 word6 word5 word4 word3 word2 word1",
+                "output": "word word word word word word word word word"
+            },
+            {
+                "input": "x2 y3 z1",
+                "output": "z x y"
+            },
+            {
+                "input": "apple3 banana1 cherry2",
+                "output": "banana cherry apple"
+            },
+            {
+                "input": "Programming9 competitive8 is2 very4 fun5 and3 useful6 for7 learning1",
+                "output": "learning is and very fun useful for competitive Programming"
+            },
+            {
+                "input": "extraordinary9 implementation8 understanding7 complexity6 algorithmic5 practice4 daily3 requires2 coding1",
+                "output": "coding requires daily practice algorithmic complexity understanding implementation extraordinary"
+            },
+            {
+                "input": "development9 software8 of7 world6 the5 in4 future3 the2 is1 exciting",
+                "output": "is the future in the world of software development"
+            },
+            {
+                "input": "internationalization9 hyperparameterization8 computationally7 optimization6 architecture5 development4 engineering3 requires2 dedication1",
+                "output": "dedication requires engineering development architecture optimization computationally hyperparameterization internationalization"
+            }
+        ]
+    }
+}
