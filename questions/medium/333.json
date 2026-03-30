@@ -1,0 +1,15 @@
+{
+    "id": 333,
+    "slug": "minimum-impossible-or",
+    "tags": [
+        "Array",
+        "Bit Manipulation",
+        "Brainteaser"
+    ],
+    "title": "Minimum Impossible OR",
+    "difficulty": "Medium",
+    "description": "You are given an array nums.\n\nYou can pick any subsequence (any set of elements, in order) and take their bitwise OR.\n\nAn integer x is called expressible if:\n\nYou can get x by OR-ing some elements of nums\n\nYour task:\n\nFind the smallest positive integer (\u003e 0) that cannot be formed this way\n\nExample 1\nInput: [2,1]\nOutput: 4\nExplanation:\n\nPossible values: 1, 2, (1|2)=3\nMissing smallest = 4\n\nExample 2\nInput: [5,3,2]\nOutput: 1\nExplanation:\n\nYou cannot form 1\n\nConstraints:\n\n1 \u003c= nums.length \u003c= 100000\n1 \u003c= nums[i] \u003c= 1e9",
+    "input_format": "Read from standard input. Format details depends on the problem.",
+    "output_format": "Print to standard output.",
+    "constraints": "Please read problem description for constraints."
+}
