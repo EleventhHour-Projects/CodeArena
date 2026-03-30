@@ -30,6 +30,7 @@ interface Problem {
     input: string;
     output: string;
   }>;
+  verified?: boolean;
 }
 
 export default function AdminTestProblem() {
@@ -152,6 +153,39 @@ export default function AdminTestProblem() {
     }
   };
 
+  const handleVerifyProblem = async () => {
+    if (!selectedProblem) return;
+    const isVerifying = !selectedProblem.verified;
+    const toastId = toast.loading(`${isVerifying ? 'Verifying' : 'Unverifying'} problem...`);
+
+    try {
+      const res = await fetch('/api/admin/questions/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemId: selectedProblem.id,
+          difficulty: selectedProblem.difficulty,
+          verified: isVerifying
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Update local state
+        const updatedProblems = problems.map(p => 
+          p.id === selectedProblem.id ? { ...p, verified: isVerifying } : p
+        );
+        setProblems(updatedProblems);
+        setSelectedProblem({ ...selectedProblem, verified: isVerifying });
+        toast.success(`Problem ${isVerifying ? 'marked as verified' : 'unverified'}!`, { id: toastId });
+      } else {
+        toast.error(data.error || 'Failed to update problem', { id: toastId });
+      }
+    } catch (error) {
+      toast.error('Network error', { id: toastId });
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#09090b] text-zinc-100 font-sans overflow-hidden">
       {/* Sidebar - Problem List */}
@@ -191,12 +225,13 @@ export default function AdminTestProblem() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 relative z-10">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-mono text-zinc-500">#{p.id}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-zinc-500">#{p.id}</span>
+                        {p.verified && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                      </div>
                       <span className={`text-sm font-semibold transition-colors ${selectedProblem?.id === p.id ? 'text-indigo-400' : 'text-zinc-300 group-hover:text-zinc-100'}`}>
                         {p.title}
                       </span>
-                    </div>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border capitalize font-medium ${
                       p.difficulty.toLowerCase() === 'easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' :
                       p.difficulty.toLowerCase() === 'medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' :
@@ -227,17 +262,25 @@ export default function AdminTestProblem() {
             <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0c0c0e]/80 backdrop-blur-md z-10">
               <div className="flex items-center gap-4">
                 <div className="flex flex-col">
-                  <h2 className="text-lg font-bold text-white tracking-tight">{selectedProblem.title}</h2>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-500 font-mono">ID: {selectedProblem.id}</span>
-                    <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                      selectedProblem.difficulty.toLowerCase() === 'easy' ? 'text-emerald-500' :
-                      selectedProblem.difficulty.toLowerCase() === 'medium' ? 'text-amber-500' : 'text-red-500'
-                    }`}>
-                      {selectedProblem.difficulty}
-                    </span>
-                  </div>
+                    <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                      {selectedProblem.title}
+                      {selectedProblem.verified && (
+                        <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Verified</span>
+                        </div>
+                      )}
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-zinc-500 font-mono">ID: {selectedProblem.id}</span>
+                      <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                        selectedProblem.difficulty.toLowerCase() === 'easy' ? 'text-emerald-500' :
+                        selectedProblem.difficulty.toLowerCase() === 'medium' ? 'text-amber-500' : 'text-red-500'
+                      }`}>
+                        {selectedProblem.difficulty}
+                      </span>
+                    </div>
                 </div>
               </div>
 
@@ -479,6 +522,19 @@ export default function AdminTestProblem() {
                                   <p className="text-[11px] text-zinc-500 leading-relaxed max-w-[280px] mx-auto">
                                     Successfully verified this problem against all defined test cases. This problem is ready for production use.
                                   </p>
+                                  <Button 
+                                    onClick={handleVerifyProblem}
+                                    className={`mt-4 ${selectedProblem.verified ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}
+                                  >
+                                    {selectedProblem.verified ? (
+                                      <>Unverify Problem</>
+                                    ) : (
+                                      <>
+                                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                                        Mark as Verified
+                                      </>
+                                    )}
+                                  </Button>
                                 </div>
                               )}
                             </motion.div>

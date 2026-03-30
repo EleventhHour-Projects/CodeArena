@@ -1,11 +1,15 @@
 {
-    "id": 3,
-    "slug": "majority-frequency-element",
-    "tags": ["Array", "Binary Search"],
-    "title": "Dominant Element in Array",
-    "difficulty": "Easy",
-    "description": "You are given an array of integers of size n. Your task is to determine the element that appears more than half of the total number of elements in the array.\n\nIt is guaranteed that such an element always exists.\n\nYou must read input from standard input and print the result accordingly, following competitive programming conventions.",
-    "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers representing the array.",
-    "output_format": "Print a single integer — the element that appears more than floor(n / 2) times.",
-    "constraints": "1 <= n <= 5 * 10^4\n-10^9 <= arr[i] <= 10^9\nIt is guaranteed that a majority element exists."
+  "id": 3,
+  "slug": "majority-frequency-element",
+  "tags": [
+    "Array",
+    "Binary Search"
+  ],
+  "title": "Dominant Element in Array",
+  "difficulty": "Easy",
+  "description": "You are given an array of integers of size n. Your task is to determine the element that appears more than half of the total number of elements in the array.\n\nIt is guaranteed that such an element always exists.\n\nYou must read input from standard input and print the result accordingly, following competitive programming conventions.",
+  "input_format": "The first line contains an integer n — the number of elements.\nThe second line contains n space-separated integers representing the array.",
+  "output_format": "Print a single integer — the element that appears more than floor(n / 2) times.",
+  "constraints": "1 <= n <= 5 * 10^4\n-10^9 <= arr[i] <= 10^9\nIt is guaranteed that a majority element exists.",
+  "verified": true
 }

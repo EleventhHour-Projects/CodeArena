@@ -57,7 +57,8 @@ export async function GET() {
         return {
           ...problemData,
           id,
-          testcases
+          testcases,
+          verified: problemData.verified || false
         };
       })
     );
