@@ -96,7 +96,7 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
                   </div>
                   <div>
                     <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
-                      Battle VS {isPlayer1 ? battle.player1.username : battle.player2.username}
+                      Battle Against {isPlayer1 ? battle.player2.username : battle.player1.username}
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
                       <Clock className="w-3.5 h-3.5" />
@@ -138,8 +138,8 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-[10px] font-bold uppercase ${
-                          prob.difficulty === 'easy' ? 'text-emerald-500' :
-                          prob.difficulty === 'medium' ? 'text-amber-500' : 'text-rose-500'
+                          prob.difficulty?.toLowerCase() === 'easy' ? 'text-emerald-500' :
+                          prob.difficulty?.toLowerCase() === 'medium' ? 'text-amber-500' : 'text-rose-500'
                         }`}>
                           {prob.difficulty}
                         </span>
