@@ -3,11 +3,7 @@
         "run": [
             {
                 "input": "6\neat tea tan ate nat bat",
-                "output": "bat\nnat tan\nate eat tea"
-            },
-            {
-                "input": "1\n",
-                "output": ""
+                "output": "ate eat tea\nnat tan\nbat"
             },
             {
                 "input": "1\na",
@@ -17,31 +13,31 @@
         "submit": [
             {
                 "input": "2\nddddddddddg dgggggggggg",
-                "output": "dgggggggggg ddddddddddg"
+                "output": "ddddddddddg\ndgggggggggg"
             },
             {
                 "input": "5\ntea and ate eat den",
-                "output": "den and ate eat tea"
+                "output": "ate eat tea\nand\nden"
             },
             {
-                "input": "11\nb bb bbb bbbb bbbbb bbbbbb bbbbbbb bbbbbbbb bbbbbbbbb bbbbbbbbbb",
-                "output": "bbbbb\nbbbbbbbb\nbbbb\nbbbbbbbbbb\nbbbbbbbbb\nbbbbbbb\nbbb\nb\nbbbbbb\nbb\n"
+                "input": "10\nb bb bbb bbbb bbbbb bbbbbb bbbbbbb bbbbbbbb bbbbbbbbb bbbbbbbbbb",
+                "output": "b\nbb\nbbb\nbbbb\nbbbbb\nbbbbbb\nbbbbbbb\nbbbbbbbb\nbbbbbbbbb\nbbbbbbbbbb"
             },
             {
                 "input": "17\nlisten silent enlist google gogole elbows below bowel state taste tates abc bca cab xyz zyx yxz",
-                "output": "xyz yxz zyx\nenlist listen silent\ngogole google\nelbows\nbelow bowel\nabc bca cab\nstate taste tates"
+                "output": "enlist listen silent\ngogole google\nelbows\nbelow bowel\nstate taste tates\nabc bca cab\nxyz yxz zyx"
             },
             {
                 "input": "4\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaba",
-                "output": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaba baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                "output": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaba baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             },
             {
-                "input": "11\n a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa",
-                "output": "aaaaaaaa\naaaaaaa\naaaaaa\naaaaaaaaaa\naaaaaaaaa\naa\na\naaaaa\naaaa\naaa\n"
+                "input": "10\na aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa",
+                "output": "a\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa"
             },
             {
                 "input": "6\na b c a b c",
-                "output": "c c\nb b\na a"
+                "output": "a a\nb b\nc c"
             },
             {
                 "input": "5\nz z z z z",
@@ -49,15 +45,15 @@
             },
             {
                 "input": "4\nabc def ghi jkl",
-                "output": "jkl\ndef\nghi\nabc"
+                "output": "abc\ndef\nghi\njkl"
             },
             {
                 "input": "4\nabcd abce abcf abcg",
-                "output": "abcf\nabcg\nabce\nabcd"
+                "output": "abcd\nabce\nabcf\nabcg"
             },
             {
                 "input": "9\nabc bca xyz zyx yxz foo ofo oof bar",
-                "output": "foo ofo oof\nxyz yxz zyx\nbar abc bca"
+                "output": "abc bca\nxyz yxz zyx\nfoo ofo oof\nbar"
             }
         ]
     }

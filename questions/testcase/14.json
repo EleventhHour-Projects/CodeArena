@@ -20,15 +20,15 @@
                 "output": "false"
             },
             {
-                "input": "\n",
+                "input": "-\n-",
                 "output": "true"
             },
             {
-                "input": "abc\n",
+                "input": "abc\n-",
                 "output": "false"
             },
             {
-                "input": "\nahbgdc",
+                "input": "-\nahbgdc",
                 "output": "true"
             },
             {
@@ -40,7 +40,7 @@
                 "output": "true"
             },
             {
-                "input": "\na",
+                "input": "-\na",
                 "output": "true"
             },
             {
@@ -48,7 +48,7 @@
                 "output": "false"
             },
             {
-                "input": "\nahbgdc",
+                "input": "-\nahbgdc",
                 "output": "true"
             }
         ]

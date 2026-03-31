@@ -1,17 +1,17 @@
 {
-  "id": 306,
-  "slug": "group-anagrams",
-  "tags": [
-    "Array",
-    "Hash Table",
-    "String",
-    "Sorting"
-  ],
-  "title": "Lexical Equivalence Clustering",
-  "difficulty": "Medium",
-  "description": "Given a list of strings, group together those that are anagrams of each other. An anagram is a word formed by rearranging the letters of another, using all the original letters exactly once. The order of the resulting groups and the strings within them does not matter.\n\nExample 1\nInput:\nstrs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput:\n[[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]]\n\nExample 2\nInput:\nstrs = [\"\"]\nOutput:\n[[\"\"]]\n\nExample 3\nInput:\nstrs = [\"a\"]\nOutput:\n[[\"a\"]]",
-  "input_format": "The first line contains an integer n representing the number of strings.\nThe next n lines each contain a single string.",
-  "output_format": "Print each group of anagrams on its own line, with strings in each group separated by spaces.",
-  "constraints": "1 <= n <= 10000\n0 <= strs[i].length <= 100\nstrs[i] consists of lowercase English letters",
-  "verified": true
+    "id": 306,
+    "slug": "group-anagrams",
+    "tags": [
+        "Array",
+        "Hash Table",
+        "String",
+        "Sorting"
+    ],
+    "title": "Lexical Equivalence Clustering",
+    "difficulty": "Medium",
+    "description": "Given a list of strings, group together those that are anagrams of each other. An anagram is a word formed by rearranging the letters of another, using all the original letters exactly once.\n\nTo ensure deterministic testing, please follow these rules:\n1. Groups should be printed in the order their first member appeared in the input (Insertion Order).\n2. Within each group, strings should be sorted alphabetically.\n3. Each group should be on its own line, with strings separated by a single space.\n\nExample 1\nInput:\n6\neat tea tan ate nat bat\nOutput:\nate eat tea\nnat tan\nbat\n\nExample 2\nInput:\n1\na\nOutput:\na",
+    "input_format": "The first line contains an integer n representing the number of strings. The next line contains n strings separated by spaces.",
+    "output_format": "Print each group of anagrams on its own line, with strings in each group separated by single spaces.",
+    "constraints": "1 <= n <= 10000, 0 <= strs[i].length <= 100",
+    "verified": true
 }

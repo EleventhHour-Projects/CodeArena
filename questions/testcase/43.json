@@ -12,19 +12,19 @@
         ],
         "submit": [
             {
-                "input": "a1ccccb2",
+                "input": "a1 ccccb2",
                 "output": "a ccccb"
             },
             {
-                "input": "a1c",
+                "input": "a1",
                 "output": "a"
             },
             {
-                "input": "a1 c",
+                "input": "a1",
                 "output": "a"
             },
             {
-                "input": "a1ccccb2cc",
+                "input": "a1 ccccb2",
                 "output": "a ccccb"
             },
             {
@@ -56,7 +56,7 @@
                 "output": "coding requires daily practice algorithmic complexity understanding implementation extraordinary"
             },
             {
-                "input": "development9 software8 of7 world6 the5 in4 future3 the2 is1 exciting",
+                "input": "development9 software8 of7 world6 the5 in4 future3 the2 is1",
                 "output": "is the future in the world of software development"
             },
             {

@@ -1,11 +1,15 @@
 {
-    "id": 2,
-    "slug": "remove-adjacent-anagrams",
-    "tags": ["Array", "String"],
-    "title": "Remove Consecutive Anagram Strings",
-    "difficulty": "Easy",
-    "description": "You are given a list of lowercase strings. Your task is to repeatedly remove strings that are anagrams of their immediate previous string.\n\nMore formally, if two consecutive strings have the same character frequency (i.e., they are anagrams), remove the later one. Continue this process until no more such adjacent pairs exist.\n\nIt can be proven that regardless of the order in which valid removals are performed, the final list remains the same.\n\nYou must take input and produce output in a competitive programming style (standard input/output), not as a function return.",
-    "input_format": "The first line contains an integer n — the number of strings.\nThe second line contains n space-separated strings.",
-    "output_format": "Print the final list of strings after all valid removals. Output the strings in order, separated by a single space.",
-    "constraints": "1 <= n <= 100\n1 <= length of each string <= 10\nEach string consists only of lowercase English letters."
+  "id": 2,
+  "slug": "remove-adjacent-anagrams",
+  "tags": [
+    "Array",
+    "String"
+  ],
+  "title": "Remove Consecutive Anagram Strings",
+  "difficulty": "Easy",
+  "description": "You are given a list of lowercase strings. Your task is to repeatedly remove strings that are anagrams of their immediate previous string.\n\nMore formally, if two consecutive strings have the same character frequency (i.e., they are anagrams), remove the later one. Continue this process until no more such adjacent pairs exist.\n\nIt can be proven that regardless of the order in which valid removals are performed, the final list remains the same.\n\nYou must take input and produce output in a competitive programming style (standard input/output), not as a function return.",
+  "input_format": "The first line contains an integer n — the number of strings.\nThe second line contains n space-separated strings.",
+  "output_format": "Print the final list of strings after all valid removals. Output the strings in order, separated by a single space.",
+  "constraints": "1 <= n <= 100\n1 <= length of each string <= 10\nEach string consists only of lowercase English letters.",
+  "verified": true
 }
