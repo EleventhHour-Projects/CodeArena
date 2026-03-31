@@ -229,14 +229,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <Button
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-white/5 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 font-bold uppercase tracking-widest text-[10px] h-11"
+              className="flex-1 border-white/5 bg-zinc-500/50 hover:bg-zinc-100 text-zinc-100 dark:text-zinc-100 font-bold uppercase tracking-widest text-[10px] h-11"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`flex-1 font-bold uppercase tracking-widest text-[10px] h-11 ${
+              className={`flex-1 font-bold uppercase tracking-widest text-zinc-300 hover:text-white dark:text-zinc-700 text-[10px] h-11 cursor-pointer ${
                 category === "Cheating" ? "bg-rose-600 hover:bg-rose-500" : "bg-primary hover:bg-primary/90"
               }`}
             >
