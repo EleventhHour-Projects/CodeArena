@@ -200,7 +200,7 @@ export default function AdminDashboard() {
             <Button
               onClick={() => router.push("/admin/testproblem")}
               variant="outline"
-              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
+              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
             >
               <Code className="h-4 w-4" />
               Test Problem
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
             <Button
               onClick={() => router.push("/admin/reports")}
               variant="outline"
-              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
+              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
             >
               <Flag className="h-4 w-4" />
               Reports
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
             <Button
               onClick={() => router.push("/admin/prs")}
               variant="outline"
-              className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
+              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
             >
               <GitPullRequest className="h-4 w-4" />
               Pull Requests
