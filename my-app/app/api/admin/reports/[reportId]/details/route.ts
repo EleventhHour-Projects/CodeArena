@@ -22,11 +22,14 @@ export async function GET(
             return NextResponse.json({ success: false, message: "Report not found" }, { status: 404 });
         }
 
-        // Fetch submissions for the reported user in this battle
-        const submissions = await SubmissionModel.find({
-            battleId: report.battleId._id,
-            userId: report.reported._id
-        }).sort({ createdAt: 1 });
+        // For Bug/Feedback/Other reports, battleId or reported may be null
+        let submissions: any[] = [];
+        if (report.battleId && report.reported) {
+            submissions = await SubmissionModel.find({
+                battleId: (report.battleId as any)._id,
+                userId: (report.reported as any)._id
+            }).sort({ createdAt: 1 });
+        }
 
         return NextResponse.json({ success: true, report, submissions });
     } catch (error: any) {

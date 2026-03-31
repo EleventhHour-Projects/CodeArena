@@ -8,6 +8,7 @@ const reportSchema = new mongoose.Schema<Report>({
     reason: { type: String, required: true },
     category: { type: String, enum: ["Cheating", "Bug", "Suggestion/Feedback", "Other"], default: "Other" },
     status: { type: String, enum: ["Pending", "Accepted", "Rejected"], default: "Pending" },
+    adminReply: { type: String },
     createdAt: { type: Date, required: true, default: Date.now },
 });
 

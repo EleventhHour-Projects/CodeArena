@@ -10,5 +10,6 @@ export interface Report {
     reason: string;
     category: ReportCategory;
     status: ReportStatus;
+    adminReply?: string;
     createdAt: Date;
 }

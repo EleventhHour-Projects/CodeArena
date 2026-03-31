@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import {
   Users, Swords, Activity, Server, Clock, Shield, Zap, Code, PlusCircle, LogOut
 } from "lucide-react";
@@ -16,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 
 type DashboardStats = {
   totalUsers: number;
@@ -23,6 +26,7 @@ type DashboardStats = {
   totalBattles: number;
   topUsers: any[];
   recentBattles: any[];
+  growthTrend: { date: string; users: number }[];
 };
 
 type WorkerDetail = {
@@ -62,11 +66,12 @@ export default function AdminDashboard() {
   const [isAuto, setIsAuto] = useState<boolean>(false);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [showAutoWarning, setShowAutoWarning] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("7d");
 
-  const fetchData = async () => {
+  const fetchData = async (p: string) => {
     try {
       const [statsRes, execRes, autoRes, usageRes] = await Promise.all([
-        fetch("/api/admin/stats"),
+        fetch(`/api/admin/stats?period=${p}`),
         fetch("/api/admin/executor-info"),
         fetch("/api/admin/executor/auto"),
         fetch("/api/admin/executor/usage")
@@ -89,15 +94,15 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (loading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 4000);
+    fetchData(selectedPeriod);
+    const interval = setInterval(() => fetchData(selectedPeriod), 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedPeriod]);
 
   const handleSpawnWorker = async () => {
     if (isAuto) {
@@ -108,7 +113,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/admin/executor/spawn", { method: "POST" });
       if (res.ok) {
         toast.success("Worker spawned successfully");
-        fetchData();
+        fetchData(selectedPeriod);
       } else {
         toast.error("Failed to spawn worker");
       }
@@ -126,7 +131,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/admin/executor/stop", { method: "POST" });
       if (res.ok) {
         toast.success("Worker stop signal sent");
-        fetchData();
+        fetchData(selectedPeriod);
       } else {
         toast.error("Failed to stop worker");
       }
@@ -171,76 +176,168 @@ export default function AdminDashboard() {
 
         {/* HEADER */}
         <div className="flex items-center gap-2 mb-12">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-2">
-            <Shield className="h-4 w-4" />
-            Admin Control
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight">
             Dashboard
           </h1>
         </div>
 
-        {/* HERO STAT */}
+        {/* HERO STAT (Redesigned) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-card group">
-            {/* bg glow */}
-            <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-indigo-500/8 blur-3xl pointer-events-none group-hover:bg-indigo-500/12 transition-all duration-700" />
-            <div className="absolute -bottom-12 -left-12 w-56 h-56 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-            {/* top rule */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-card/50 backdrop-blur-sm group shadow-2xl">
+            {/* dynamic accents */}
+            <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/10 blur-[100px] pointer-events-none group-hover:bg-primary/15 transition-all duration-1000" />
+            <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none" />
 
-            <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row md:items-stretch gap-8 md:gap-0">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2">
 
-              {/* LEFT — main number */}
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="flex items-center gap-2 mb-6">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Total Users</span>
-                  <div className="ml-auto flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Live
-                  </div>
-                </div>
-
+              {/* LEFT COLUMN: Main Stats */}
+              <div className="p-8 md:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border/40">
                 <div>
-                  <h1 className="text-7xl font-black tracking-tighter tabular-nums text-foreground">
-                    {loading ? <span className="opacity-20 animate-pulse">—</span> : stats?.totalUsers?.toLocaleString()}
-                  </h1>
-                  <p className="text-sm text-muted-foreground mt-3">
-                    Registered accounts on CodeArena
-                  </p>
-                </div>
+                  <div className="flex items-center gap-2 mb-8">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold">Total User</span>
+                    <div className="ml-auto flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold px-2.5 py-1 bg-emerald-400/10 rounded-full border border-emerald-400/20">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      LIVE
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2 mt-6 text-[11px] text-emerald-400 font-semibold">
-                  <div className="h-px flex-1 bg-emerald-400/20" />
-                  Platform growing
-                  <div className="h-px flex-1 bg-emerald-400/20" />
+                  <h1 className="text-8xl font-black tracking-tighter tabular-nums text-foreground mb-4 bg-gradient-to-br from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
+                    {loading ? <span className="opacity-20 animate-pulse">---</span> : stats?.totalUsers?.toLocaleString()}
+                  </h1>
+
+                  <div className="flex flex-wrap gap-3 mt-8">
+                    <div className="flex items-center gap-3 bg-muted/30 px-4 py-2.5 rounded-2xl border border-border/40">
+                      <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Online</span>
+                      <span className="text-sm font-bold tabular-nums text-emerald-400 ml-1">{loading ? "—" : stats?.activeUsers}</span>
+                    </div>
+                    <div className="flex items-center gap-3 bg-muted/30 px-4 py-2.5 rounded-2xl border border-border/40">
+                      <div className="h-2 w-2 rounded-full bg-indigo-400" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Battle played</span>
+                      <span className="text-sm font-bold tabular-nums text-indigo-400 ml-1">{loading ? "—" : stats?.totalBattles}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* DIVIDER */}
-              <div className="hidden md:block w-px bg-border/60 mx-8 self-stretch" />
+              {/* RIGHT COLUMN: Graph & Insight */}
+              <div className="p-8 md:p-10 flex flex-col justify-between bg-muted/5">
+                <div className="flex-1 min-h-[180px] w-full relative">
+                  <div className="absolute inset-0 flex flex-col">
+                    <div className="flex justify-between gap-4 mb-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none mb-1">Growth Trend</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">
+                          {(() => {
+                            if (!stats?.growthTrend || stats.growthTrend.length < 2) return "---";
+                            const first = stats.growthTrend[0].users;
+                            const last = stats.growthTrend[stats.growthTrend.length - 1].users;
+                            if (first === 0) return `+${last} users`;
+                            const pct = ((last - first) / first) * 100;
+                            const sign = pct >= 0 ? "+" : "";
+                            const periodLabel = selectedPeriod === "7d" ? "this week" : selectedPeriod === "30d" ? "this month" : "overall";
+                            return `${sign}${pct.toFixed(1)}% ${periodLabel}`;
+                          })()}
+                        </span>
+                      </div>
 
-              {/* RIGHT — stat pills */}
-              <div className="flex flex-row md:flex-col justify-between md:justify-center gap-4 md:gap-6 md:min-w-[180px]">
-                {[
-                  { label: "Active Now",     value: loading ? "—" : String(stats?.activeUsers ?? 0),                   sub: "last 5 mins", color: "text-emerald-400", dot: "bg-emerald-400" },
-                  { label: "Battles Played", value: loading ? "—" : (stats?.totalBattles?.toLocaleString() ?? "0"),     sub: "all time",    color: "text-indigo-400",  dot: "bg-indigo-400" },
-                  { label: "Top Rating",     value: loading ? "—" : String(stats?.topUsers?.[0]?.rating ?? "—"),        sub: "highest",     color: "text-amber-400",   dot: "bg-amber-400"  },
-                ].map((s) => (
-                  <div key={s.label} className="flex items-center gap-3 bg-muted/40 rounded-2xl px-4 py-3 border border-border/60 hover:border-border transition-colors">
-                    <div className={`h-2 w-2 rounded-full ${s.dot} shrink-0`} />
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mb-1">{s.label}</p>
-                      <p className={`text-xl font-bold tabular-nums ${s.color} truncate leading-none`}>{s.value}</p>
-                      <p className="text-[10px] text-muted-foreground/50 mt-1">{s.sub}</p>
+                      {/* Period Selector */}
+                      <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-0.5 rounded-lg self-start">
+                        {[
+                          { label: "7D", value: "7d" },
+                          { label: "30D", value: "30d" },
+                          { label: "All", value: "all" },
+                        ].map((p) => (
+                          <button
+                            key={p.value}
+                            onClick={() => setSelectedPeriod(p.value)}
+                            className={`px-3 py-1 text-[9px] font-black rounded-md transition-all ${selectedPeriod === p.value
+                                ? "bg-white text-black shadow-lg"
+                                : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+                              }`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats?.growthTrend?.map(item => {
+                          const d = new Date(item.date);
+                          let label = format(d, "EEE"); // default Mon, Tue
+                          if (selectedPeriod === '30d') label = format(d, "dd"); // 15, 18
+                          if (selectedPeriod === 'all') label = format(d, "MMM"); // Jan, Feb
+
+                          return {
+                            date: format(d, "MMM dd, yyyy"),
+                            displayDate: label,
+                            users: item.users
+                          };
+                        }) || []}>
+                          <defs>
+                            <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis
+                            dataKey="displayDate"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 10, fill: '#71717a' }}
+                            dy={10}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#09090b',
+                              borderColor: '#27272a',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              padding: '8px 12px',
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            }}
+                            itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                            labelStyle={{ color: '#71717a', marginBottom: '4px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                            labelFormatter={(label, payload) => payload[0]?.payload?.date || label}
+                            formatter={(value: any) => [
+                              `${(value || 0).toLocaleString()} Users`,
+                              "Count"
+                            ]}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="users"
+                            stroke="var(--primary)"
+                            strokeWidth={3}
+                            fillOpacity={1}
+                            fill="url(#colorUsers)"
+                            animationDuration={2000}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-border/40 flex items-center justify-between">
+                  <div className="max-w-[240px]">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Platform user base is expanding steadily with a focus on competitive retention and battle frequency.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-tighter">
+                    Analytical View <Zap className="h-3 w-3 fill-primary/20" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -467,10 +564,10 @@ export default function AdminDashboard() {
                           {(() => {
                             const cpu = Math.min(worker.cpu_usage * 2, 100);
                             const cpuColor = cpu >= 80
-                              ? { label: "text-rose-400",   bar: "from-rose-500/80 to-rose-400",     glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
+                              ? { label: "text-rose-400", bar: "from-rose-500/80 to-rose-400", glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
                               : cpu >= 50
-                              ? { label: "text-amber-400",  bar: "from-amber-500/80 to-amber-400",   glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
-                              : { label: "text-emerald-400",bar: "from-emerald-500/80 to-emerald-400",glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
+                                ? { label: "text-amber-400", bar: "from-amber-500/80 to-amber-400", glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
+                                : { label: "text-emerald-400", bar: "from-emerald-500/80 to-emerald-400", glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
                             return (
                               <div>
                                 <div className="flex justify-between items-center mb-2">
@@ -492,10 +589,10 @@ export default function AdminDashboard() {
                           {(() => {
                             const memPct = (worker.memory_usage / worker.memory_limit) * 100;
                             const memColor = memPct >= 80
-                              ? { label: "text-rose-400",   bar: "from-rose-500/80 to-rose-400",     glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
+                              ? { label: "text-rose-400", bar: "from-rose-500/80 to-rose-400", glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
                               : memPct >= 50
-                              ? { label: "text-amber-400",  bar: "from-amber-500/80 to-amber-400",   glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
-                              : { label: "text-emerald-400",bar: "from-emerald-500/80 to-emerald-400",glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
+                                ? { label: "text-amber-400", bar: "from-amber-500/80 to-amber-400", glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
+                                : { label: "text-emerald-400", bar: "from-emerald-500/80 to-emerald-400", glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
                             return (
                               <div>
                                 <div className="flex justify-between items-center mb-2">
