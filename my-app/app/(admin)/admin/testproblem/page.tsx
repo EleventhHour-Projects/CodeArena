@@ -26,6 +26,9 @@ interface Problem {
   title: string;
   difficulty: "Easy" | "Medium" | "Hard";
   description: string;
+  input_format?: string;
+  output_format?: string;
+  constraints?: string;
   testcases: Array<{
     input: string;
     output: string;
@@ -387,13 +390,45 @@ export default function AdminTestProblem() {
 
                   <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                     {activeTab === 'description' && (
-                      <div className="mt-0 space-y-6 animate-in fade-in duration-300">
+                      <div className="mt-0 space-y-8 animate-in fade-in duration-300">
+                        {/* Description Section */}
                         <div className="prose prose-invert prose-sm max-w-none">
-                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Problem Description</h3>
-                          <div className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-sm">
+                          <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3">Problem Description</h3>
+                          <div className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-sm bg-zinc-900/30 p-4 rounded-xl border border-white/5 shadow-inner">
                             {selectedProblem.description}
                           </div>
                         </div>
+
+                        {/* I/O Formats */}
+                        <div className="grid grid-cols-1 gap-6">
+                           {selectedProblem.input_format && (
+                             <div className="space-y-3">
+                                <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em]">Input Format</h3>
+                                <div className="text-zinc-300 text-sm leading-relaxed bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10 whitespace-pre-wrap">
+                                  {selectedProblem.input_format}
+                                </div>
+                             </div>
+                           )}
+
+                           {selectedProblem.output_format && (
+                             <div className="space-y-3">
+                                <h3 className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em]">Output Format</h3>
+                                <div className="text-zinc-300 text-sm leading-relaxed bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10 whitespace-pre-wrap">
+                                  {selectedProblem.output_format}
+                                </div>
+                             </div>
+                           )}
+                        </div>
+
+                        {/* Constraints Section */}
+                        {selectedProblem.constraints && (
+                          <div className="space-y-3">
+                            <h3 className="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em]">Constraints</h3>
+                            <div className="text-zinc-400 text-sm leading-relaxed bg-amber-500/5 p-4 rounded-xl border border-amber-500/10 font-mono whitespace-pre-wrap">
+                              {selectedProblem.constraints}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

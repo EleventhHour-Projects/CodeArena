@@ -26,7 +26,7 @@ const (
 	// WORKER_POOL_SIZE is a constant that defines the number of worker goroutines that will be spawned to process code execution tasks from the worker pool
 	// This constant allows for easy configuration of the worker pool size based on the needs of the application and available resources, enabling efficient processing of code execution tasks while managing system resources effectively
 	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
-	WORKER_POOL_SIZE = 10
+	WORKER_POOL_SIZE = 4
 )
 
 // Global variables for configuration and shared data

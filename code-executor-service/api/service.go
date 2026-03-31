@@ -181,9 +181,14 @@ func GetServerUsageInfo(c fiber.Ctx) error {
 	if err != nil {
 		memoryUsage = "N/A"
 	}
+	cpuPct, _ := cpu.GetCPUPercent()
+	memPct, _ := cpu.GetMemoryPercent()
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"cpu_usage":    cpuUsage,
-		"memory_usage": memoryUsage,
+		"cpu_usage":      cpuUsage,
+		"memory_usage":   memoryUsage,
+		"numeric_cpu":    cpuPct,
+		"numeric_memory": memPct,
 	})
 }
 

@@ -5,7 +5,12 @@ import {
   Server, Activity, Zap, Clock, Code, PlusCircle, StopCircle,
   RefreshCw, AlertTriangle, CheckCircle, XCircle, Cpu, MemoryStick,
   Container, BarChart3, ToggleLeft, ToggleRight, ExternalLink,
+  ActivitySquare, TrendingUp, History,
 } from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ResponsiveContainer as RC,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,6 +52,15 @@ type ExecutorInfo = {
 type UsageInfo = {
   cpu_usage?: string;
   memory_usage?: string;
+  numeric_cpu?: number;
+  numeric_memory?: number;
+};
+
+type HistoryPoint = {
+  time: string;
+  cpu: number;
+  memory: number;
+  tasks: number;
 };
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -126,6 +140,15 @@ export default function ClusterPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [showMetrics, setShowMetrics] = useState(false);
+  const [history, setHistory] = useState<HistoryPoint[]>([]);
+
+  const parseUsage = useCallback((val: string | undefined) => {
+    if (!val) return 0;
+    return parseFloat(val.replace(/[^\d.]/g, '')) || 0;
+  }, []);
+
+  const curCpu = usage.numeric_cpu ?? parseUsage(usage.cpu_usage);
+  const curMem = usage.numeric_memory ?? parseUsage(usage.memory_usage);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -134,16 +157,36 @@ export default function ClusterPage() {
         fetch("/api/admin/executor/usage"),
         fetch("/api/admin/executor/auto"),
       ]);
-      if (infoRes.ok) setInfo(await infoRes.json());
-      if (usageRes.ok) setUsage(await usageRes.json());
-      if (autoRes.ok) { const d = await autoRes.json(); setIsAuto(d.auto); }
+      const infoData = infoRes.ok ? await infoRes.json() : null;
+      const usageData = usageRes.ok ? await usageRes.json() : {};
+      const autoData = autoRes.ok ? await autoRes.json() : null;
+
+      if (infoData) setInfo(infoData);
+      if (usageData) setUsage(usageData);
+      if (autoData) setIsAuto(autoData.auto);
+
+      // Update history buffer
+      const numericCpu = usageData.numeric_cpu ?? parseUsage(usageData.cpu_usage);
+      const numericMem = usageData.numeric_memory ?? parseUsage(usageData.memory_usage);
+
+      setHistory(prev => {
+        const newPoint = {
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          cpu: numericCpu,
+          memory: numericMem,
+          tasks: infoData?.total_tasks || 0,
+        };
+        const next = [...prev, newPoint];
+        return next.slice(-30); // Keep last 30 points (approx 2 mins)
+      });
+
       setLastUpdated(new Date());
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [parseUsage]);
 
   useEffect(() => {
     fetchAll();
@@ -352,12 +395,16 @@ export default function ClusterPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.05 * i }}
-                        className={`relative rounded-2xl border p-6 transition-all group/worker ${
+                        className={`relative rounded-3xl border p-6 transition-all duration-500 group/worker ${
                           isRunning
-                            ? "bg-card/80 border-border/60 hover:border-indigo-500/30"
-                            : "bg-zinc-950 border-zinc-800/60 opacity-70"
+                            ? "bg-[#09090b] border-white/5 hover:border-indigo-500/40 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_-10px_rgba(99,102,241,0.1)]"
+                            : "bg-zinc-950 border-zinc-800/60 opacity-60 grayscale hover:grayscale-0 hover:opacity-100"
                         }`}
                       >
+                        {/* Pulse effect for active cards */}
+                        {isRunning && (
+                          <div className="absolute inset-0 rounded-3xl border border-indigo-500/0 group-hover:border-indigo-500/10 transition-colors pointer-events-none" />
+                        )}
                         {/* State badge */}
                         <div className="absolute top-4 right-4">
                           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
@@ -372,8 +419,13 @@ export default function ClusterPage() {
                         {/* Identity */}
                         <div className="mb-5 pr-16">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className={`h-2 w-2 rounded-full shrink-0 ${isRunning ? "bg-emerald-400 animate-pulse" : "bg-zinc-600"}`} />
-                            <h4 className="font-bold text-sm truncate">
+                            <div className="relative">
+                              <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${isRunning ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                              {isRunning && (
+                                <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                              )}
+                            </div>
+                            <h4 className="font-bold text-sm truncate text-zinc-100 group-hover/worker:text-white transition-colors">
                               {worker.name.replace(/^\//, "")}
                             </h4>
                           </div>
@@ -479,27 +531,195 @@ export default function ClusterPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── METRICS IFRAME DIALOG ───────────────────────────── */}
+      {/* ── METRICS DASHBOARD DIALOG ────────────────────────── */}
       <Dialog open={showMetrics} onOpenChange={setShowMetrics}>
-        <DialogContent className="max-w-5xl h-[80vh] p-0 overflow-hidden bg-zinc-950 border-zinc-800">
-          <DialogHeader className="px-5 py-3 border-b border-zinc-800 flex flex-row items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
-              <BarChart3 className="h-4 w-4 text-indigo-400" />
-              Performance Metrics
-            </DialogTitle>
-            <Button
-              size="sm" variant="ghost"
-              onClick={() => window.open("/api/admin/executor/metrics", "_blank")}
-              className="h-7 gap-1.5 text-xs text-muted-foreground"
-            >
-              <ExternalLink className="h-3.5 w-3.5" /> Open in tab
-            </Button>
+        <DialogContent className="sm:max-w-[90vw] w-[95vw] h-[90vh] p-0 overflow-hidden bg-[#0a0a0a] border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+          <DialogHeader className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between bg-zinc-900/30 backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                <ActivitySquare className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm font-bold tracking-tight text-zinc-100">Executor Analytics</DialogTitle>
+                <p className="text-[10px] text-zinc-500 font-medium">Real-time performance telemetry</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
+                <div className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-tighter">Live Stream</span>
+              </div>
+              <Button
+                size="sm" variant="ghost"
+                onClick={() => window.open("/api/admin/executor/metrics", "_blank")}
+                className="h-8 gap-1.5 text-xs text-zinc-400 hover:text-zinc-100 hover:bg-white/5 border border-transparent hover:border-white/10"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Raw
+              </Button>
+            </div>
           </DialogHeader>
-          <iframe
-            src="/api/admin/executor/metrics"
-            className="w-full h-full border-0"
-            title="Executor Metrics"
-          />
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            {/* Top Cards in Modal */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-zinc-950/50 border border-zinc-800/50 rounded-2xl p-5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Cpu className="h-12 w-12 text-orange-500" />
+                </div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5 font-bold">Current CPU</p>
+                <h2 className="text-3xl font-black text-white font-mono tracking-tighter">{usage.cpu_usage || "0%"}</h2>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="h-1 flex-1 bg-zinc-900 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-orange-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${curCpu || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-orange-500/80 font-bold">LOAD</span>
+                </div>
+              </div>
+
+              <div className="bg-zinc-950/50 border border-zinc-800/50 rounded-2xl p-5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <MemoryStick className="h-12 w-12 text-teal-500" />
+                </div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5 font-bold">Memory Pool</p>
+                <h2 className="text-3xl font-black text-white font-mono tracking-tighter">{usage.memory_usage || "0%"}</h2>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="h-1 flex-1 bg-zinc-900 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-teal-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${curMem || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-teal-500/80 font-bold">USED</span>
+                </div>
+              </div>
+
+              <div className="bg-zinc-950/50 border border-zinc-800/50 rounded-2xl p-5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <TrendingUp className="h-12 w-12 text-indigo-500" />
+                </div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5 font-bold">Total Workers</p>
+                <h2 className="text-3xl font-black text-white font-mono tracking-tighter">{info?.active_worker || 0}</h2>
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-zinc-500">
+                  <span className="text-emerald-500 font-bold">{runningWorkers.length} Active</span>
+                  <span>•</span>
+                  <span>{stoppedWorkers.length} Terminated</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-zinc-950/50 border border-zinc-800/50 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <ActivitySquare className="h-4 w-4 text-orange-400" />
+                    <h3 className="text-sm font-bold text-zinc-200">CPU Load History</h3>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-500">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 w-2 rounded-full bg-orange-500" /> CPU %
+                    </div>
+                  </div>
+                </div>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={history}>
+                      <defs>
+                        <linearGradient id="cpuGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                      <XAxis
+                        dataKey="time"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#52525b', fontSize: 9 }}
+                        interval="preserveStartEnd"
+                        minTickGap={30}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#52525b', fontSize: 9 }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', fontSize: '10px' }}
+                        itemStyle={{ color: '#f97316' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cpu"
+                        stroke="#f97316"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#cpuGradient)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-zinc-950/50 border border-zinc-800/50 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <History className="h-4 w-4 text-teal-400" />
+                    <h3 className="text-sm font-bold text-zinc-200">Memory Allocation</h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                    <div className="h-2 w-2 rounded-full bg-teal-500" /> Memory %
+                  </div>
+                </div>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={history}>
+                      <defs>
+                        <linearGradient id="memGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
+                      <XAxis
+                        dataKey="time"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#52525b', fontSize: 9 }}
+                        minTickGap={30}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#52525b', fontSize: 9 }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', fontSize: '10px' }}
+                        itemStyle={{ color: '#14b8a6' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="memory"
+                        stroke="#14b8a6"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#memGradient)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
