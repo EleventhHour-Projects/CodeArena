@@ -182,8 +182,8 @@ export default function BattleHistoryPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-foreground">vs {battle.opponent.username}</span>
                           <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                            battle.difficulty === 'easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' :
-                            battle.difficulty === 'medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
+                            battle.difficulty?.toLowerCase() === 'easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' :
+                            battle.difficulty?.toLowerCase() === 'medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
                             'text-rose-500 border-rose-500/20 bg-rose-500/5'
                           }`}>
                             {battle.difficulty}
