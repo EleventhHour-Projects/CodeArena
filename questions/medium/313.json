@@ -6,11 +6,11 @@
     "Graph Theory",
     "Shortest Path"
   ],
-  "title": "Find the City With the Smallest Number of Neighbors at a Threshold Distance",
+  "title": "Optimal Hub Selection with Distance Constraints",
   "difficulty": "Medium",
-  "description": "There are n cities labeled from 0 to n - 1.\n\nYou are given a list of edges edges, where each element is of the form:\n\nedges[i] = [fromᵢ, toᵢ, weightᵢ]\n\nThis represents a bidirectional edge between cities fromᵢ and toᵢ with a distance (weight) of weightᵢ.\n\nYou are also given an integer distanceThreshold.\n\nTask\n\nFor each city, count how many other cities are reachable such that the shortest path distance is ≤ distanceThreshold.\n\nReturn the city that has the smallest number of reachable cities.\n\nIf multiple cities have the same minimum count, return the one with the greatest index.\nExamples\n\nExample 1\nInput:\nn = 4\nedges = [[0,1,3],[1,2,1],[1,3,4],[2,3,1]]\ndistanceThreshold = 4\n\nOutput: 3\n\nExplanation:\n\nCity 0 → can reach {1, 2} → count = 2\nCity 1 → can reach {0, 2, 3} → count = 3\nCity 2 → can reach {0, 1, 3} → count = 3\nCity 3 → can reach {1, 2} → count = 2\n\nCities 0 and 3 have the smallest count (2), so return the larger index → 3.\n\nExample 2\nInput:\nn = 5\nedges = [[0,1,2],[0,4,8],[1,2,3],[1,4,2],[2,3,1],[3,4,1]]\ndistanceThreshold = 2\n\nOutput: 0\n\nExplanation:\n\nCity 0 → {1} → count = 1\nCity 1 → {0, 4} → count = 2\nCity 2 → {3, 4} → count = 2\nCity 3 → {2, 4} → count = 2\nCity 4 → {1, 2, 3} → count = 3\n\nCity 0 has the smallest count → 0.\n\nConstraints\n2 ≤ n ≤ 100\n1 ≤ edges.length ≤ n × (n - 1) / 2\nedges[i].length == 3\n0 ≤ fromᵢ < toᵢ < n\n1 ≤ weightᵢ, distanceThreshold ≤ 10⁴\nAll edges are unique",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "There are n cities labeled from 0 to n - 1. Cities are connected by bidirectional weighted roads. Given a distanceThreshold, identify the city that can reach the fewest number of other cities within that distance. Reachability is defined as the shortest path distance being less than or equal to the threshold. If multiple cities share the same minimum count, return the one with the highest index.\n\nExample 1\nInput: n = 4, edges = [[0,1,3],[1,2,1],[1,3,4],[2,3,1]], threshold = 4\nOutput: 3\n\nExample 2\nInput: n = 5, edges = [[0,1,2],[0,4,8],[1,2,3],[1,4,2],[2,3,1],[3,4,1]], threshold = 2\nOutput: 0",
+  "input_format": "The first line contains an integer n (cities).\nThe second line contains two integers m and c (number of edges and a constant 3).\nThe next m lines each contain three integers u, v, w (road between u and v with weight w).\nThe last line contains an integer distanceThreshold.",
+  "output_format": "Print the index of the city with the smallest number of neighbors at or below the threshold distance. If multiple exist, return the largest index.",
+  "constraints": "2 <= n <= 100\n1 <= m <= n * (n - 1) / 2\n0 <= from < to < n\n1 <= weight, distanceThreshold <= 10000",
   "verified": true
 }

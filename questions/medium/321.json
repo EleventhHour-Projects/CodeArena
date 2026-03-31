@@ -6,11 +6,11 @@
     "Greedy",
     "Matrix"
   ],
-  "title": "Max Increase to Keep City Skyline",
+  "title": "Skyline-Preserving Building Height Optimization",
   "difficulty": "Medium",
-  "description": "You are given an n × n grid grid, where grid[r][c] represents the height of a building at position (r, c).\n\nEach building is a vertical square prism, and the city’s skyline is defined as the outer contour when viewed from the four cardinal directions:\n\nNorth\nSouth\nEast\nWest\nSkyline Definition\nFrom the left/right (west/east) → skyline is determined by the maximum value in each row\nFrom the top/bottom (north/south) → skyline is determined by the maximum value in each column\nOperation\n\nYou may increase the height of any building by any amount (including buildings with height 0).\n\nHowever:\n\nThe skyline from all four directions must remain unchanged\nTask\n\nReturn the maximum total increase in building heights such that the skyline is preserved.\n\nExamples\n\nExample 1\nInput:\n\n[[3,0,8,4],\n [2,4,5,7],\n [9,2,6,3],\n [0,3,1,0]]\n\nOutput: 35\n\nExplanation:\nHeights can be increased without exceeding:\n\nrow maximum\ncolumn maximum\n\nResulting grid:\n\n[[8,4,8,7],\n [7,4,7,7],\n [9,4,8,7],\n [3,3,3,3]]\n\nExample 2\nInput:\n\n[[0,0,0],\n [0,0,0],\n [0,0,0]]\n\nOutput: 0\n\nExplanation:\nAny increase would change the skyline.\n\nConstraints\nn == grid.length == grid[r].length\n2 ≤ n ≤ 50\n0 ≤ grid[r][c] ≤ 100",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given an n × n matrix representing a city where grid[r][c] is the height of the building at that position. The city's skyline consists of the maximum building heights when viewed from the four cardinal directions (North, South, East, West). Specifically, the West and East skylines are determined by the maximum height in each row, while the North and South skylines are determined by the maximum height in each column.\n\nYou can increase the height of any building by any amount (starting from height 0), provided that the skyline from all four directions remains exactly the same. Your task is to calculate the maximum total increase in building heights possible without altering the skyline.\n\nExample 1\nInput:\n4 4\n3 0 8 4\n2 4 5 7\n9 2 6 3\n0 3 1 0\nOutput: 35\nExplanation:\nThe row maximums (West/East skyline) are: [8, 7, 9, 3].\nThe column maximums (North/South skyline) are: [9, 4, 8, 7].\nThe buildings can be increased up to min(rowMax[r], colMax[c]) without changing the skyline.\n\nExample 2\nInput:\n3 3\n0 0 0\n0 0 0\n0 0 0\nOutput: 0",
+  "input_format": "The first line contains two integers n and n (number of rows and columns, which are always equal).\nThe next n lines each contain n space-separated integers representing the grid heights.",
+  "output_format": "Print a single integer representing the maximum total increase in height possible.",
+  "constraints": "n == grid.length == grid[r].length\n2 <= n <= 50\n0 <= grid[r][c] <= 100",
   "verified": true
 }

@@ -6,11 +6,11 @@
     "Dynamic Programming",
     "Backtracking"
   ],
-  "title": "Generate Parentheses",
+  "title": "Systematic Balanced Parenthesis Generation",
   "difficulty": "Medium",
-  "description": "You are given an integer n.\n\nYou need to generate all valid combinations of n pairs of parentheses.\n\nWhat is “valid”?\n\nA parentheses string is valid if:\n\nEvery ( has a matching )\nAt no point do closing brackets exceed opening ones\nTask\n\nReturn a list of all well-formed parentheses strings of length 2n.\n\nExamples\n\nExample 1\n\nn = 3\n→ [\"((()))\",\"(()())\",\"(())()\",\"()(())\",\"()()()\"]\n\nExample 2\n\nn = 1\n→ [\"()\"]\nConstraints\n1 ≤ n ≤ 8",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given an integer 'n', your task is to generate every possible combination of well-formed parentheses that can be constructed using exactly 'n' pairs of opening and closing brackets.\n\nA string of parentheses is 'well-formed' if:\n1. It starts with an opening bracket '('.\n2. In any prefix of the string, the number of opening brackets is greater than or equal to the number of closing brackets.\n3. The total number of opening brackets equals the total number of closing brackets.\n\nExample 1\nInput: 3\nOutput: ((())) (()()) (())() ()(()) ()()()\n\nExample 2\nInput: 1\nOutput: ()\n\nExample 3\nInput: 2\nOutput: (()) ()()",
+  "input_format": "A single line containing an integer n.",
+  "output_format": "Print all well-formed parentheses strings separated by a single space.",
+  "constraints": "1 <= n <= 8",
   "verified": true
 }

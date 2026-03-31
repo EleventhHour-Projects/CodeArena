@@ -6,11 +6,11 @@
     "Greedy",
     "Sorting"
   ],
-  "title": "Maximize Happiness of Selected Children",
+  "title": "Optimal Selection for Happiness Maximization",
   "difficulty": "Medium",
-  "description": "You are given an array happiness and an integer k.\n\nEach element represents the happiness of a child.\n\nYou will select k children, one per turn.\n\nRules:\n\nWhen you pick a child, you gain their current happiness\nAfter each pick, all remaining (unpicked) children:\nlose 1 happiness\nbut never go below 0\n\nYour task:\n\nChoose k children to maximize total happiness\n\nExample 1\nInput: [1,2,3], k = 2\nOutput: 4\n\nExample 2\nInput: [1,1,1,1], k = 2\nOutput: 1\n\nExample 3\nInput: [2,3,4,5], k = 1\nOutput: 5\n\nConstraints:\n\n1 <= n <= 2 * 10^5\n1 <= happiness[i] <= 10^8\n1 <= k <= n",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are managing a group of 'n' children, each with an initial happiness level. You need to select exactly 'k' children, one child per turn, to maximize the cumulative happiness gain.\n\nIn each turn:\n1. You pick one child from the remaining set and add their current happiness level to your total.\n2. Immediately after your selection, the happiness level of every remaining (unselected) child decreases by 1. However, happiness levels never drop below 0.\n\nCalculate the maximum total happiness you can achieve after selecting k children.\n\nExample 1\nInput:\n3\n1 2 3\n2\nOutput: 4\nExplanation: Turn 1: Pick child with 3. Total=3. Remaining: [1-1, 2-1] = [0, 1]. Turn 2: Pick child with 1. Total=3+1=4.\n\nExample 2\nInput:\n4\n1 1 1 1\n2\nOutput: 1\n\nExample 3\nInput:\n4\n2 3 4 5\n1\nOutput: 5",
+  "input_format": "The first line contains an integer n, the number of children.\nThe second line contains n space-separated integers representing the initial happiness levels.\nThe third line contains an integer k, the number of children to select.",
+  "output_format": "Print the maximum cumulative happiness possible.",
+  "constraints": "1 <= n <= 2 * 10^5\n0 <= happiness[i] <= 10^8\n1 <= k <= n",
   "verified": true
 }

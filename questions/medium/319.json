@@ -5,11 +5,11 @@
     "String",
     "Greedy"
   ],
-  "title": "Partitioning Into Minimum Number Of Deci-Binary Numbers",
+  "title": "Minimum Binary Decomposition of Decimal Strings",
   "difficulty": "Medium",
-  "description": "A deci-binary number is a number where:\n\nEach digit is either 0 or 1\nIt has no leading zeros\n\nExamples:\n\nValid: 101, 1100\nInvalid: 112, 3001\nTask\n\nYou are given a string n representing a positive decimal integer.\n\nReturn the minimum number of positive deci-binary numbers needed such that their sum equals n.\n\nExamples\n\nExample 1\nInput: n = \"32\"\nOutput: 3\n\nExplanation:\n10 + 11 + 11 = 32\n\nExample 2\nInput: n = \"82734\"\nOutput: 8\n\nExample 3\nInput: n = \"27346209830709182346\"\nOutput: 9\n\nConstraints\n1 ≤ n.length ≤ 10⁵\nn contains only digits (0–9)\nn has no leading zeros",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "A \"deci-binary\" number is a positive integer where each digit is either 0 or 1. Given a large decimal integer n (provided as a string), determine the minimum number of deci-binary numbers required to sum up to n.\n\nExample 1\nInput: n = \"32\"\nOutput: 3\n\nExample 2\nInput: n = \"82734\"\nOutput: 8",
+  "input_format": "The first line contains a single string representing the decimal number n.",
+  "output_format": "Print the minimum number of deci-binary components needed for the sum.",
+  "constraints": "1 <= n.length <= 100000\nn contains only digits (0–9)\nn has no leading zeros",
   "verified": true
 }

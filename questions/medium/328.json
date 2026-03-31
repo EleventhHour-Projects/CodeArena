@@ -6,11 +6,11 @@
     "Backtracking",
     "Bit Manipulation"
   ],
-  "title": "Letter Case Permutation",
+  "title": "Exhaustive Case Modification Mapping",
   "difficulty": "Medium",
-  "description": "You are given a string s.\n\nFor each letter in the string:\n\nYou can change it to lowercase or uppercase\n\nDigits remain unchanged.\n\nTask\n\nReturn all possible strings formed by changing the case of letters.\n\nImportant Points\nEach letter has 2 choices → lower or upper\nDigits stay the same\nTotal combinations = 2^(number of letters)\nExamples\n\nExample 1\n\ns = \"a1b2\"\n→ [\"a1b2\",\"a1B2\",\"A1b2\",\"A1B2\"]\n\nExample 2\n\ns = \"3z4\"\n→ [\"3z4\",\"3Z4\"]\nConstraints\n1 ≤ s.length ≤ 12\ns contains:\nletters (a–z, A–Z)\ndigits (0–9)",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given a string 's', you can transform every letter individually into either lowercase or uppercase to create a new string. Numeric digits in the string must remain unchanged.\n\nYour task is to generate and print all possible strings that can be formed by these transformations.\n\nExample 1\nInput:\na1b2\nOutput: a1b2 a1B2 A1b2 A1B2\n\nExample 2\nInput:\n3z4\nOutput: 3z4 3Z4",
+  "input_format": "A single line containing the string 's'.",
+  "output_format": "Print all possible transformed strings separated by a single space. The order of strings in the output does not strictly matter.",
+  "constraints": "1 <= s.length <= 12\ns consists of English letters and digits.",
   "verified": true
 }

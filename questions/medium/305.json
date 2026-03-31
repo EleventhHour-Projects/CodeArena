@@ -5,11 +5,11 @@
     "Array",
     "Binary Search"
   ],
-  "title": "Summit Seeker",
+  "title": "Mountain Peak Identification",
   "difficulty": "Medium",
-  "description": "You are given an integer array arr of length n that represents a mountain array.\n\nAn array is considered a mountain array if:\n\nThere exists an index i such that:\narr[0] < arr[1] < ... < arr[i] (strictly increasing), and\narr[i] > arr[i+1] > ... > arr[n-1] (strictly decreasing)\n\nThe element at index i is called the peak element.\n\nTask\n\nReturn the index of the peak element.\n\nYour solution must run in O(log n) time.\n\nExample 1\n\nInput:\narr = [0,1,0]\n\nOutput:\n1\n\nExample 2\n\nInput:\narr = [0,2,1,0]\n\nOutput:\n1\n\nExample 3\n\nInput:\narr = [0,10,5,2]\n\nOutput:\n1\n\nConstraints\n3 ≤ arr.length ≤ 100000\n0 ≤ arr[i] ≤ 1000000\narr is guaranteed to be a valid mountain array",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given an array that follows a \"mountain\" pattern: it strictly increases to a maximum value at some index i and then strictly decreases. Your task is to find the index i of this peak element. Your solution must have a time complexity of O(log n).\n\nExample 1\nInput:\narr = [0,1,0]\nOutput:\n1\n\nExample 2\nInput:\narr = [0,2,1,0]\nOutput:\n1\n\nExample 3\nInput:\narr = [0,10,5,2]\nOutput:\n1",
+  "input_format": "The first line contains an integer n representing the size of the array.\nThe second line contains n space-separated integers representing the mountain array elements.",
+  "output_format": "Print a single integer representing the zero-indexed position of the peak element.",
+  "constraints": "3 <= n <= 100000\n0 <= arr[i] <= 1000000\narr is guaranteed to be a valid mountain array",
   "verified": true
 }

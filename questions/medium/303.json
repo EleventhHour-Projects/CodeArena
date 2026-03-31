@@ -7,11 +7,11 @@
     "Greedy",
     "Sorting"
   ],
-  "title": "Minimize Maximum Pair Sum in Array",
+  "title": "Optimal Pair Balance Minimization",
   "difficulty": "Medium",
-  "description": "You are given an integer array nums of even length n.\n\nA pair sum is defined as the sum of two elements (a, b), i.e., a + b.\n\nWhen you form n / 2 pairs using all elements in the array:\n\nEach element must belong to exactly one pair\nNo element can be reused\nTask\n\nPair up the elements such that the maximum pair sum among all pairs is as small as possible.\n\nReturn this minimized maximum pair sum.\n\nExample 1\n\nInput:\nnums = [3,5,2,3]\n\nOutput:\n7\n\nExplanation:\nPossible pairing:\n\n(3,3) → sum = 6\n(5,2) → sum = 7\n\nMaximum pair sum = max(6, 7) = 7\n\nExample 2\n\nInput:\nnums = [3,5,4,2,4,6]\n\nOutput:\n8\n\nExplanation:\nOne optimal pairing:\n\n(2,6) → 8\n(3,5) → 8\n(4,4) → 8\n\nMaximum pair sum = 8\n\nConstraints\nn == nums.length\n2 ≤ n ≤ 100000\nn is even\n1 ≤ nums[i] ≤ 100000",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "Given an array of even length n, you must partition the elements into n/2 pairs such that every element is used exactly once. For any given partition, let the weight be the maximum sum of any pair. Find the minimum possible weight across all possible partitions.\n\nExample 1\n\nInput:\nnums = [3,5,2,3]\n\nOutput:\n7\n\nExplanation:\nMaximum pair sum = max(6, 7) = 7\n\nExample 2\n\nInput:\nnums = [3,5,4,2,4,6]\n\nOutput:\n8\n\nExplanation:\nAll pairs sum to 8, so max pair sum = 8",
+  "input_format": "The first line contains an integer n (even length).\nThe second line contains n space-separated integers representing the array elements.",
+  "output_format": "Print a single integer representing the minimum possible maximum pair sum.",
+  "constraints": "2 <= n <= 100000\nn is even\n1 <= nums[i] <= 100000",
   "verified": true
 }

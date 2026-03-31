@@ -1,15 +1,15 @@
 {
   "id": 301,
   "slug": "house-robber",
-  "title": "House Robber",
+  "title": "Optimal Non-Adjacent Accumulation",
   "difficulty": "Medium",
   "tags": [
     "Dynamic Programming",
     "Array"
   ],
-  "description": "You are planning to rob houses arranged in a straight line. Each house contains a certain amount of money. However, robbing two adjacent houses will trigger an alarm. Given an integer array nums representing the money in each house, return the maximum amount you can rob without robbing adjacent houses.",
-  "constraints": "1 <= nums.length <= 100\n0 <= nums[i] <= 400",
-  "input_format": "An integer array nums representing money in each house.",
-  "output_format": "Return a single integer representing the maximum money that can be robbed.",
+  "description": "You are a professional thief planning to rob houses along a street. Each house has a specific amount of money stashed. The only constraint stopping you from robbing each of them is that adjacent houses have security systems connected and it will automatically contact the police if two adjacent houses were broken into on the same night. Given an array representing the money in each house, calculate the maximum amount of money you can rob tonight without alerting the police.",
+  "input_format": "The first line contains an integer n, the number of houses.\nThe second line contains n space-separated integers representing the money in each house.",
+  "output_format": "Print a single integer representing the maximum possible loot you can collect.",
+  "constraints": "1 <= n <= 100\n0 <= nums[i] <= 400",
   "verified": true
 }

@@ -7,11 +7,11 @@
     "Breadth-First Search",
     "Matrix"
   ],
-  "title": "Shortest Bridge",
+  "title": "Minimum Nautical Gap Between Islands",
   "difficulty": "Medium",
-  "description": "You are given an n × n grid of 0s and 1s:\n\n1 = land\n0 = water\n\nThere are exactly two islands (groups of connected 1s).\n\nYour task:\n\nConvert some 0s into 1s to connect the two islands\nReturn the minimum number of 0s you need to flip\n\nRules:\n\nIslands are connected up, down, left, right (4-directionally)\n\nExample 1\nInput: [[0,1],[1,0]]\nOutput: 1\n\nExample 2\nInput: [[0,1,0],[0,0,0],[0,0,1]]\nOutput: 2\n\nExample 3\nInput:\n[[1,1,1,1,1], [1,0,0,0,1], [1,0,1,0,1], [1,0,0,0,1], [1,1,1,1,1]]\nOutput: 1\n\nConstraints:\n\n2 <= n <= 100\nOnly 0 and 1\nExactly two islands exist",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given an n x m grid where 1 represents land and 0 represents water. An island is a 4-directionally connected group of 1s. The grid contains exactly two islands.\n\nYour goal is to connect these two islands by changing the minimum possible number of 0s into 1s. Return the minimum number of water cells that must be converted to bridge the gap.\n\nExample 1\nInput:\n2 2\n0 1\n1 0\nOutput: 1\n\nExample 2\nInput:\n3 3\n0 1 0\n0 0 0\n0 0 1\nOutput: 2\n\nExample 3\nInput:\n5 5\n1 1 1 1 1\n1 0 0 0 1\n1 0 1 0 1\n1 0 0 0 1\n1 1 1 1 1\nOutput: 1",
+  "input_format": "The first line contains two integers n and m, representing the row and column dimensions of the grid.\nThe next n lines each contain m space-separated integers (0 or 1).",
+  "output_format": "Print the minimum number of flips required to connect the two islands.",
+  "constraints": "2 <= n, m <= 100\nThe grid contains exactly two islands.",
   "verified": true
 }
