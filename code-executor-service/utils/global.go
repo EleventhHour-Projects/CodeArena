@@ -87,6 +87,13 @@ type WorkerPool struct {
 	auto bool
 	// muauto is a mutex to ensure thread-safe access to the auto field, allowing for concurrent updates and retrievals of the auto-scaling setting for the worker pool without
 	muauto sync.Mutex
+	// scalingMu is a mutex to synchronize scaling operations (scaling up/down or recycling workers),
+	// ensuring that concurrent scaling routines (e.g., Auto and AutoClean) do not conflict.
+	scalingMu sync.Mutex
+	// ActiveTasks is a map that tracks which task is being executed by which container ID,
+	// allowing for precise rescue of tasks during AutoClean events.
+	// IT ALSO acts as the worker registry: if a key exists, the worker is "Active".
+	ActiveTasks map[string]*CodeConfig
 }
 
 // ExecutionCode is a struct that represents the structure of the execution code document in the MongoDB collection
@@ -140,7 +147,7 @@ type Submission struct {
 	Result          *Result       `bson:"result,omitempty"`
 }
 
-var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig), auto: false, muauto: sync.Mutex{}}
+var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig, 100), auto: false, muauto: sync.Mutex{}, scalingMu: sync.Mutex{}, ActiveTasks: make(map[string]*CodeConfig)}
 
 // Increment increments the active worker count by 1 in a thread-safe manner
 func (wp *WorkerPool) Increment() {
@@ -271,4 +278,61 @@ func (wp *WorkerPool) GetChannelLength() int {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 	return len(wp.channel)
+}
+
+func (wp *WorkerPool) ScalingMuLock() {
+	wp.scalingMu.Lock()
+}
+
+func (wp *WorkerPool) ScalingMuUnlock() {
+	wp.scalingMu.Unlock()
+}
+
+func (wp *WorkerPool) RegisterWorker(containerID string) {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	wp.ActiveTasks[containerID] = nil
+}
+
+func (wp *WorkerPool) IsWorkerRegistered(containerID string) bool {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	_, ok := wp.ActiveTasks[containerID]
+	return ok
+}
+
+func (wp *WorkerPool) UnregisterWorker(containerID string) {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	delete(wp.ActiveTasks, containerID)
+}
+
+func (wp *WorkerPool) SetActiveTask(containerID string, task *CodeConfig) {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	// Only set if worker is still registered
+	if _, ok := wp.ActiveTasks[containerID]; ok {
+		wp.ActiveTasks[containerID] = task
+	}
+}
+
+func (wp *WorkerPool) ClearActiveTask(containerID string) {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	// Only clear if worker is still registered (don't re-add it if cleaned)
+	if _, ok := wp.ActiveTasks[containerID]; ok {
+		wp.ActiveTasks[containerID] = nil
+	}
+}
+
+func (wp *WorkerPool) StealActiveTask(containerID string) *CodeConfig {
+	wp.mu.Lock()
+	defer wp.mu.Unlock()
+	task, ok := wp.ActiveTasks[containerID]
+	if ok {
+		// UNREGISTER the worker immediately to mark it as cleaned
+		delete(wp.ActiveTasks, containerID)
+		return task
+	}
+	return nil
 }

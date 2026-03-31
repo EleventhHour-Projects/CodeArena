@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"executor-service/cpu"
+	"executor-service/docker"
 	"executor-service/gh"
 	"executor-service/utils"
 	"executor-service/worker"
@@ -38,12 +39,17 @@ func AddToQueue(c fiber.Ctx) error {
 // The function accesses the TaskInfo struct from the utils package, which contains methods to calculate the average execution time and track the total number of tasks processed by the worker pool
 // The response includes the average execution time and total task count, allowing clients to monitor the performance of the task execution service
 func GetTaskInfo(c fiber.Ctx) error {
+	workerInfo, err := docker.GetWorkerDetails()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Error fetching worker details")
+	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"average_time_to_execute_task_inSec": utils.TaskInfo.GetAverageTime(),
 		"total_tasks":                        utils.TaskInfo.GetTotalTasks(),
 		"total_time_to_execute_task_inSec":   utils.TaskInfo.GetTotalTime(),
 		"active_worker":                      utils.WorkerPoolData.GetCount(),
 		"total_active_time":                  time.Since(utils.StartTime).String(),
+		"worker_details":                     workerInfo,
 	})
 }
 
