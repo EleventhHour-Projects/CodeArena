@@ -2,11 +2,12 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2, Activity, Volume2, VolumeX } from "lucide-react";
+import { Clock, Handshake, Flag, ChevronLeft, ChevronRight, Play, Upload, CheckCircle2, Activity, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { io, Socket } from "socket.io-client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ReportModal } from "@/components/modals/ReportModal";
 import { Button } from "@/components/ui/button";
 
 // Minimal synthesized sound effects
@@ -80,8 +81,6 @@ export default function BattlePage({ params }: PageProps) {
   const [drawOffer, setDrawOffer] = useState<{ fromUserId: string } | null>(null);
   const [isSurrenderOpen, setIsSurrenderOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [drawsSent, setDrawsSent] = useState(0);
   const battleFinishedRef = useRef(false);
 
@@ -478,39 +477,6 @@ export default function BattlePage({ params }: PageProps) {
     setIsSurrenderOpen(true);
   };
 
-  const handleReportSubmit = async () => {
-    if (!reportReason.trim()) {
-      toast.error("Please provide a reason for reporting");
-      return;
-    }
-    const opponentId = isMePlayer1 ? battleDetails?.player2 : battleDetails?.player1;
-    if (!opponentId) return;
-
-    setIsSubmittingReport(true);
-    try {
-      const res = await fetch("/api/battle/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reportedId: opponentId,
-          battleId: battleID,
-          reason: reportReason
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Player reported successfully");
-        setIsReportOpen(false);
-        setReportReason("");
-      } else {
-        toast.error(data.message || "Failed to submit report");
-      }
-    } catch (error) {
-      toast.error("An error occurred while submitting the report");
-    } finally {
-      setIsSubmittingReport(false);
-    }
-  };
 
   const confirmSurrender = () => {
     if (!socket || !session?.user || isBattleOver) return;
@@ -773,44 +739,13 @@ export default function BattlePage({ params }: PageProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Report Player Dialog */}
-      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-500">
-              <Flag className="w-5 h-5" />
-              Report Player
-            </DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Please provide a valid reason for reporting your opponent. False reports may lead to penalties.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-2">
-             <textarea 
-               className="w-full bg-[#09090b] border border-white/10 rounded-lg p-3 text-sm text-zinc-300 outline-none focus:border-rose-500/50 resize-none h-24"
-               placeholder="e.g., Using prohibited tools, inappropriate behavior..."
-               value={reportReason}
-               onChange={(e) => setReportReason(e.target.value)}
-             />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsReportOpen(false)}
-              className="border-white/10 hover:bg-zinc-800 text-white"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleReportSubmit}
-              disabled={isSubmittingReport}
-              className="bg-rose-600 hover:bg-rose-500 text-white"
-            >
-              {isSubmittingReport ? "Submitting..." : "Submit Report"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        battleId={battleID}
+        reportedUserId={isMePlayer1 ? battleDetails?.player2 : battleDetails?.player1}
+        mode="battle"
+      />
 
       {/* End of Battle Overlay */}
       {isBattleOver && (

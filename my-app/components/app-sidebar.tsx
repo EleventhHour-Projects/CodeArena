@@ -1,7 +1,8 @@
-import { Home, Trophy, Code2, User2, ChevronUp, History } from "lucide-react"
+import { Home, Trophy, Code2, User2, ChevronUp, History, BugIcon } from "lucide-react"
 import { getServerSession } from "next-auth"
 import Link from "next/link"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { SidebarReportAction } from "@/components/SidebarReportAction"
 
 import {
   Sidebar,
@@ -94,6 +95,7 @@ export async function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarReportAction />
               <ThemeToggleSidebarItem />
             </SidebarMenu>
           </SidebarGroupContent>

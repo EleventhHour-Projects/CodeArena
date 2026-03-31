@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
                 difficulty: battle.difficulty,
                 type: battle.type,
                 opponent: {
+                    id: opponent._id,
                     name: opponent.name,
                     username: opponent.username,
                     image: opponent.image

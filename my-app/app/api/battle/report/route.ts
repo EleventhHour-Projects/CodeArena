@@ -14,10 +14,17 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { reportedId, battleId, reason } = body;
+        const { reportedId, battleId, reason, category = "Other" } = body;
+        
+        // Validation logic
+        if (!reason) {
+            return NextResponse.json({ success: false, message: "Reason is required" }, { status: 400 });
+        }
 
-        if (!reportedId || !battleId || !reason) {
-            return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+        if (category === "Cheating") {
+            if (!reportedId || !battleId) {
+                return NextResponse.json({ success: false, message: "Reported user and battle ID are required for cheating reports" }, { status: 400 });
+            }
         }
 
         await dbConnect();
@@ -27,26 +34,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
         }
 
-        const reportedUser = await UserModel.findById(reportedId);
-        if (!reportedUser) {
-             return NextResponse.json({ success: false, message: "Reported user not found" }, { status: 404 });
-        }
-
-        const battle = await BattleModel.findById(battleId);
-        if (!battle) {
-             return NextResponse.json({ success: false, message: "Battle not found" }, { status: 404 });
-        }
-
-        const existingReport = await ReportModel.findOne({ reporter: reporterUser._id, reported: reportedId, battleId });
-        if (existingReport) {
-             return NextResponse.json({ success: false, message: "You have already reported this user for this battle" }, { status: 400 });
+        // Only check for duplicates for cheating reports to avoid blocking multi-bug reports
+        if (category === "Cheating") {
+            const existingReport = await ReportModel.findOne({ 
+                reporter: reporterUser._id, 
+                reported: reportedId, 
+                battleId,
+                category: "Cheating"
+            });
+            if (existingReport) {
+                return NextResponse.json({ success: false, message: "You have already reported this user for this battle" }, { status: 400 });
+            }
         }
 
         const report = new ReportModel({
             reporter: reporterUser._id,
-            reported: reportedId,
-            battleId,
-            reason
+            reported: reportedId || null,
+            battleId: battleId || null,
+            reason,
+            category,
+            status: "Pending"
         });
 
         await report.save();

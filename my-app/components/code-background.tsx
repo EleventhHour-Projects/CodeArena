@@ -1,125 +1,73 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useMemo } from "react";
 import { useTheme } from "next-themes";
 
 const CHARACTERS = "ELEVENTHHOUR<>/\\;:";
-
 const getRandomChar = () => CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
 
-interface CodeColumnProps {
-  delay: number;
-  duration: number;
-  bright?: boolean;
+interface StaticColumnProps {
+  opacity: number;
+  color: string;
+  glow?: string;
+  offset: string;
 }
 
-const CodeColumn: React.FC<CodeColumnProps> = ({ delay, duration, bright }) => {
-  const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === "light";
-  const length = 40;
-  const [chars, setChars] = useState<string[]>(() =>
-    Array.from({ length }, getRandomChar)
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setChars((prev) => {
-        const next = [...prev];
-        const count = bright ? 5 : 3;
-        for (let i = 0; i < count; i++) {
-          const idx = Math.floor(Math.random() * length);
-          next[idx] = getRandomChar();
-        }
-        return next;
-      });
-    }, bright ? 80 : 130);
-
-    return () => clearInterval(interval);
-  }, [bright]);
-
+const StaticColumn: React.FC<StaticColumnProps> = ({ opacity, color, glow, offset }) => {
+  const chars = useMemo(() => 
+    Array.from({ length: 50 }, getRandomChar).map((c, i) => (
+      <span key={i} className="block">{c}</span>
+    )), 
+  []);
+  
   return (
-    <motion.div
-      initial={{ y: "-100%" }}
-      animate={{ y: "150%" }}
-      transition={{
-        duration,
-        repeat: Infinity,
-        ease: "linear",
-        delay,
-      }}
-      className="flex flex-col text-xs font-mono whitespace-pre items-center shrink-0 select-none"
-      style={{
-        width: "20px",
-        willChange: "transform",
-        color: isLight 
-          ? (bright ? "rgba(22, 163, 74, 0.45)" : "rgba(34, 197, 94, 0.12)")
-          : (bright ? "rgba(74, 222, 128, 0.7)" : "rgba(34, 197, 94, 0.22)"),
-        textShadow: bright
-          ? (isLight 
-              ? "0 0 8px rgba(34, 197, 94, 0.3)" 
-              : "0 0 12px rgba(74, 222, 128, 0.9), 0 0 4px rgba(74, 222, 128, 0.5)")
-          : (isLight ? "none" : "0 0 6px rgba(34, 197, 94, 0.3)"),
+    <div 
+      className="flex flex-col text-[10px] font-mono leading-none select-none"
+      style={{ 
+        color, 
+        opacity,
+        transform: `translateY(${offset})`,
+        textShadow: glow ? `0 0 12px ${glow}` : 'none',
+        willChange: 'auto'
       }}
     >
-      {chars.map((c, i) => (
-        <span
-          key={i}
-          className="my-[2px] leading-none"
-          style={{
-            opacity: bright
-              ? Math.max(0.15, 1 - i / (length * 0.8))
-              : Math.max(0.05, 0.5 - i / (length * 1.2)),
-          }}
-        >
-          {c}
-        </span>
-      ))}
-    </motion.div>
+      {chars}
+    </div>
   );
 };
 
 export const CodeBackground = () => {
-  const [columnProps, setColumnProps] = useState<
-    { delay: number; duration: number; bright: boolean }[]
-  >([]);
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
 
-  useEffect(() => {
-    const updateColumns = () => {
-      const elWidth = window.innerWidth * 0.7;
-      const columnsCount = Math.floor(elWidth / 22);
-
-      setColumnProps(
-        Array.from({ length: columnsCount }).map((_, i) => ({
-          delay: Math.random() * 8,
-          duration: Math.random() * 12 + 10,
-          bright: i % 7 === 0, // every 7th column is a bright "lead" column
-        }))
-      );
-    };
-
-    updateColumns();
-    window.addEventListener("resize", updateColumns);
-    return () => window.removeEventListener("resize", updateColumns);
+  // Generate static positions and properties once
+  const columns = useMemo(() => {
+    return Array.from({ length: 40 }).map((_, i) => ({
+      opacity: Math.random() * 0.2 + 0.05,
+      bright: i % 8 === 0,
+      offset: `${Math.random() * -100}px`,
+    }));
   }, []);
 
-  return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-background flex justify-center pointer-events-none transition-colors duration-500">
-      {/* Vertical fade overlays */}
-      <div className="absolute inset-0 z-10 bg-linear-to-b from-background via-transparent to-background" />
-      {/* Horizontal fade from center */}
-      <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,var(--background)_100%)] opacity-80" />
+  const baseColor = isLight ? "rgba(22, 163, 74, 0.35)" : "rgba(34, 197, 94, 0.25)";
+  const brightColor = isLight ? "rgba(21, 128, 61, 0.6)" : "rgba(74, 222, 128, 0.5)";
+  const glowColor = isLight ? "rgba(34, 197, 94, 0.3)" : "rgba(74, 222, 128, 0.4)";
 
-      <div className="flex w-full h-[200%] justify-evenly items-start">
-        {columnProps.map((props, i) => (
-          <CodeColumn
-            key={i}
-            delay={props.delay}
-            duration={props.duration}
-            bright={props.bright}
-          />
-        ))}
-      </div>
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden bg-background flex justify-around pointer-events-none transition-colors duration-500 px-4">
+      {/* Background Gradients for Depth */}
+      <div className="absolute inset-0 z-10 bg-linear-to-b from-background via-transparent to-background" />
+      <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_20%,var(--background)_100%)] opacity-90" />
+
+      {columns.map((col, i) => (
+        <StaticColumn 
+          key={i} 
+          opacity={col.opacity} 
+          color={col.bright ? brightColor : baseColor}
+          glow={col.bright ? glowColor : undefined}
+          offset={col.offset}
+        />
+      ))}
     </div>
   );
 };
