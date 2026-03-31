@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Toaster } from "@/components/ui/sonner"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import Providers from "../(main)/providers";
 
 const geistSans = Geist({
@@ -32,9 +32,14 @@ export default function AdminLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <main className="w-full">
-            {children}
-          </main>
+          <SidebarProvider>
+            <AdminSidebar />
+            <SidebarInset>
+              <main className="w-full">
+                {children}
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
           <Toaster position="top-center" richColors />
         </Providers>
       </body>
