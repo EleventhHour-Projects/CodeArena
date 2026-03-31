@@ -3,6 +3,8 @@ package docker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,14 +12,23 @@ import (
 )
 
 type WorkerDetail struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Image       string  `json:"image"`
-	State       string  `json:"state"`
-	Status      string  `json:"status"`
-	CPUUsage    float64 `json:"cpu_usage"`    // Percentage
-	MemoryUsage uint64  `json:"memory_usage"` // Bytes
-	MemoryLimit uint64  `json:"memory_limit"` // Bytes
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Image        string  `json:"image"`
+	State        string  `json:"state"`
+	Status       string  `json:"status"`
+	CPUUsage     float64 `json:"cpu_usage"`     // Percentage
+	OnlineCPUs   uint32  `json:"online_cpus"`   // Number of CPU cores
+	MemoryUsage  uint64  `json:"memory_usage"`  // Bytes
+	MemoryLimit  uint64  `json:"memory_limit"`  // Bytes
+	CreatedAt    int64   `json:"created_at"`    // Unix timestamp
+	StartedAt    string  `json:"started_at"`    // RFC3339
+	RestartCount int     `json:"restart_count"` // How many times restarted
+	Pid          int     `json:"pid"`           // Host PID of container init
+	NetworkMode  string  `json:"network_mode"`  // e.g. "bridge"
+	Ports        string  `json:"ports"`         // Comma-separated exposed ports
+	NetworkRxMB  float64 `json:"network_rx_mb"` // MB received
+	NetworkTxMB  float64 `json:"network_tx_mb"` // MB transmitted
 }
 
 type containerStats struct {
@@ -38,6 +49,10 @@ type containerStats struct {
 		Usage uint64 `json:"usage"`
 		Limit uint64 `json:"limit"`
 	} `json:"memory_stats"`
+	Networks map[string]struct {
+		RxBytes uint64 `json:"rx_bytes"`
+		TxBytes uint64 `json:"tx_bytes"`
+	} `json:"networks"`
 }
 
 func fetchStats(apiClient *client.Client, containerID string) (*containerStats, error) {
@@ -79,13 +94,49 @@ func GetWorkerDetails() ([]WorkerDetail, error) {
 			if len(container.Names) > 0 {
 				name = container.Names[0]
 			}
+
+			// Collect exposed ports
+			var portParts []string
+			for _, p := range container.Ports {
+				if p.PublicPort > 0 {
+					portParts = append(portParts, fmt.Sprintf("%d->%d/%s", p.PublicPort, p.PrivatePort, p.Type))
+				} else {
+					portParts = append(portParts, fmt.Sprintf("%d/%s", p.PrivatePort, p.Type))
+				}
+			}
+			ports := strings.Join(portParts, ", ")
+
+			// Inspect for rich metadata
+			startedAt := ""
+			restartCount := 0
+			pid := 0
+			networkMode := ""
+			result, inspectErr := apiClient.ContainerInspect(context.Background(), container.ID, client.ContainerInspectOptions{})
+			if inspectErr == nil {
+				c := result.Container
+				if c.State != nil {
+					startedAt = c.State.StartedAt
+					pid = c.State.Pid
+				}
+				restartCount = c.RestartCount
+				if c.HostConfig != nil {
+					networkMode = string(c.HostConfig.NetworkMode)
+				}
+			}
+
 			targets = append(targets, container.ID)
 			targetInfos[container.ID] = WorkerDetail{
-				ID:     container.ID,
-				Name:   name,
-				Image:  container.Image,
-				State:  string(container.State),
-				Status: string(container.Status),
+				ID:           container.ID,
+				Name:         name,
+				Image:        container.Image,
+				State:        string(container.State),
+				Status:       string(container.Status),
+				CreatedAt:    container.Created,
+				StartedAt:    startedAt,
+				RestartCount: restartCount,
+				Pid:          pid,
+				NetworkMode:  networkMode,
+				Ports:        ports,
 			}
 		}
 	}
@@ -139,23 +190,30 @@ func GetWorkerDetails() ([]WorkerDetail, error) {
 		info := targetInfos[id]
 
 		if s1 != nil && s2 != nil {
-			// Calculate CPU Usage Percentage
+			// CPU
 			cpuUsage := 0.0
 			cpuDelta := float64(s2.CPUStats.CPUUsage.TotalUsage) - float64(s1.CPUStats.CPUUsage.TotalUsage)
 			systemDelta := float64(s2.CPUStats.SystemUsage) - float64(s1.CPUStats.SystemUsage)
-
 			onlineCPUs := float64(s2.CPUStats.OnlineCPUs)
 			if onlineCPUs == 0 {
-				onlineCPUs = 1.0 // Fallback to at least 1 CPU to avoid zero results
+				onlineCPUs = 1.0
 			}
-
 			if systemDelta > 0.0 && cpuDelta > 0.0 {
 				cpuUsage = (cpuDelta / systemDelta) * onlineCPUs * 100.0
 			}
-
 			info.CPUUsage = cpuUsage
+			info.OnlineCPUs = s2.CPUStats.OnlineCPUs
 			info.MemoryUsage = s2.MemoryStats.Usage
 			info.MemoryLimit = s2.MemoryStats.Limit
+
+			// Network I/O — sum all interfaces from final snapshot
+			var rxBytes, txBytes uint64
+			for _, net := range s2.Networks {
+				rxBytes += net.RxBytes
+				txBytes += net.TxBytes
+			}
+			info.NetworkRxMB = float64(rxBytes) / (1024 * 1024)
+			info.NetworkTxMB = float64(txBytes) / (1024 * 1024)
 		}
 
 		workerDetails = append(workerDetails, info)
