@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Users, Swords, Activity, Server, Clock, LogOut, Code, PlusCircle, Shield, Flag, GitPullRequest, Zap
+  Users, Swords, Activity, Server, Clock, Shield, Zap, Code, PlusCircle, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +56,6 @@ const formatBytes = (bytes: number) => {
 };
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [executorInfo, setExecutorInfo] = useState<ExecutorInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,11 +98,6 @@ export default function AdminDashboard() {
     const interval = setInterval(fetchData, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
-  };
 
   const handleSpawnWorker = async () => {
     if (isAuto) {
@@ -177,61 +170,14 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-2">
-              <Shield className="h-4 w-4" />
-              Admin Control
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Dashboard
-            </h1>
+        <div className="flex items-center gap-2 mb-12">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-2">
+            <Shield className="h-4 w-4" />
+            Admin Control
           </div>
-
-          <div className="flex gap-3">
-            <Button
-              onClick={() => router.push("/admin/add")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 flex gap-2 font-medium"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Add Problem
-            </Button>
-
-            <Button
-              onClick={() => router.push("/admin/testproblem")}
-              variant="outline"
-              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
-            >
-              <Code className="h-4 w-4" />
-              Test Problem
-            </Button>
-
-            <Button
-              onClick={() => router.push("/admin/reports")}
-              variant="outline"
-              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
-            >
-              <Flag className="h-4 w-4" />
-              Reports
-            </Button>
-
-            <Button
-              onClick={() => router.push("/admin/prs")}
-              variant="outline"
-              className="border-primary/50 text-zinc-700 dark:text-zinc-300  hover:bg-primary hover:text-primary-foreground flex gap-2 font-medium"
-            >
-              <GitPullRequest className="h-4 w-4" />
-              Pull Requests
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Dashboard
+          </h1>
         </div>
 
         {/* HERO STAT */}
@@ -240,52 +186,69 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="relative overflow-hidden rounded-3xl p-10 border border-border bg-card group">
-            <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 blur-3xl group-hover:opacity-20 transition-opacity" />
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-card group">
+            {/* bg glow */}
+            <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-indigo-500/8 blur-3xl pointer-events-none group-hover:bg-indigo-500/12 transition-all duration-700" />
+            <div className="absolute -bottom-12 -left-12 w-56 h-56 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+            {/* top rule */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
 
-            <div className="relative z-10">
-              <p className="text-muted-foreground mb-2 flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" /> Total Users
-              </p>
-              <h1 className="text-5xl font-bold tracking-tight">
-                {loading ? "..." : stats?.totalUsers?.toLocaleString()}
-              </h1>
-              <div className="flex items-center gap-2 text-emerald-400 text-sm mt-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live platform growth
+            <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row md:items-stretch gap-8 md:gap-0">
+
+              {/* LEFT — main number */}
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2 mb-6">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Total Users</span>
+                  <div className="ml-auto flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live
+                  </div>
+                </div>
+
+                <div>
+                  <h1 className="text-7xl font-black tracking-tighter tabular-nums text-foreground">
+                    {loading ? <span className="opacity-20 animate-pulse">—</span> : stats?.totalUsers?.toLocaleString()}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Registered accounts on CodeArena
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 mt-6 text-[11px] text-emerald-400 font-semibold">
+                  <div className="h-px flex-1 bg-emerald-400/20" />
+                  Platform growing
+                  <div className="h-px flex-1 bg-emerald-400/20" />
+                </div>
+              </div>
+
+              {/* DIVIDER */}
+              <div className="hidden md:block w-px bg-border/60 mx-8 self-stretch" />
+
+              {/* RIGHT — stat pills */}
+              <div className="flex flex-row md:flex-col justify-between md:justify-center gap-4 md:gap-6 md:min-w-[180px]">
+                {[
+                  { label: "Active Now",     value: loading ? "—" : String(stats?.activeUsers ?? 0),                   sub: "last 5 mins", color: "text-emerald-400", dot: "bg-emerald-400" },
+                  { label: "Battles Played", value: loading ? "—" : (stats?.totalBattles?.toLocaleString() ?? "0"),     sub: "all time",    color: "text-indigo-400",  dot: "bg-indigo-400" },
+                  { label: "Top Rating",     value: loading ? "—" : String(stats?.topUsers?.[0]?.rating ?? "—"),        sub: "highest",     color: "text-amber-400",   dot: "bg-amber-400"  },
+                ].map((s) => (
+                  <div key={s.label} className="flex items-center gap-3 bg-muted/40 rounded-2xl px-4 py-3 border border-border/60 hover:border-border transition-colors">
+                    <div className={`h-2 w-2 rounded-full ${s.dot} shrink-0`} />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mb-1">{s.label}</p>
+                      <p className={`text-xl font-bold tabular-nums ${s.color} truncate leading-none`}>{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground/50 mt-1">{s.sub}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* SECONDARY STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {[
-            { label: "Active Users", value: stats?.activeUsers, icon: Activity, sub: "Last 5 mins" },
-            { label: "Battles Played", value: stats?.totalBattles, icon: Swords, sub: "All time" }
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="group bg-card border border-border rounded-2xl p-6 transition-all hover:border-border/80"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">{item.label}</p>
-                  <h2 className="text-3xl font-semibold">
-                    {loading ? "..." : item.value}
-                  </h2>
-                  <p className="text-[10px] text-muted-foreground/60 uppercase mt-1 tracking-tighter">{item.sub}</p>
-                </div>
-                <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground transition">
-                  <item.icon className="h-5 w-5" />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+
+
+
 
         {/* DATA GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
@@ -501,34 +464,57 @@ export default function AdminDashboard() {
 
                         <div className="space-y-6">
                           {/* CPU */}
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">CPU Load</span>
-                              <span className="text-sm font-mono text-amber-400">{worker.cpu_usage.toFixed(1)}%</span>
-                            </div>
-                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(worker.cpu_usage * 2, 100)}%` }}
-                                className="h-full bg-gradient-to-r from-amber-500/80 to-amber-400 rounded-full"
-                              />
-                            </div>
-                          </div>
+                          {(() => {
+                            const cpu = Math.min(worker.cpu_usage * 2, 100);
+                            const cpuColor = cpu >= 80
+                              ? { label: "text-rose-400",   bar: "from-rose-500/80 to-rose-400",     glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
+                              : cpu >= 50
+                              ? { label: "text-amber-400",  bar: "from-amber-500/80 to-amber-400",   glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
+                              : { label: "text-emerald-400",bar: "from-emerald-500/80 to-emerald-400",glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
+                            return (
+                              <div>
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">CPU Load</span>
+                                  <span className={`text-sm font-mono font-bold ${cpuColor.label}`}>{worker.cpu_usage.toFixed(1)}%</span>
+                                </div>
+                                <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${cpu}%` }}
+                                    className={`h-full bg-gradient-to-r ${cpuColor.bar} rounded-full ${cpuColor.glow}`}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* RAM */}
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">Memory Consumption</span>
-                              <span className="text-sm font-mono text-emerald-400 font-bold">{formatBytes(worker.memory_usage)} <span className="text-[10px] text-zinc-600 font-normal">/ {formatBytes(worker.memory_limit)}</span></span>
-                            </div>
-                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${(worker.memory_usage / worker.memory_limit) * 100}%` }}
-                                className="h-full bg-gradient-to-r from-emerald-500/80 to-emerald-400 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-                              />
-                            </div>
-                          </div>
+                          {(() => {
+                            const memPct = (worker.memory_usage / worker.memory_limit) * 100;
+                            const memColor = memPct >= 80
+                              ? { label: "text-rose-400",   bar: "from-rose-500/80 to-rose-400",     glow: "shadow-[0_0_10px_rgba(244,63,94,0.25)]" }
+                              : memPct >= 50
+                              ? { label: "text-amber-400",  bar: "from-amber-500/80 to-amber-400",   glow: "shadow-[0_0_10px_rgba(251,191,36,0.2)]" }
+                              : { label: "text-emerald-400",bar: "from-emerald-500/80 to-emerald-400",glow: "shadow-[0_0_10px_rgba(52,211,153,0.2)]" };
+                            return (
+                              <div>
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-tight">Memory</span>
+                                  <span className={`text-sm font-mono font-bold ${memColor.label}`}>
+                                    {formatBytes(worker.memory_usage)}
+                                    <span className="text-[10px] text-zinc-600 font-normal ml-1">/ {formatBytes(worker.memory_limit)}</span>
+                                  </span>
+                                </div>
+                                <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${memPct}%` }}
+                                    className={`h-full bg-gradient-to-r ${memColor.bar} rounded-full ${memColor.glow}`}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           <div className="pt-2 flex items-center justify-between border-t border-border/20 mt-2">
                             <span className="text-xs text-zinc-500 font-medium">Status: <span className="text-zinc-300 ml-1">{worker.status}</span></span>
