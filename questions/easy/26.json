@@ -1,16 +1,17 @@
 {
-    "id": 26,
-    "slug": "first-letter-to-appear-twice",
-    "tags": [
-        "Hash Table",
-        "String",
-        "Bit Manipulation",
-        "Counting"
-    ],
-    "title": "First Letter to Appear Twice",
-    "difficulty": "Easy",
-    "description": "You are given a string s consisting of lowercase English letters.\n\nTask\n\nReturn the first letter that appears twice in the string.\n\nDefinition\n\nA letter a is considered to appear before another letter b if:\n\nthe index of the second occurrence of 'a' \u003c the index of the second occurrence of 'b'\nExamples\n\nExample 1\nInput: s = \"abccbaacz\"\nOutput: \"c\"\n\nExplanation:\n\nc appears at indices 2 and 3 → second occurrence at index 3\nOther letters repeat later\n→ So c is the earliest to appear twice\n\nExample 2\nInput: s = \"abcdd\"\nOutput: \"d\"\n\nExplanation:\n\nOnly d appears twice\nConstraints\n2 ≤ s.length ≤ 100\ns contains only lowercase English letters\nAt least one character appears twice",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 26,
+  "slug": "first-letter-to-appear-twice",
+  "tags": [
+    "Hash Table",
+    "String",
+    "Bit Manipulation",
+    "Counting"
+  ],
+  "title": "First Letter to Appear Twice",
+  "difficulty": "Easy",
+  "description": "You are given a string s consisting of lowercase English letters.\n\nTask\n\nReturn the first letter that appears twice in the string.\n\nDefinition\n\nA letter a is considered to appear before another letter b if:\n\nthe index of the second occurrence of 'a' < the index of the second occurrence of 'b'\nExamples\n\nExample 1\nInput: s = \"abccbaacz\"\nOutput: \"c\"\n\nExplanation:\n\nc appears at indices 2 and 3 → second occurrence at index 3\nOther letters repeat later\n→ So c is the earliest to appear twice\n\nExample 2\nInput: s = \"abcdd\"\nOutput: \"d\"\n\nExplanation:\n\nOnly d appears twice\nConstraints\n2 ≤ s.length ≤ 100\ns contains only lowercase English letters\nAt least one character appears twice",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

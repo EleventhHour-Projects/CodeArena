@@ -1,14 +1,15 @@
 {
-    "id": 22,
-    "slug": "number-of-1-bits",
-    "tags": [
-        "Divide and Conquer",
-        "Bit Manipulation"
-    ],
-    "title": "Number of 1 Bits",
-    "difficulty": "Easy",
-    "description": "Given a positive integer n, return the number of set bits (bits with value 1) in its binary representation.\n\nThis is also known as the Hamming weight.\n\nExamples\n\nExample 1\nInput: n = 11\nOutput: 3\nExplanation:\nBinary representation: 1011 → three 1s\n\nExample 2\nInput: n = 128\nOutput: 1\nExplanation:\nBinary representation: 10000000 → one 1\n\nExample 3\nInput: n = 2147483645\nOutput: 30\nExplanation:\nBinary representation: 1111111111111111111111111111101 → thirty 1s\n\nConstraints\n1 ≤ n ≤ 2³¹ - 1",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 22,
+  "slug": "number-of-1-bits",
+  "tags": [
+    "Divide and Conquer",
+    "Bit Manipulation"
+  ],
+  "title": "Number of 1 Bits",
+  "difficulty": "Easy",
+  "description": "Given a positive integer n, return the number of set bits (bits with value 1) in its binary representation.\n\nThis is also known as the Hamming weight.\n\nExamples\n\nExample 1\nInput: n = 11\nOutput: 3\nExplanation:\nBinary representation: 1011 → three 1s\n\nExample 2\nInput: n = 128\nOutput: 1\nExplanation:\nBinary representation: 10000000 → one 1\n\nExample 3\nInput: n = 2147483645\nOutput: 30\nExplanation:\nBinary representation: 1111111111111111111111111111101 → thirty 1s\n\nConstraints\n1 ≤ n ≤ 2³¹ - 1",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }

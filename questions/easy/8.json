@@ -1,11 +1,14 @@
 {
-    "id": 8,
-    "slug": "smallest-letter-greater-than-target",
-    "tags": ["Binary Search"],
-    "title": "Find Smallest Letter Greater Than Target",
-    "difficulty": "Easy",
-    "description": "You are given a sorted array of lowercase characters and a target character.\n\nYour task is to find the smallest character in the array that is strictly greater than the target character.\n\nIf no such character exists, return the first character of the array (wrap-around behavior).\n\nYou must read input from standard input and print the result accordingly.",
-    "input_format": "The first line contains an integer n — the number of characters.\nThe second line contains n space-separated lowercase characters.\nThe third line contains the target character.",
-    "output_format": "Print a single character representing the answer.",
-    "constraints": "2 <= n <= 10000\nletters[i] is a lowercase English letter.\nletters is sorted in non-decreasing order.\nletters contains at least two distinct characters.\ntarget is a lowercase English letter."
+  "id": 8,
+  "slug": "smallest-letter-greater-than-target",
+  "tags": [
+    "Binary Search"
+  ],
+  "title": "Find Smallest Letter Greater Than Target",
+  "difficulty": "Easy",
+  "description": "You are given a sorted array of lowercase characters and a target character.\n\nYour task is to find the smallest character in the array that is strictly greater than the target character.\n\nIf no such character exists, return the first character of the array (wrap-around behavior).\n\nYou must read input from standard input and print the result accordingly.",
+  "input_format": "The first line contains an integer n — the number of characters.\nThe second line contains n space-separated lowercase characters.\nThe third line contains the target character.",
+  "output_format": "Print a single character representing the answer.",
+  "constraints": "2 <= n <= 10000\nletters[i] is a lowercase English letter.\nletters is sorted in non-decreasing order.\nletters contains at least two distinct characters.\ntarget is a lowercase English letter.",
+  "verified": true
 }

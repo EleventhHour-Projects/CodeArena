@@ -1,15 +1,16 @@
 {
-    "id": 20,
-    "slug": "minimum-string-length-after-removing-substrings",
-    "tags": [
-        "String",
-        "Stack",
-        "Simulation"
-    ],
-    "title": "Minimum String Length After Removing Substrings",
-    "difficulty": "Easy",
-    "description": "You are given a string s consisting only of uppercase English letters.\n\nYou can perform the following operation any number of times:\n\nRemove any occurrence of the substring \"AB\" or \"CD\" from s.\n\nAfter removal, the remaining parts of the string are concatenated, which may create new \"AB\" or \"CD\" substrings.\n\nTask\n\nReturn the minimum possible length of the string after performing zero or more operations.\n\nExamples\n\nExample 1\nInput: s = \"ABFCACDB\"\nOutput: 2\n\nExplanation:\n\nRemove \"AB\" → \"FCACDB\"\nRemove \"CD\" → \"FCAB\"\nRemove \"AB\" → \"FC\"\nFinal length = 2\n\nExample 2\nInput: s = \"ACBBD\"\nOutput: 5\n\nExplanation:\nNo \"AB\" or \"CD\" substrings exist, so no operations can be performed.\n\nConstraints\n1 ≤ s.length ≤ 100\ns consists only of uppercase English letters",
-    "input_format": "Read from standard input. Format details depends on the problem.",
-    "output_format": "Print to standard output.",
-    "constraints": "Please read problem description for constraints."
+  "id": 20,
+  "slug": "minimum-string-length-after-removing-substrings",
+  "tags": [
+    "String",
+    "Stack",
+    "Simulation"
+  ],
+  "title": "Minimum String Length After Removing Substrings",
+  "difficulty": "Easy",
+  "description": "You are given a string s consisting only of uppercase English letters.\n\nYou can perform the following operation any number of times:\n\nRemove any occurrence of the substring \"AB\" or \"CD\" from s.\n\nAfter removal, the remaining parts of the string are concatenated, which may create new \"AB\" or \"CD\" substrings.\n\nTask\n\nReturn the minimum possible length of the string after performing zero or more operations.\n\nExamples\n\nExample 1\nInput: s = \"ABFCACDB\"\nOutput: 2\n\nExplanation:\n\nRemove \"AB\" → \"FCACDB\"\nRemove \"CD\" → \"FCAB\"\nRemove \"AB\" → \"FC\"\nFinal length = 2\n\nExample 2\nInput: s = \"ACBBD\"\nOutput: 5\n\nExplanation:\nNo \"AB\" or \"CD\" substrings exist, so no operations can be performed.\n\nConstraints\n1 ≤ s.length ≤ 100\ns consists only of uppercase English letters",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
+  "verified": true
 }
