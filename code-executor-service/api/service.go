@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"executor-service/cpu"
+	"executor-service/database"
 	"executor-service/docker"
 	"executor-service/gh"
 	"executor-service/utils"
@@ -204,6 +205,46 @@ func ServerPID(c fiber.Ctx) error {
 	})
 }
 
+func RegisterForMatchmaking(c fiber.Ctx) error {
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+	b := c.Body()
+	err := json.Unmarshal(b, &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+	}
+	u, err := database.MongoDB.GetUser(req.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("User not found")
+	}
+	tkn := utils.TokenStoreInstance.GenerateToken(u.Username)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"token":   tkn,
+		"expires": time.Now().Add(10 * time.Minute),
+	})
+}
+
+func IsAlreadyInMatchmaking(c fiber.Ctx) error {
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+	b := c.Body()
+	err := json.Unmarshal(b, &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid request body")
+	}
+	u, err := database.MongoDB.GetUser(req.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("User not found")
+	}
+	exists := utils.TokenStoreInstance.UserExists(u.Username)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"in_matchmaking": exists,
+	})
+}
+
 // StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -245,6 +286,7 @@ func StartService() {
 	app.Get("/api/internal/auto", GetAutoStatus)
 	app.Get("/api/internal/usage", GetServerUsageInfo)
 	app.Get("/api/internal/pid", ServerPID)
+	app.Post("/api/matchmaking/register", RegisterForMatchmaking)
 	app.Get("/metrics", monitor.New(monitor.Config{Title: "ParkProof Go Backend Monitor"}))
 	log.Fatal(app.Listen(":6969", fiber.ListenConfig{DisableStartupMessage: true}))
 }

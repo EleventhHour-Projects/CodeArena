@@ -149,3 +149,30 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 
 	return subID, nil
 }
+
+func (m *MongoDBClient) GetUser(userID string) (*utils.User, error) {
+	objID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var user utils.User
+	filter := bson.M{"_id": objID}
+	err = m.UsersCollection.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (m *MongoDBClient) GetUserByUsername(username string) (*utils.User, error) {
+	var user utils.User
+	filter := bson.M{"username": username}
+	err := m.UsersCollection.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

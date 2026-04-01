@@ -20,6 +20,7 @@ import (
 	"executor-service/api"
 	"executor-service/database"
 	"executor-service/gh"
+	"executor-service/matchmaking"
 	"executor-service/queue"
 	"executor-service/utils"
 	"executor-service/websocket"
@@ -146,6 +147,7 @@ func main() {
 	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
 	utils.INTERNAL_KEY = os.Getenv("INTERNAL_KEY")
 	utils.WSSIP = os.Getenv("WSSIP")
+	utils.MASALA = os.Getenv("MASALA")
 	if utils.WSSIP == "" {
 		fmt.Println(utils.Red + "WSSIP not set" + utils.Reset)
 		utils.WSSIP = "http://localhost:6767/internal/event"
@@ -171,6 +173,8 @@ func main() {
 	}
 	// API service starting
 	go api.StartService()
+	go matchmaking.MatchmakingService(ctx)
+	go matchmaking.ProcessMatchmaking(ctx)
 	// Initialize GitHub Client
 	gh.InitGH()
 
