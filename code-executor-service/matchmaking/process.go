@@ -23,16 +23,35 @@ func ProcessMatchmaking(ctx context.Context) {
 }
 
 func MatchMaker() {
-	users, len := utils.UserPoolInstance.GetAllUsers()
-	if len < 2 {
-		return
+	allUsers, _ := utils.UserPoolInstance.GetAllUsers()
+
+	// Group available users by difficulty
+	byDifficulty := make(map[string][]*utils.User)
+	for _, u := range allUsers {
+		if _, ok := utils.MatchPoolInstance.GetMatchByConnID(u.AllotedConnID); !ok {
+			byDifficulty[u.Difficulty] = append(byDifficulty[u.Difficulty], u)
+		}
 	}
-	slices.SortFunc(users, func(a, b *utils.User) int {
-		return cmp.Compare(b.Rating, a.Rating)
-	})
-	for i := 0; i < len-1; i += 2 {
-		user1 := users[i]
-		user2 := users[i+1]
-		NotifyUser(user1, user2)
+
+	for _, users := range byDifficulty {
+		n := len(users)
+		if n < 2 {
+			continue
+		}
+
+		slices.SortFunc(users, func(a, b *utils.User) int {
+			return cmp.Compare(b.Rating, a.Rating)
+		})
+
+		for i := 0; i < n-1; i += 2 {
+			user1 := users[i]
+			user2 := users[i+1]
+
+			if utils.RejectionRegistryInstance.IsRejected(user1.Username, user2.Username) {
+				continue
+			}
+
+			NotifyUser(user1, user2)
+		}
 	}
 }

@@ -176,3 +176,111 @@ func (m *MongoDBClient) GetUserByUsername(username string) (*utils.User, error) 
 
 	return &user, nil
 }
+
+func (m *MongoDBClient) AssignBattleProblems(difficulty string) ([]utils.BattleProblem, error) {
+	var easyCount, mediumCount, hardCount int
+	diffLower := strings.ToLower(difficulty)
+
+	switch diffLower {
+	case "easy":
+		easyCount = 2
+		mediumCount = 1
+	case "medium":
+		mediumCount = 2
+		hardCount = 1
+	case "hard":
+		mediumCount = 1
+		hardCount = 2
+	default:
+		// Fallback to medium
+		mediumCount = 2
+		hardCount = 1
+	}
+
+	var problems []utils.BattleProblem
+
+	eProbs, _ := m.fetchRandomProblems("easy", easyCount)
+	mProbs, _ := m.fetchRandomProblems("medium", mediumCount)
+	hProbs, _ := m.fetchRandomProblems("hard", hardCount)
+
+	problems = append(problems, eProbs...)
+	problems = append(problems, mProbs...)
+	problems = append(problems, hProbs...)
+
+	return problems, nil
+}
+
+func (m *MongoDBClient) fetchRandomProblems(level string, count int) ([]utils.BattleProblem, error) {
+	if count == 0 {
+		return []utils.BattleProblem{}, nil
+	}
+
+	questionsDir := filepath.Join("..", "questions", level)
+	files, err := os.ReadDir(questionsDir)
+	if err != nil {
+		fmt.Printf("Error reading questions dir %s: %v\n", questionsDir, err)
+		return []utils.BattleProblem{}, nil
+	}
+
+	var availableIDs []int
+	for _, f := range files {
+		if !f.Type().IsDir() && strings.HasSuffix(f.Name(), ".json") {
+			idStr := strings.TrimSuffix(f.Name(), ".json")
+			id, err := strconv.Atoi(idStr)
+			if err == nil {
+				availableIDs = append(availableIDs, id)
+			}
+		}
+	}
+
+	if len(availableIDs) < count {
+		count = len(availableIDs)
+	}
+
+	// Shuffle
+	for i := len(availableIDs) - 1; i > 0; i-- {
+		j := utils.RandomInt(i + 1)
+		availableIDs[i], availableIDs[j] = availableIDs[j], availableIDs[i]
+	}
+
+	var result []utils.BattleProblem
+	for i := 0; i < count; i++ {
+		result = append(result, utils.BattleProblem{
+			Difficulty: level,
+			ID:         availableIDs[i],
+		})
+	}
+
+	return result, nil
+}
+
+func (m *MongoDBClient) CreateBattle(p1ID, p2ID bson.ObjectID, difficulty string) (bson.ObjectID, error) {
+	problems, err := m.AssignBattleProblems(difficulty)
+	if err != nil {
+		return bson.NilObjectID, err
+	}
+
+	battle := utils.Battle{
+		Player1:    p1ID,
+		Player2:    p2ID,
+		Status:     "Active",
+		CreatedAt:  time.Now(),
+		Difficulty: difficulty,
+		Type:       "1v1",
+		Problems:   problems,
+		StartTime:  time.Now(),
+	}
+
+	res, err := m.BattlesCollection.InsertOne(context.Background(), battle)
+	if err != nil {
+		return bson.NilObjectID, err
+	}
+
+	battleID := res.InsertedID.(bson.ObjectID)
+
+	// Update users
+	_, _ = m.UsersCollection.UpdateOne(context.Background(), bson.M{"_id": p1ID}, bson.M{"$set": bson.M{"currentBattleId": battleID}})
+	_, _ = m.UsersCollection.UpdateOne(context.Background(), bson.M{"_id": p2ID}, bson.M{"$set": bson.M{"currentBattleId": battleID}})
+
+	return battleID, nil
+}

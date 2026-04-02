@@ -2,6 +2,7 @@ package utils
 
 import (
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -32,7 +33,109 @@ var (
 	ConnectionPoolInstance = &Connection{
 		Pool: make(map[string]*websocket.Conn),
 	}
+
+	// MatchPoolInstance tracks active matches.
+	MatchPoolInstance = &MatchPool{
+		Matches: make(map[string]*Match),
+	}
+
+	// RejectionRegistryInstance tracks rejected matches for 5 minutes.
+	RejectionRegistryInstance = &RejectionRegistry{
+		Rejections: make(map[string]time.Time),
+	}
 )
+
+type RejectionRegistry struct {
+	Rejections map[string]time.Time
+	mu         sync.RWMutex
+}
+
+func (rr *RejectionRegistry) AddRejection(u1, u2 string) {
+	rr.mu.Lock()
+	defer rr.mu.Unlock()
+	key := rr.getRejectionKey(u1, u2)
+	rr.Rejections[key] = time.Now().Add(5 * time.Minute)
+}
+
+func (rr *RejectionRegistry) IsRejected(u1, u2 string) bool {
+	rr.mu.RLock()
+	defer rr.mu.RUnlock()
+	key := rr.getRejectionKey(u1, u2)
+	expiry, exists := rr.Rejections[key]
+	if !exists {
+		return false
+	}
+	if time.Now().After(expiry) {
+		return false
+	}
+	return true
+}
+
+func (rr *RejectionRegistry) getRejectionKey(u1, u2 string) string {
+	if u1 < u2 {
+		return u1 + ":" + u2
+	}
+	return u2 + ":" + u1
+}
+
+func (rr *RejectionRegistry) StartCleanup() {
+	go func() {
+		for {
+			time.Sleep(1 * time.Minute)
+			rr.mu.Lock()
+			for k, v := range rr.Rejections {
+				if time.Now().After(v) {
+					delete(rr.Rejections, k)
+				}
+			}
+			rr.mu.Unlock()
+		}
+	}()
+}
+
+type Match struct {
+	User1      *User
+	User2      *User
+	Accepted1  bool
+	Accepted2  bool
+	MatchID    string
+	Difficulty string
+}
+
+type MatchPool struct {
+	Matches map[string]*Match
+	mu      sync.RWMutex
+}
+
+func (mp *MatchPool) AddMatch(match *Match) {
+	mp.mu.Lock()
+	defer mp.mu.Unlock()
+	mp.Matches[match.MatchID] = match
+}
+
+func (mp *MatchPool) GetMatch(id string) (*Match, bool) {
+	mp.mu.RLock()
+	defer mp.mu.RUnlock()
+	m, exists := mp.Matches[id]
+	return m, exists
+}
+
+func (mp *MatchPool) RemoveMatch(id string) {
+	mp.mu.Lock()
+	defer mp.mu.Unlock()
+	delete(mp.Matches, id)
+}
+
+func (mp *MatchPool) GetMatchByConnID(connID string) (*Match, bool) {
+	mp.mu.RLock()
+	defer mp.mu.RUnlock()
+	for _, m := range mp.Matches {
+		if m.User1.AllotedConnID == connID || m.User2.AllotedConnID == connID {
+			return m, true
+		}
+	}
+	return nil, false
+}
 
 // AddConnection adds a new WebSocket connection to the pool with the given AllotedConnID.
 // It locks the pool for writing, adds the connection to the pool, and then unlocks it.
