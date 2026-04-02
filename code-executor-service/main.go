@@ -175,6 +175,7 @@ func main() {
 	go api.StartService()
 	go matchmaking.MatchmakingService(ctx)
 	go matchmaking.ProcessMatchmaking(ctx)
+	utils.RejectionRegistryInstance.StartCleanup()
 	// Initialize GitHub Client
 	gh.InitGH()
 

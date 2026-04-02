@@ -361,11 +361,31 @@ type User struct {
 	Name          string        `bson:"name"`
 	Rating        int           `bson:"rating"`
 	AllotedConnID string        `bson:"allotedConnId,omitempty"`
+	CurrentBattleID bson.ObjectID `bson:"currentBattleId,omitempty"`
+	Difficulty    string        `bson:"difficulty,omitempty"`
+}
+
+type BattleProblem struct {
+	Difficulty string `bson:"difficulty"`
+	ID         int    `bson:"id"`
+}
+
+type Battle struct {
+	ID         bson.ObjectID   `bson:"_id,omitempty"`
+	Player1    bson.ObjectID   `bson:"player1"`
+	Player2    bson.ObjectID   `bson:"player2"`
+	Status     string          `bson:"status"`
+	CreatedAt  time.Time       `bson:"createdAt"`
+	Difficulty string          `bson:"difficulty"`
+	Type       string          `bson:"type"`
+	Problems   []BattleProblem `bson:"problems"`
+	StartTime  time.Time       `bson:"startTime,omitempty"`
 }
 
 type Token struct {
-	Username string
-	Expires  time.Time
+	Username   string
+	Difficulty string
+	Expires    time.Time
 }
 
 type TokenStore struct {
@@ -378,7 +398,7 @@ var TokenStoreInstance = &TokenStore{
 	mu:    sync.Mutex{},
 }
 
-func (tc *TokenStore) GenerateToken(username string) string {
+func (tc *TokenStore) GenerateToken(username string, difficulty string) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 
@@ -395,29 +415,34 @@ func (tc *TokenStore) GenerateToken(username string) string {
 
 	tc.mu.Lock()
 	tc.store[token] = Token{
-		Username: username,
-		Expires:  time.Now().Add(10 * time.Minute),
+		Username:   username,
+		Difficulty: difficulty,
+		Expires:    time.Now().Add(10 * time.Minute),
 	}
 	tc.mu.Unlock()
 
 	return token
 }
 
-func (tc *TokenStore) VerifyToken(token, username string) bool {
+func (tc *TokenStore) VerifyToken(token, username string) (string, bool) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
 
 	data, ok := tc.store[token]
 	if !ok {
-		return false
+		return "", false
 	}
 
 	if time.Now().After(data.Expires) {
 		delete(tc.store, token)
-		return false
+		return "", false
 	}
 
-	return data.Username == username
+	if data.Username != username {
+		return "", false
+	}
+
+	return data.Difficulty, true
 }
 
 func (tc *TokenStore) ConsumeToken(token string) {

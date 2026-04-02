@@ -1,61 +1,70 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { Loader2, User, Trophy, Play, XCircle, Swords, Zap, Shield, Target } from "lucide-react";
 
 interface BattleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialOpponent?: string;
+  initialMode?: "private" | "arena";
 }
 
-export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, initialOpponent = "" }) => {
+export const BattleModal: React.FC<BattleModalProps> = ({ 
+  open, 
+  onOpenChange, 
+  initialOpponent = "",
+  initialMode = "arena"
+}) => {
   const router = useRouter();
+  const { data: session } = useSession();
   
+  const [mode, setMode] = useState<"private" | "arena">(initialMode);
+  const [difficulty, setDifficulty] = useState<string>("medium");
+  
+  // States
   const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
-  const [difficulty, setDifficulty] = useState<string>("");
-  const [status, setStatus] = useState<"idle" | "sending" | "waiting">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "searching" | "found" | "accepted" | "starting">("idle");
   const [timeLeft, setTimeLeft] = useState(60);
   const [inviteId, setInviteId] = useState<string | null>(null);
 
-  // Sync initialOpponent to state when modal opens
-  useEffect(() => {
-    if (open && initialOpponent) {
-      setOpponentUsername(initialOpponent);
-    }
-  }, [open, initialOpponent]);
+  // Arena Mode State
+  const [searchTime, setSearchTime] = useState(0);
+  const [arenaOpponent, setArenaOpponent] = useState<{ username: string; rating: number } | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
-  // Send Invitation Request
+  // Sync initial state
+  useEffect(() => {
+    if (open) {
+      if (initialOpponent) {
+        setOpponentUsername(initialOpponent);
+        setMode("private");
+      } else {
+        setMode(initialMode);
+      }
+    }
+  }, [open, initialOpponent, initialMode]);
+
+  // Private: Send Invite
   const handleSendInvite = async () => {
     if (!opponentUsername.trim()) {
-      toast.error("Opponent's Username is required.");
+      toast.error("Enter a username.");
       return;
     }
-    if (!difficulty) {
-      toast.error("Please select a difficulty level.");
-      return;
-    }
-
     setStatus("sending");
-
     try {
       const res = await fetch("/api/battle/invite", {
         method: "POST",
@@ -66,107 +75,142 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, in
           type: "1v1"
         })
       });
-
       const data = await res.json();
-      
       if (!res.ok) {
-        toast.error(data.message || "Failed to send invitation");
+        toast.error(data.message || "Invite failed.");
         setStatus("idle");
         return;
       }
-
-      toast.success("Invitation sent successfully!");
+      toast.success("Invite sent.");
       setInviteId(data.inviteId);
       setStatus("waiting");
       setTimeLeft(60);
-
     } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while sending the invitation.");
+      toast.error("Error sending invite.");
       setStatus("idle");
     }
   };
 
-  // Timer Effect
+  // Private: Polling
   useEffect(() => {
-    if (status !== "waiting") return;
-
-    if (timeLeft <= 0) {
-      const timeoutId = setTimeout(() => {
-        toast.error("Invitation expired.");
-        setStatus("idle");
-        onOpenChange(false);
-      }, 0);
-      return () => clearTimeout(timeoutId);
-    }
-
-    const timerId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timerId);
-  }, [status, timeLeft, onOpenChange]);
-
-  // Polling Effect
-  useEffect(() => {
-    if (status !== "waiting" || !inviteId) return;
-
+    if (mode !== "private" || status !== "waiting" || !inviteId) return;
     const pollId = setInterval(async () => {
       try {
         const res = await fetch(`/api/battle/invite/${inviteId}`);
         const data = await res.json();
-        
         if (data.success) {
           if (data.status === "Accepted" && data.battleId) {
-            toast.success("Battle Accepted!");
             router.push(`/battle/${data.battleId}`);
-          } else if (data.status === "Rejected") {
-            toast.error("Invitation rejected by opponent.");
-            setStatus("idle");
-            setInviteId(null);
             onOpenChange(false);
+          } else if (data.status === "Rejected") {
+            toast.error("Invite rejected.");
+            setStatus("idle");
           } else if (data.status === "Expired") {
-             toast.error("Invitation expired.");
+             toast.error("Invite expired.");
              setStatus("idle");
-             setInviteId(null);
-             onOpenChange(false);
           }
         }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
+      } catch (err) {}
     }, 2000);
-
     return () => clearInterval(pollId);
-  }, [status, inviteId, router, onOpenChange]);
+  }, [mode, status, inviteId, router, onOpenChange]);
 
-  // Handle modal close
-  const handleOpenChange = (newOpen: boolean) => {
-    // Prevent accidental closing while waiting
-    if (!newOpen && status === "waiting") {
-        toast.error("You are currently waiting for an opponent. If you wish to cancel, let the timer expire.");
+  // Arena: Search
+  const startArenaSearch = async () => {
+    if (!session?.user) {
+      toast.error("Login to play.");
+      return;
+    }
+    setStatus("searching");
+    try {
+      const resp = await fetch("/api/matchmaking/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ difficulty }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        toast.error(data.error || "Matchmaking error.");
+        setStatus("idle");
         return;
+      }
+      
+      const wsUrl = `ws://localhost:6970/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+
+      socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.user && msg.rating !== undefined) {
+          setArenaOpponent({ username: msg.user, rating: msg.rating });
+          setStatus("found");
+        } else if (msg.action === "battle_begin") {
+          setStatus("starting");
+          router.push(`/battle/${msg.battleId}`);
+          onOpenChange(false);
+        } else if (msg.action === "match_rejected") {
+          toast.info("Match rejected.");
+          setStatus("searching");
+        }
+      };
+
+      socket.onclose = () => {
+        if (status === "searching" || status === "found") setStatus("idle");
+      };
+
+    } catch (err) {
+      setStatus("idle");
+    }
+  };
+
+  const stopArenaSearch = () => {
+    if (socketRef.current) socketRef.current.close();
+    setStatus("idle");
+    setSearchTime(0);
+  };
+
+  const handleArenaAccept = () => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ action: "accept" }));
+      setStatus("accepted");
+    }
+  };
+
+  const handleArenaReject = () => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ action: "reject" }));
+      stopArenaSearch();
+      onOpenChange(false);
+      toast.info("Match rejected.");
+    }
+  };
+
+  // Timers
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (status === "waiting") {
+      interval = setInterval(() => setTimeLeft(p => p - 1), 1000);
+    } else if (status === "searching") {
+      interval = setInterval(() => setSearchTime(p => p + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "waiting" && timeLeft <= 0) setStatus("idle");
+  }, [status, timeLeft]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && (status === "waiting" || status === "searching" || status === "found" || status === "accepted")) {
+        if (!confirm("Exit this battle setup?")) return;
+    }
+    if (!newOpen) {
+      stopArenaSearch();
+      setStatus("idle");
     }
     onOpenChange(newOpen);
   };
 
-  // Reset state when closed
-  useEffect(() => {
-    if (!open) {
-      // Use a timeout to reset state asynchronously.
-      // This fixes the React warning and allows the modal close animation to finish smoothly.
-      const resetTimer = setTimeout(() => {
-        setStatus("idle");
-        setOpponentUsername("");
-        setDifficulty("");
-        setInviteId(null);
-      }, 300);
-      
-      return () => clearTimeout(resetTimer);
-    }
-  }, [open]);
-
-  // Format time (ex: 03:00)
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
@@ -175,78 +219,153 @@ export const BattleModal: React.FC<BattleModalProps> = ({ open, onOpenChange, in
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md bg-zinc-950 text-white border-zinc-800">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold tracking-tight text-center">
-            Battle Selection
+      <DialogContent className="sm:max-w-md bg-zinc-950 text-white border-zinc-800 p-6 rounded-3xl">
+        <DialogHeader className="mb-6">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Swords className="w-5 h-5 text-green-500" />
+            {(status === "idle" || status === "sending") ? "Start Battle" : status === "searching" ? "Searching Arena" : "Matchmaking"}
           </DialogTitle>
-          <DialogDescription className="text-center text-zinc-400">
-            {status === "idle" ? "Challenge a friend to a coding battle." : "Waiting for opponent..."}
+          <DialogDescription className="text-zinc-500">
+            {(status === "idle" || status === "sending") && "Choose your mode and difficulty to begin."}
+            {status === "searching" && "Looking for a worthy opponent..."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 py-4">
-          {status === "idle" || status === "sending" ? (
+        {/* Mode Selector */}
+        {(status === "idle" || status === "sending") && (
+          <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 mb-6">
+            <button 
+              onClick={() => setMode("arena")}
+              disabled={status === "sending"}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === "arena" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"} ${status === "sending" ? "opacity-50" : ""}`}
+            >
+              Arena
+            </button>
+            <button 
+              onClick={() => setMode("private")}
+              disabled={status === "sending"}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === "private" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"} ${status === "sending" ? "opacity-50" : ""}`}
+            >
+              Private (Invite)
+            </button>
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {(status === "idle" || status === "sending") && (
             <>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="opponent">Opponent Username</Label>
-                <Input
-                  id="opponent"
-                  placeholder="Enter username"
-                  className="bg-zinc-900 border-zinc-800 focus-visible:ring-green-500"
-                  value={opponentUsername}
-                  onChange={(e) => setOpponentUsername(e.target.value)}
-                  disabled={status === "sending"}
-                />
+              {/* Difficulty Row */}
+              <div className="flex flex-col gap-3">
+                <Label className="text-xs font-bold text-zinc-500">Difficulty</Label>
+                <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 gap-1">
+                  {['easy', 'medium', 'hard'].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDifficulty(d)}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                        difficulty === d 
+                        ? "bg-green-600/20 text-green-500 border border-green-500/30" 
+                        : "text-zinc-500 hover:text-zinc-400"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="difficulty">Battle Difficulty</Label>
-                <Select
-                  value={difficulty}
-                  onValueChange={setDifficulty}
-                  disabled={status === "sending"}
+              {mode === "private" ? (
+                <div className="space-y-4 pt-2">
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-xs font-bold text-zinc-500">Friend's Username</Label>
+                    <Input
+                      placeholder="e.g. coder_pro"
+                      className="bg-zinc-900 border-zinc-800 h-10 rounded-xl"
+                      value={opponentUsername}
+                      onChange={(e) => setOpponentUsername(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSendInvite}
+                    disabled={status === "sending" || !opponentUsername}
+                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12 rounded-xl"
+                  >
+                    {status === "sending" ? "Sending..." : "Send Invite"}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={startArenaSearch}
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12 rounded-xl mt-4"
                 >
-                  <SelectTrigger className="bg-zinc-900 border-zinc-800 focus:ring-green-500">
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 text-white border-zinc-800">
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
+                  Enter Arena
+                </Button>
+              )}
+            </>
+          )}
+
+          {status === "searching" && (
+            <div className="flex flex-col items-center py-6 gap-6">
+              <Loader2 className="w-10 h-10 text-green-500 animate-spin" />
+              <div className="text-center">
+                <p className="text-2xl font-mono font-bold text-white">{formatTime(searchTime)}</p>
+                <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">Searching... ({difficulty})</p>
+              </div>
+              <Button variant="ghost" onClick={stopArenaSearch} className="text-zinc-600 hover:text-red-500 uppercase text-[10px] font-bold">
+                Cancel
+              </Button>
+            </div>
+          )}
+
+          {status === "waiting" && (
+            <div className="flex flex-col items-center py-6 gap-6">
+              <Loader2 className="w-10 h-10 text-zinc-500 animate-spin" />
+              <div className="text-center">
+                <p className="text-2xl font-mono font-bold text-white">{formatTime(timeLeft)}</p>
+                <p className="text-xs text-zinc-500 mt-1">Waiting for {opponentUsername}...</p>
+              </div>
+            </div>
+          )}
+
+          {(status === "found" || status === "accepted") && arenaOpponent && (
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
+                     <User className="w-5 h-5 text-zinc-500" />
+                   </div>
+                   <div>
+                     <p className="text-sm font-bold">{arenaOpponent.username}</p>
+                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                       <Trophy className="w-3 h-3 text-green-500" />
+                       {arenaOpponent.rating} MMR
+                     </div>
+                   </div>
+                 </div>
+                 <div className="text-xs font-black italic text-zinc-700">FOUND</div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="type">Battle Type</Label>
-                <Select defaultValue="1v1" disabled>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-800 opacity-70">
-                    <SelectValue placeholder="1v1" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1v1">1v1</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Button
+                  onClick={handleArenaAccept}
+                  disabled={status === "accepted"}
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12 rounded-xl"
+                >
+                  {status === "accepted" ? "Ready..." : "Accept Match"}
+                </Button>
+                {status === "found" && (
+                  <Button variant="ghost" onClick={handleArenaReject} className="text-zinc-600 hover:text-red-500 text-xs font-bold">
+                    Reject
+                  </Button>
+                )}
               </div>
+            </div>
+          )}
 
-              <Button
-                onClick={handleSendInvite}
-                disabled={status === "sending" || !opponentUsername || !difficulty}
-                className="w-full bg-green-600 hover:bg-green-700 text-white mt-2 transition-colors relative"
-              >
-                {status === "sending" ? "Sending..." : "Send Invitation"}
-              </Button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 gap-4">
-                <div className="w-16 h-16 rounded-full border-t-2 border-r-2 border-green-500 animate-spin mb-2"></div>
-                <div className="text-4xl font-mono text-green-500 tracking-widest font-bold">
-                  {formatTime(timeLeft)}
-                </div>
-                <div className="text-sm text-zinc-400">
-                  Invitation Expires In
-                </div>
+          {status === "starting" && (
+            <div className="flex flex-col items-center py-10 gap-4">
+              <Loader2 className="w-10 h-10 text-green-500 animate-spin" />
+              <p className="text-sm font-bold uppercase tracking-widest text-green-500">Connecting...</p>
             </div>
           )}
         </div>

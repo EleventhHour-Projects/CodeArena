@@ -16,6 +16,7 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"private" | "arena">("arena");
   const [loading, setLoading] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [challengeUsername, setChallengeUsername] = useState("");
@@ -26,6 +27,7 @@ export default function Home() {
     const c = searchParams.get("challenge");
     if (c) {
       setChallengeUsername(c);
+      setModalMode("private");
       setModalOpen(true);
       // Clean up URL
       router.replace("/");
@@ -41,6 +43,7 @@ export default function Home() {
         toast.info("You are already in a battle. Redirecting...");
         router.push(`/battle/${data.battleId}`);
       } else {
+        setModalMode("arena");
         setModalOpen(true);
       }
     } catch (err) {
@@ -160,6 +163,14 @@ export default function Home() {
             </button>
           </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="group relative"
+          >
+          </motion.div>
+
           {/* Friends list */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -213,6 +224,7 @@ export default function Home() {
         open={modalOpen}
         onOpenChange={(o) => { setModalOpen(o); if (!o) setChallengeUsername(""); }}
         initialOpponent={challengeUsername}
+        initialMode={modalMode}
       />
     </div>
   );

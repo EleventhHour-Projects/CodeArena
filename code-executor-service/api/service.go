@@ -207,7 +207,8 @@ func ServerPID(c fiber.Ctx) error {
 
 func RegisterForMatchmaking(c fiber.Ctx) error {
 	var req struct {
-		UserID string `json:"user_id"`
+		UserID     string `json:"user_id"`
+		Difficulty string `json:"difficulty"`
 	}
 	b := c.Body()
 	err := json.Unmarshal(b, &req)
@@ -218,7 +219,13 @@ func RegisterForMatchmaking(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).SendString("User not found")
 	}
-	tkn := utils.TokenStoreInstance.GenerateToken(u.Username)
+	
+	diff := req.Difficulty
+	if diff == "" {
+		diff = "medium"
+	}
+	
+	tkn := utils.TokenStoreInstance.GenerateToken(u.Username, diff)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"token":   tkn,
