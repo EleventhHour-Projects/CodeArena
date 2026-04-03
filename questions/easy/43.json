@@ -7,9 +7,9 @@
   ],
   "title": "Sorting the Sentence",
   "difficulty": "Easy",
-  "description": "You are given a shuffled sentence s.\n\nEach word has a number at the end (1 to 9)\nThe number tells the original position of the word\nTask\nRearrange the words based on their numbers\nRemove the numbers\nReturn the original sentence\nExample\n\nExample 1\n\n\"is2 sentence4 This1 a3\"\n→ \"This is a sentence\"\n\nExample 2\n\n\"Myself2 Me1 I4 and3\"\n→ \"Me Myself and I\"\nRules\nWords are separated by one space\nEach word ends with a digit (1–9)\nNo leading/trailing spaces\nMax 9 words\n\nConstraints:\n\n2 <= s.length <= 200\ns consists of lowercase and uppercase English letters, spaces, and digits from 1 to 9.\nThe number of words in s is between 1 and 9.\nThe words in s are separated by a single space.\ns contains no leading or trailing spaces.",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a shuffled sentence s.\n\nEach word has a number at the end (1 to 9)\nThe number tells the original position of the word\nTask\nRearrange the words based on their numbers\nRemove the numbers\nReturn the original sentence\nExample\n\nExample 1\n\n\"is2 sentence4 This1 a3\"\n→ \"This is a sentence\"\n\nExample 2\n\n\"Myself2 Me1 I4 and3\"\n→ \"Me Myself and I\"\nRules\nWords are separated by one space\nEach word ends with a digit (1–9)\nNo leading/trailing spaces\nMax 9 words",
+  "input_format": "The input contains a single string.",
+  "output_format": "Print a single line string.",
+  "constraints": "2 <= s.length <= 200\ns consists of lowercase and uppercase English letters, spaces, and digits from 1 to 9.\nThe number of words in s is between 1 and 9.\nThe words in s are separated by a single space.\ns contains no leading or trailing spaces.",
   "verified": true
 }

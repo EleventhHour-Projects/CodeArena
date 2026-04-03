@@ -4,9 +4,9 @@
   "tags": [],
   "title": "First Matching Character From Both Ends",
   "difficulty": "Easy",
-  "description": "You are given a string s of length n.\n\nFind the smallest index i such that:\n\ns[i] == s[n - i - 1]\nTask\nCompare characters from start and end (mirror positions)\nReturn the smallest index i where both characters match\nIf no such index exists, return -1\nImportant Note\nIf i == n - i - 1 (middle character in odd length),\nit always matches itself\nExamples\n\nExample 1\n\ns = \"abcacbd\"\n→ 1\n\nExample 2\n\ns = \"abc\"\n→ 1\n\nExample 3\n\ns = \"abcdab\"\n→ -1\nConstraints\n1 ≤ n ≤ 100\nOnly lowercase letters",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a string s of length n.\n\nFind the smallest index i such that:\n\ns[i] == s[n - i - 1]\nTask\nCompare characters from start and end (mirror positions)\nReturn the smallest index i where both characters match\nIf no such index exists, return -1\nImportant Note\nIf i == n - i - 1 (middle character in odd length),\nit always matches itself\nExamples\n\nExample 1\n\ns = \"abcacbd\"\n→ 1\n\nExample 2\n\ns = \"abc\"\n→ 1\n\nExample 3\n\ns = \"abcdab\"\n→ -1",
+  "input_format": "The input contains a single string.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ n ≤ 100\nOnly lowercase letters",
   "verified": true
 }

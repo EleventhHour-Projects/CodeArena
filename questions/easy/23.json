@@ -8,9 +8,9 @@
   ],
   "title": "Split a String in Balanced Strings",
   "difficulty": "Easy",
-  "description": "A string is called balanced if it contains an equal number of 'L' and 'R' characters.\n\nYou are given a balanced string s consisting only of 'L' and 'R'.\n\nTask\n\nSplit the string into the maximum number of non-empty substrings such that:\n\nEach substring is balanced\n\nReturn the maximum number of balanced substrings you can obtain.\n\nExamples\n\nExample 1\nInput: s = \"RLRRLLRLRL\"\nOutput: 4\n\nExplanation:\nPossible split: \"RL\", \"RRLL\", \"RL\", \"RL\"\n\nExample 2\nInput: s = \"RLRRRLLRLL\"\nOutput: 2\n\nExplanation:\nPossible split: \"RL\", \"RRRLLRLL\"\nOther splits may create unbalanced substrings, which are not allowed.\n\nExample 3\nInput: s = \"LLLLRRRR\"\nOutput: 1\n\nExplanation:\nOnly one balanced substring: \"LLLLRRRR\"\n\nConstraints\n2 ≤ s.length ≤ 1000\ns[i] ∈ {'L', 'R'}\ns is guaranteed to be balanced",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "A string is called balanced if it contains an equal number of 'L' and 'R' characters.\n\nYou are given a balanced string s consisting only of 'L' and 'R'.\n\nTask\n\nSplit the string into the maximum number of non-empty substrings such that:\n\nEach substring is balanced\n\nReturn the maximum number of balanced substrings you can obtain.\n\nExamples\n\nExample 1\nInput: s = \"RLRRLLRLRL\"\nOutput: 4\n\nExplanation:\nPossible split: \"RL\", \"RRLL\", \"RL\", \"RL\"\n\nExample 2\nInput: s = \"RLRRRLLRLL\"\nOutput: 2\n\nExplanation:\nPossible split: \"RL\", \"RRRLLRLL\"\nOther splits may create unbalanced substrings, which are not allowed.\n\nExample 3\nInput: s = \"LLLLRRRR\"\nOutput: 1\n\nExplanation:\nOnly one balanced substring: \"LLLLRRRR\"",
+  "input_format": "The input contains a single string.",
+  "output_format": "Print a single integer.",
+  "constraints": "2 ≤ s.length ≤ 1000\ns[i] ∈ {'L', 'R'}\ns is guaranteed to be balanced",
   "verified": true
 }

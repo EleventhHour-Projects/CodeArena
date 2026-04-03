@@ -8,9 +8,9 @@
   ],
   "title": "Relative Ranks",
   "difficulty": "Easy",
-  "description": "You are given an array score where each value is an athlete’s score.\n\nAll scores are unique\nHigher score → better rank\nRanking Rules\nHighest score → \"Gold Medal\"\n2nd highest → \"Silver Medal\"\n3rd highest → \"Bronze Medal\"\nFrom 4th onward → \"rank number\" (as string)\nTask\n\nReturn an array answer where:\n\nanswer[i] = rank of athlete at index i\nExamples\n\nExample 1\n\n[5,4,3,2,1]\n→ [\"Gold Medal\",\"Silver Medal\",\"Bronze Medal\",\"4\",\"5\"]\n\nExample 2\n\n[10,3,8,9,4]\n→ [\"Gold Medal\",\"5\",\"Bronze Medal\",\"Silver Medal\",\"4\"]\nConstraints\n1 ≤ n ≤ 10000\n0 ≤ score[i] ≤ 10^6\nAll values are unique",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given an array score where each value is an athlete’s score.\n\nAll scores are unique\nHigher score → better rank\nRanking Rules\nHighest score → \"Gold Medal\"\n2nd highest → \"Silver Medal\"\n3rd highest → \"Bronze Medal\"\nFrom 4th onward → \"rank number\" (as string)\nTask\n\nReturn an array answer where:\n\nanswer[i] = rank of athlete at index i\nExamples\n\nExample 1\n\n[5,4,3,2,1]\n→ [\"Gold Medal\",\"Silver Medal\",\"Bronze Medal\",\"4\",\"5\"]\n\nExample 2\n\n[10,3,8,9,4]\n→ [\"Gold Medal\",\"5\",\"Bronze Medal\",\"Silver Medal\",\"4\"]",
+  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
+  "output_format": "Print a single line string.",
+  "constraints": "1 ≤ n ≤ 10000\n0 ≤ score[i] ≤ 10^6\nAll values are unique",
   "verified": true
 }

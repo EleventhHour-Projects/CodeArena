@@ -8,9 +8,9 @@
   ],
   "title": "Baseball Game",
   "difficulty": "Easy",
-  "description": "You are given a list of operations ops for a game.\n\nYou maintain a list called record (initially empty).\n\nProcess each operation:\n\nIf it’s a number x → add x to record\n\"+\" → add sum of last two scores\n\"D\" → add double of last score\n\"C\" → remove the last score\nTask\n\nAfter processing all operations, return the sum of all values in record.\n\nExamples\n\nExample 1\n\nInput: [\"5\",\"2\",\"C\",\"D\",\"+\"]\nOutput: 30\n\nExample 2\n\nInput: [\"5\",\"-2\",\"4\",\"C\",\"D\",\"9\",\"+\",\"+\"]\nOutput: 27\n\nExample 3\n\nInput: [\"1\",\"C\"]\nOutput: 0\nConstraints\n1 ≤ ops.length ≤ 1000\nEach operation is:\n\"+\", \"D\", \"C\"\nor an integer in range [-30000, 30000]\nOperations are always valid (no invalid removals or missing values)",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a list of operations ops for a game.\n\nYou maintain a list called record (initially empty).\n\nProcess each operation:\n\nIf it’s a number x → add x to record\n\"+\" → add sum of last two scores\n\"D\" → add double of last score\n\"C\" → remove the last score\nTask\n\nAfter processing all operations, return the sum of all values in record.\n\nExamples\n\nExample 1\n\nInput: [\"5\",\"2\",\"C\",\"D\",\"+\"]\nOutput: 30\n\nExample 2\n\nInput: [\"5\",\"-2\",\"4\",\"C\",\"D\",\"9\",\"+\",\"+\"]\nOutput: 27\n\nExample 3\n\nInput: [\"1\",\"C\"]\nOutput: 0",
+  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated values.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ ops.length ≤ 1000\nEach operation is:\n\"+\", \"D\", \"C\"\nor an integer in range [-30000, 30000]\nOperations are always valid (no invalid removals or missing values)",
   "verified": true
 }
