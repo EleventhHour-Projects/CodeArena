@@ -19,6 +19,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// handler is a function that handles the websocket connection for matchmaking
 func handler(w http.ResponseWriter, r *http.Request) {
 	tkn := r.URL.Query().Get("token")
 	username := r.URL.Query().Get("username")
@@ -90,10 +91,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 						"action":   "battle_begin",
 						"battleId": battleObjectID.Hex(),
 					}
-					
+
 					conn1, ok1 := utils.ConnectionPoolInstance.GetConnection(match.User1.AllotedConnID)
 					conn2, ok2 := utils.ConnectionPoolInstance.GetConnection(match.User2.AllotedConnID)
-					
+
 					if ok1 {
 						conn1.WriteJSON(startMsg)
 						conn1.Close()
@@ -102,14 +103,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 						conn2.WriteJSON(startMsg)
 						conn2.Close()
 					}
-					
+
 					// Cleanup
 					utils.MatchPoolInstance.RemoveMatch(match.MatchID)
 					utils.ConnectionPoolInstance.RemoveConnection(match.User1.AllotedConnID)
 					utils.ConnectionPoolInstance.RemoveConnection(match.User2.AllotedConnID)
 					utils.UserPoolInstance.RemoveUser(match.User1.AllotedConnID)
 					utils.UserPoolInstance.RemoveUser(match.User2.AllotedConnID)
-					break 
+					break
 				}
 			}
 		} else if msg.Action == "reject" {
@@ -117,22 +118,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			if ok {
 				// Blacklist the pair for 5 minutes
 				utils.RejectionRegistryInstance.AddRejection(match.User1.Username, match.User2.Username)
-				
+
 				// Notify both users that match was rejected and return them to pool
 				rejectMsg := map[string]interface{}{
 					"action": "match_rejected",
 				}
-				
+
 				conn1, ok1 := utils.ConnectionPoolInstance.GetConnection(match.User1.AllotedConnID)
 				conn2, ok2 := utils.ConnectionPoolInstance.GetConnection(match.User2.AllotedConnID)
-				
+
 				if ok1 {
 					conn1.WriteJSON(rejectMsg)
 				}
 				if ok2 {
 					conn2.WriteJSON(rejectMsg)
 				}
-				
+
 				// Cleanup match but keep users in pool (they will be re-matched later)
 				utils.MatchPoolInstance.RemoveMatch(match.MatchID)
 			}
@@ -145,6 +146,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// MatchmakingService is a function that starts the matchmaking service
 func MatchmakingService(ctx context.Context) {
 	port := "6970"
 	http.HandleFunc("/wss/matchmaking", handler)
@@ -155,11 +157,13 @@ func MatchmakingService(ctx context.Context) {
 	}
 }
 
+// notification is a struct that is used to send notifications to users
 type notification struct {
 	User   string `json:"user"`
 	Rating int    `json:"rating"`
 }
 
+// NotifyUser is a function that sends notifications to users about the match
 func NotifyUser(user1 *utils.User, user2 *utils.User) {
 	conn1, ok1 := utils.ConnectionPoolInstance.GetConnection(user1.AllotedConnID)
 	conn2, ok2 := utils.ConnectionPoolInstance.GetConnection(user2.AllotedConnID)
