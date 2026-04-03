@@ -7,9 +7,9 @@
   ],
   "title": "Matrix Diagonal Sum",
   "difficulty": "Easy",
-  "description": "You are given a square matrix mat of size n × n.\n\nFind the sum of:\n\nAll elements on the main diagonal (top-left to bottom-right)\nAll elements on the secondary diagonal (top-right to bottom-left)\n\nImportant:\n\nIf an element lies on both diagonals (only happens when n is odd), count it only once.\nExamples\n\nExample 1\n\nInput:\nmat = [[1,2,3],\n       [4,5,6],\n       [7,8,9]]\n\nOutput: 25\n\nDiagonals: 1 + 5 + 9 + 3 + 7\n\nExample 2\n\nInput:\nmat = [[1,1,1,1],\n       [1,1,1,1],\n       [1,1,1,1],\n       [1,1,1,1]]\n\nOutput: 8\n\nExample 3\n\nInput:\nmat = [[5]]\n\nOutput: 5\nConstraints\n1 ≤ n ≤ 100\nmat is a square matrix\n1 ≤ mat[i][j] ≤ 100",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a square matrix mat of size n × n.\n\nFind the sum of:\n\nAll elements on the main diagonal (top-left to bottom-right)\nAll elements on the secondary diagonal (top-right to bottom-left)\n\nImportant:\n\nIf an element lies on both diagonals (only happens when n is odd), count it only once.\nExamples\n\nExample 1\n\nInput:\nmat = [[1,2,3],\n       [4,5,6],\n       [7,8,9]]\n\nOutput: 25\n\nDiagonals: 1 + 5 + 9 + 3 + 7\n\nExample 2\n\nInput:\nmat = [[1,1,1,1],\n       [1,1,1,1],\n       [1,1,1,1],\n       [1,1,1,1]]\n\nOutput: 8\n\nExample 3\n\nInput:\nmat = [[5]]\n\nOutput: 5",
+  "input_format": "The first line contains two integers m and n.\nThe next m lines each contain n space-separated integers.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ n ≤ 100\nmat is a square matrix\n1 ≤ mat[i][j] ≤ 100",
   "verified": true
 }

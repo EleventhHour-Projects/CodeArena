@@ -9,9 +9,9 @@
   ],
   "title": "Next Greater Element I",
   "difficulty": "Easy",
-  "description": "You are given two arrays:\n\nnums2 → the main array\nnums1 → a subset of nums2\n\nFor each element in nums1, find its next greater element in nums2.\n\nWhat is “Next Greater Element”?\n\nFor a value x in nums2:\n\nLook to the right of x\nFind the first element greater than x\nIf none exists → answer is -1\nTask\n\nReturn an array ans where:\n\nans[i] = next greater element of nums1[i] in nums2\nExamples\n\nExample 1\n\nnums1 = [4,1,2]\nnums2 = [1,3,4,2]\n→ [-1,3,-1]\n\nExample 2\n\nnums1 = [2,4]\nnums2 = [1,2,3,4]\n→ [3,-1]\nConstraints\n1 ≤ nums1.length ≤ nums2.length ≤ 1000\nAll elements are unique\nnums1 is a subset of nums2",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given two arrays:\n\nnums2 → the main array\nnums1 → a subset of nums2\n\nFor each element in nums1, find its next greater element in nums2.\n\nWhat is “Next Greater Element”?\n\nFor a value x in nums2:\n\nLook to the right of x\nFind the first element greater than x\nIf none exists → answer is -1\nTask\n\nReturn an array ans where:\n\nans[i] = next greater element of nums1[i] in nums2\nExamples\n\nExample 1\n\nnums1 = [4,1,2]\nnums2 = [1,3,4,2]\n→ [-1,3,-1]\n\nExample 2\n\nnums1 = [2,4]\nnums2 = [1,2,3,4]\n→ [3,-1]",
+  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.\nThe third line contains an integer m.\nThe fourth line contains m space-separated integers.",
+  "output_format": "Print space-separated integers in one line.",
+  "constraints": "1 ≤ nums1.length ≤ nums2.length ≤ 1000\nAll elements are unique\nnums1 is a subset of nums2",
   "verified": true
 }
