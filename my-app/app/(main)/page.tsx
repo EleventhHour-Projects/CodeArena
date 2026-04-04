@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,7 +12,7 @@ import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { FriendsList } from "@/components/friends-list";
 import { useMounted } from "@/hooks/use-mounted";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
@@ -227,5 +227,13 @@ export default function Home() {
         initialMode={modalMode}
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
