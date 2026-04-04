@@ -1,12 +1,12 @@
 services:
   express-server:
     build:
-      context: ./express-ts-server
+      context: ./websocket
       dockerfile: Dockerfile
     ports:
       - "6767:6767"
     env_file:
-      - ./express-ts-server/.env
+      - ./websocket/.env
     # Override for Docker network
     environment:
       - REDIS_ADDR=redis:6379
