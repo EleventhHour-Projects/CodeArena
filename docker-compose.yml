@@ -19,6 +19,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "6969:6969"
+      - "6970:6970"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./questions:/questions
