@@ -53,8 +53,14 @@ func checkImage() error {
 	}
 	found := false
 	for _, img := range imgs.Items {
-		if img.RepoTags[0] == "gcc:13" {
-			found = true
+		for _, tag := range img.RepoTags {
+			if tag == "gcc:13" {
+				found = true
+				break
+			}
+		}
+		if found {
+			break
 		}
 	}
 	if found == true {
