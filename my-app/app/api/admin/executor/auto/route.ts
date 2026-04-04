@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const res = await fetch('http://127.0.0.1:6969/api/internal/auto', {
+    const res = await fetch('http://34.126.214.18:6969/api/internal/auto', {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
@@ -29,7 +29,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const res = await fetch('http://127.0.0.1:6969/api/internal/auto', {
+    const res = await fetch('http://34.126.214.18:6969/api/internal/auto', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         const userId = session.user.id;
 
         // Call the Go matchmaking service
-        const response = await fetch("http://localhost:6969/api/matchmaking/register", {
+        const response = await fetch("http://34.126.214.18:6969/api/matchmaking/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
