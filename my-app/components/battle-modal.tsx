@@ -223,7 +223,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md bg-zinc-950 text-white border-zinc-800 p-6 rounded-3xl">
+      <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-950 text-white border-zinc-800 p-6 rounded-3xl">
         <DialogHeader className="mb-6">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Swords className="w-5 h-5 text-green-500" />
