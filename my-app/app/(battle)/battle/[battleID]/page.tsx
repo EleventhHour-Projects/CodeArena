@@ -88,7 +88,7 @@ export default function BattlePage({ params }: PageProps) {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
-  // WebSocket Connection
+  // WebSocket Connection and Event Handling
   useEffect(() => {
     if (!session?.user || !battleID) return;
     const currentUserId = (session.user as any).id;
