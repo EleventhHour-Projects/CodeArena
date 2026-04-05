@@ -38,7 +38,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   // States
   const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
   const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "searching" | "found" | "accepted" | "starting">("idle");
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(45);
   const [inviteId, setInviteId] = useState<string | null>(null);
 
   // Arena Mode State
@@ -84,7 +84,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       toast.success("Invite sent.");
       setInviteId(data.inviteId);
       setStatus("waiting");
-      setTimeLeft(60);
+      setTimeLeft(45);
     } catch (err) {
       toast.error("Error sending invite.");
       setStatus("idle");
@@ -201,7 +201,11 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   }, [status, timeLeft]);
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen && (status === "waiting" || status === "searching" || status === "found" || status === "accepted")) {
+    if (!newOpen && status === "waiting") {
+      toast.error("You cannot close the invite modal until the timer expires.");
+      return;
+    }
+    if (!newOpen && (status === "searching" || status === "found" || status === "accepted")) {
         if (!confirm("Exit this battle setup?")) return;
     }
     if (!newOpen) {
@@ -338,7 +342,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
                      <p className="text-sm font-bold">{arenaOpponent.username}</p>
                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
                        <Trophy className="w-3 h-3 text-green-500" />
-                       {arenaOpponent.rating} MMR
+                       {arenaOpponent.rating} Rating
                      </div>
                    </div>
                  </div>
