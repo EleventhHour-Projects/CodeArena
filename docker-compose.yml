@@ -32,6 +32,21 @@ services:
     depends_on:
       - redis
 
+  frontend-service:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./my-app/.env.local
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - express-server
+      - executor-service
+
   redis:
     image: redis:alpine
     ports:
