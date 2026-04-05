@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     // Generate JWT
     const alg = 'HS256';
-    const token = await new SignJWT({ id: admin._id, username: admin.username, role: 'admin' })
+    const token = await new SignJWT({ id: admin._id.toString(), username: admin.username, role: 'admin' })
       .setProtectedHeader({ alg })
       .setIssuedAt()
       .setExpirationTime('24h') // 24 hours

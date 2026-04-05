@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import {
   LayoutDashboard,
   PlusCircle,
@@ -72,6 +74,22 @@ const adminNavItems = [
 export function AdminSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [adminUser, setAdminUser] = React.useState<{ username: string; image?: string } | null>(null);
+
+  React.useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const response = await fetch("/api/admin/me");
+        if (response.ok) {
+          const data = await response.json();
+          setAdminUser(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch admin info", error);
+      }
+    };
+    fetchAdmin();
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -174,12 +192,16 @@ export function AdminSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg bg-indigo-500/20 text-indigo-400">
-                      <User2 className="size-4" />
-                    </AvatarFallback>
+                    {adminUser?.image ? (
+                      <img src={adminUser.image} alt="Profile" className="h-full w-full object-cover rounded-lg" />
+                    ) : (
+                      <AvatarFallback className="rounded-lg bg-indigo-500/20 text-indigo-400">
+                        <Shield className="size-4" />
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <span className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Admin</span>
+                    <span className="truncate font-semibold">{adminUser?.username || "Admin"}</span>
                     <span className="truncate text-xs text-muted-foreground">
                       Control Center
                     </span>
@@ -191,12 +213,16 @@ export function AdminSidebar() {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarFallback className="rounded-lg bg-indigo-500/20 text-indigo-400">
-                        <User2 className="size-4" />
-                      </AvatarFallback>
+                      {adminUser?.image ? (
+                        <img src={adminUser.image} alt="Profile" className="h-full w-full object-cover rounded-lg" />
+                      ) : (
+                        <AvatarFallback className="rounded-lg bg-indigo-500/20 text-indigo-400">
+                          <Shield className="size-4" />
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">Administrator</span>
+                      <span className="truncate font-semibold">{adminUser?.username || "Administrator"}</span>
                       <span className="truncate text-xs text-muted-foreground">
                         CodeArena Admin
                       </span>
@@ -204,6 +230,12 @@ export function AdminSidebar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/profile" className="cursor-pointer">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Profile
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/">← Back to App</Link>
                 </DropdownMenuItem>
