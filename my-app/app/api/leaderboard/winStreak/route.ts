@@ -24,7 +24,8 @@ export async function GET() {
                     currentStreak: 1,
                     rating: 1,
                     battlesPlayed: 1,
-                    battlesWon: 1
+                    battlesWon: 1,
+                    image: 1
                 }
             }
         ]);

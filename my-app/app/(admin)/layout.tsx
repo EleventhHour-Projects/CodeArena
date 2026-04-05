@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "../(main)/providers";
@@ -35,7 +35,11 @@ export default function AdminLayout({
           <SidebarProvider>
             <AdminSidebar />
             <SidebarInset>
-              <main className="w-full">
+              <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4 md:hidden">
+                <SidebarTrigger />
+                <span className="font-semibold">CodeArena Admin</span>
+              </header>
+              <main className="w-full flex-1">
                 {children}
               </main>
             </SidebarInset>

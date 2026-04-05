@@ -32,7 +32,8 @@ export async function GET() {
                     name: 1,
                     totalSolved: 1,
                     totalProblemsSolved: 1,
-                    rating: 1
+                    rating: 1,
+                    image: 1
                 }
             }
         ]);

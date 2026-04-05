@@ -42,7 +42,8 @@ export async function GET() {
                     battlesPlayed: 1,
                     battlesWon: 1,
                     winRate: 1,
-                    totalSolved: 1
+                    totalSolved: 1,
+                    image: 1
                 }
             }
         ]);

@@ -111,7 +111,7 @@ export default function AdminPRs() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30 transition-colors">
+    <div className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-10 selection:bg-primary/30 transition-colors">
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}

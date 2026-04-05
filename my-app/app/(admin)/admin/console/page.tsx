@@ -232,9 +232,9 @@ export default function ConsolePage() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-[#050505] text-zinc-300 font-sans overflow-hidden">
+    <div className="flex flex-col h-auto min-h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] bg-[#050505] text-zinc-300 font-sans md:overflow-hidden">
       {/* --- HEADER --- */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur-xl z-10">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 sm:px-6 py-4 gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
             <div className={`h-2 w-2 rounded-full ${
@@ -252,7 +252,7 @@ export default function ConsolePage() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -287,7 +287,7 @@ export default function ConsolePage() {
       </header>
 
       {/* --- DASHBOARD STATS --- */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-black/20">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 sm:p-6 bg-black/20">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -345,9 +345,9 @@ export default function ConsolePage() {
       </section>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 overflow-hidden">
+      <main className="flex-1 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6 p-4 sm:p-6 overflow-y-auto lg:overflow-hidden min-h-[600px] lg:min-h-0">
         {/* GENERAL LOGS */}
-        <div className="flex flex-col h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden group">
+        <div className="flex flex-col h-[400px] lg:h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden group">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
             <div className="flex items-center gap-2">
               <Terminal className="h-4 w-4 text-indigo-400" />
@@ -388,7 +388,7 @@ export default function ConsolePage() {
         </div>
 
         {/* CONTAINER LOGS */}
-        <div className="flex flex-col h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="flex flex-col h-[400px] lg:h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

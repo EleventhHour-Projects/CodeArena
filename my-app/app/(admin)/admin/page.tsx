@@ -171,8 +171,8 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30 transition-colors">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-10 selection:bg-primary/30 transition-colors overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full">
 
         {/* HEADER */}
         <div className="flex items-center gap-2 mb-12">
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <h1 className="text-8xl font-black tracking-tighter tabular-nums text-foreground mb-4 bg-gradient-to-br from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
+                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter tabular-nums text-foreground mb-4 bg-gradient-to-br from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
                     {loading ? <span className="opacity-20 animate-pulse">---</span> : stats?.totalUsers?.toLocaleString()}
                   </h1>
 
@@ -431,13 +431,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* EXECUTOR PANEL */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-muted/20 border border-border rounded-3xl p-8 backdrop-blur"
-        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-muted/20 border border-border rounded-3xl p-5 md:p-8 backdrop-blur overflow-x-hidden"
+          >
           {/* header */}
-          <div className="flex justify-between items-center mb-10 pb-4 border-b border-border/20">
+          <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-6 mb-10 pb-4 border-b border-border/20">
             <div className="flex items-center gap-3 text-muted-foreground mr-auto">
               <Server className="h-4 w-4" />
               <h2 className="text-md font-bold uppercase tracking-widest italic">
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
               </h2>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Button
                 onClick={() => window.open("/api/admin/executor/metrics", "_blank")}
                 size="sm"
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
           {/* grid */}
           {executorInfo ? (
             <div className="space-y-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
                 <Stat label="Workers" value={executorInfo.active_worker} icon={Activity} />
                 <Stat label="Tasks" value={executorInfo.total_tasks} icon={Code} />
                 <Stat label="Avg Time" value={`${executorInfo.average_time_to_execute_task_inSec.toFixed(2)}s`} icon={Clock} />

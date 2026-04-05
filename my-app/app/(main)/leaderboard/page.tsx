@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, RefreshCcw, Activity, CheckSquare, Flame, Globe } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +18,7 @@ interface UserData {
   battlesWon?: number;
   totalSolved?: number;
   longestStreak?: number;
+  image?: string;
 }
 
 const LEADERBOARDS = [
@@ -152,6 +153,7 @@ export default function LeaderboardPage() {
                       <div className="absolute -top-10 sm:-top-12 flex flex-col items-center">
                         <div className="relative">
                           <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-background shadow-lg">
+                            <AvatarImage src={user.image} alt={user.username} />
                             <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div className={`absolute -bottom-3 -right-2 w-8 h-8 rounded-full flex items-center justify-center border-2 border-background shadow-md ${isFirst ? 'bg-yellow-400' : rankNum === 2 ? 'bg-slate-300' : 'bg-orange-500'}`}>
@@ -193,6 +195,7 @@ export default function LeaderboardPage() {
                         {globalRank}
                       </div>
                       <Avatar className="w-10 h-10 border border-muted">
+                        <AvatarImage src={user.image} alt={user.username} />
                         <AvatarFallback className="bg-muted font-medium text-xs">
                            {user.username.slice(0, 2).toUpperCase()}
                         </AvatarFallback>

@@ -101,7 +101,7 @@ export default function AdminReports() {
                      "text-rose-400 border-rose-500/30 bg-rose-500/10";
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 py-8">
+    <div className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto flex flex-col h-[88vh] gap-6">
 
         {/* HEADER */}

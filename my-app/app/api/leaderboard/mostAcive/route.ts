@@ -21,7 +21,8 @@ export async function GET() {
                     name: 1,
                     battlesPlayed: 1,
                     battlesWon: 1,
-                    rating: 1
+                    rating: 1,
+                    image: 1
                 }
             }
         ]);

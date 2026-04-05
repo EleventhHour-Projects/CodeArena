@@ -151,7 +151,7 @@ export default function AdminNotifyPage() {
   const charLimit = 280;
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-10 selection:bg-primary/30">
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}

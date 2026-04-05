@@ -229,12 +229,12 @@ export default function ClusterPage() {
   const stoppedWorkers = workers.filter(w => w.state !== "running");
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 py-10 selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-foreground px-4 sm:px-6 py-6 sm:py-10 selection:bg-primary/30">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── HEADER ─────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-2">
                 <Container className="h-3.5 w-3.5" />
@@ -249,7 +249,7 @@ export default function ClusterPage() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Live badge */}
               <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold px-3 py-1.5 bg-emerald-400/5 border border-emerald-400/10 rounded-full">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -323,7 +323,7 @@ export default function ClusterPage() {
             {/* ── TOP STATS GRID ──────────────────────────────── */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4"
+              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4"
             >
               <StatCard label="Workers" value={info.active_worker} icon={Server} color="text-indigo-400" />
               <StatCard label="Running" value={runningWorkers.length} icon={CheckCircle} color="text-emerald-400" />
@@ -534,7 +534,7 @@ export default function ClusterPage() {
       {/* ── METRICS DASHBOARD DIALOG ────────────────────────── */}
       <Dialog open={showMetrics} onOpenChange={setShowMetrics}>
         <DialogContent className="sm:max-w-[90vw] w-[95vw] h-[90vh] p-0 overflow-hidden bg-[#0a0a0a] border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-          <DialogHeader className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between bg-zinc-900/30 backdrop-blur-xl">
+          <DialogHeader className="px-4 sm:px-6 py-4 border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-zinc-900/30 backdrop-blur-xl">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
                 <ActivitySquare className="h-4 w-4 text-indigo-400" />
