@@ -135,7 +135,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         return;
       }
       
-      const wsUrl = `ws://34.126.214.18:6970/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
+      const wsUrl = `wss://matchmake.codearena.pro/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
