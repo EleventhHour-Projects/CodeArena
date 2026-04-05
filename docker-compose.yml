@@ -36,20 +36,3 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
-
-  my-app:
-    build:
-      context: ./my-app
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_SOCKET_URL=ws://localhost:6767
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./my-app/.env
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - NEXT_PUBLIC_SOCKET_URL=ws://express-server:6767
-    depends_on:
-      - redis
-      - express-server
