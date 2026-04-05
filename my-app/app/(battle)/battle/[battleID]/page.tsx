@@ -94,8 +94,8 @@ export default function BattlePage({ params }: PageProps) {
     const currentUserId = (session.user as any).id;
     
     // Connect to backend server running Socket.IO (on port 3000 locally)
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "https://wss-codearena.onrender.com";
-    const newSocket = io("wss://wss.codearena.pro");
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     newSocket.emit("JOIN_BATTLE", { battleId: battleID, userId: currentUserId });
