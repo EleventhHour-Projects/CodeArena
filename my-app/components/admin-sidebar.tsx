@@ -11,6 +11,7 @@ import {
   ChevronUp,
   Shield,
   User2,
+  Terminal,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -65,6 +66,7 @@ const adminNavItems = [
   { title: "Pull Requests", url: "/admin/prs", icon: GitPullRequest, imgIcon: null },
   { title: "Notifications", url: "/admin/notifications", icon: Bell, imgIcon: null },
   { title: "Cluster", url: "/admin/cluster", icon: null, imgIcon: "docker" },
+  { title: "Console", url: "/admin/console", icon: Terminal, imgIcon: null },
 ];
 
 export function AdminSidebar() {
