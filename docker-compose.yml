@@ -38,6 +38,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - ./questions:/questions
     env_file:
       - ./my-app/.env.local
     environment:
