@@ -10,7 +10,6 @@ import (
 	"executor-service/worker"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/nottechdm/notnet/pkg/notnet"
@@ -250,11 +249,10 @@ func IsAlreadyInMatchmaking(req *notnet.Request, res *notnet.Response) error {
 	})
 }
 
-// StartService initializes the Fiber app, sets up the API routes, and starts the server to listen for incoming requests
+// StartService initializes the NotNet app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
 func StartService() {
-	os.Setenv("FIBER_NO_BANNER", "true")
 	app := notnet.New(&notnet.EngineOption{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
