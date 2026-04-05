@@ -28,9 +28,11 @@ services:
     # Override for Docker network
     environment:
       - REDIS_ADDR=redis:6379
+      - MONGO_URI=mongodb://mongodb:27017
       - WSSIP=http://express-server:6767/internal/event
     depends_on:
       - redis
+      - mongodb
 
   frontend-service:
     build:
@@ -44,12 +46,24 @@ services:
       - ./my-app/.env.local
     environment:
       - REDIS_URL=redis://redis:6379
+      - MONGODB_URI=mongodb://mongodb:27017/code-arena
     depends_on:
       - redis
       - express-server
       - executor-service
+      - mongodb
 
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
