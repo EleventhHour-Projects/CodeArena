@@ -72,7 +72,7 @@ export async function AppSidebar() {
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)] shrink-0" />
                 </div>
                 <span className="text-[10px] text-zinc-500 tracking-wider font-semibold mt-0.1">
-                  By-Eleventh_Hour
+                  EleventhHour
                 </span>
               </div>
             </SidebarMenuButton>
