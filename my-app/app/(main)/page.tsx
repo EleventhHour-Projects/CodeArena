@@ -86,10 +86,6 @@ function HomeContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Real-time 1v1 Coding Battles
-            </span>
           </motion.div>
 
           {/* Main headline */}
@@ -205,12 +201,10 @@ function HomeContent() {
               {/* Panel header */}
               <div className="flex items-center justify-between pb-4 border-b border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
                   <h2 className="text-lg font-bold tracking-tight text-foreground">
                     Activity Dashboard
                   </h2>
                 </div>
-                <span className="text-[10px] tracking-widest text-[#00ff41]/70 font-bold uppercase">Live</span>
               </div>
 
               {/* Dashboard content */}
