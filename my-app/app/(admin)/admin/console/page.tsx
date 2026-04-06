@@ -13,8 +13,7 @@ import {
   Trash2,
   Server,
   Cpu,
-  ChevronRight,
-  Search
+  History,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -33,7 +32,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 // Types
@@ -49,6 +47,16 @@ interface LogEntry {
   timestamp: Date;
 }
 
+interface CommandHistoryEntry {
+  command: string;
+  timestamp: string;
+}
+
+interface CommandHistoryResponse {
+  history: CommandHistoryEntry[];
+  system_history: CommandHistoryEntry[];
+}
+
 export default function ConsolePage() {
   // Authentication & Configuration
   const [token, setToken] = useState<string>("");
@@ -62,12 +70,14 @@ export default function ConsolePage() {
   const [containerLogs, setContainerLogs] = useState<string>("");
   const [selectedService, setSelectedService] = useState<string>("frontend-service");
   const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatus | null>(null);
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryResponse | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Refs for auto-scroll
   const generalLogsEndRef = useRef<HTMLDivElement>(null);
   const containerLogsEndRef = useRef<HTMLDivElement>(null);
+  const commandHistoryEndRef = useRef<HTMLDivElement>(null);
 
   // Initial Load
   useEffect(() => {
@@ -149,6 +159,16 @@ export default function ConsolePage() {
     }
   };
 
+  const refreshCommandHistory = async () => {
+    if (!isConfigured) return;
+    try {
+      const data = await fetchFromProxy("/command-history");
+      setCommandHistory(data);
+    } catch (err) {
+      console.error("Command history refresh failed", err);
+    }
+  };
+
   const handleDeploy = async () => {
     if (!confirm("Are you sure you want to trigger a new deployment?")) return;
     setIsDeploying(true);
@@ -174,30 +194,34 @@ export default function ConsolePage() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (!isConfigured) return;
+    setIsRefreshing(true);
+    setGeneralLogs([]);
+    setContainerLogs("");
+    setCommandHistory(null);
+    
+    await Promise.allSettled([
+      refreshLogs(),
+      refreshContainerLogs(),
+      refreshStatus(),
+      refreshCommandHistory(),
+      refreshHealth()
+    ]);
+    setIsRefreshing(false);
+  };
+
   // Polling Logic
   useEffect(() => {
     if (!isConfigured) return;
 
     refreshHealth();
     const healthInterval = setInterval(refreshHealth, 30000); // 30s
-    
-    let logsInterval: NodeJS.Timeout;
-    if (autoRefresh) {
-      refreshLogs();
-      refreshContainerLogs();
-      refreshStatus();
-      logsInterval = setInterval(() => {
-        refreshLogs();
-        refreshContainerLogs();
-        refreshStatus();
-      }, 5000); // 5s
-    }
 
     return () => {
-      if (healthInterval) clearInterval(healthInterval);
-      if (logsInterval) clearInterval(logsInterval);
+      clearInterval(healthInterval);
     };
-  }, [isConfigured, autoRefresh, selectedService]);
+  }, [isConfigured]);
 
   // Auto-scroll logic
   useEffect(() => {
@@ -212,6 +236,12 @@ export default function ConsolePage() {
     }
   }, [containerLogs]);
 
+  useEffect(() => {
+    if (commandHistoryEndRef.current) {
+      commandHistoryEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [commandHistory]);
+
   const saveToken = () => {
     if (!tempToken.trim()) {
       toast.error("Token cannot be empty");
@@ -222,6 +252,14 @@ export default function ConsolePage() {
     setIsConfigured(true);
     setIsTokenModalOpen(false);
     toast.success("Deployment token saved for this session");
+    
+    // Fetch initial data right after configuring
+    setTimeout(() => {
+        refreshLogs();
+        refreshContainerLogs();
+        refreshStatus();
+        refreshCommandHistory();
+    }, 100);
   };
 
   const services = [
@@ -231,8 +269,13 @@ export default function ConsolePage() {
     { name: "Redis", id: "redis" },
   ];
 
+  const allHistory = [
+    ...(commandHistory?.history || []),
+    ...(commandHistory?.system_history || [])
+  ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
   return (
-    <div className="flex flex-col h-auto min-h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] bg-[#050505] text-zinc-300 font-sans md:overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#050505] text-zinc-300 font-sans overflow-x-hidden">
       {/* --- HEADER --- */}
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 sm:px-6 py-4 gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl z-10">
         <div className="flex items-center gap-4">
@@ -256,11 +299,12 @@ export default function ConsolePage() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`gap-2 ${autoRefresh ? "text-emerald-400" : "text-zinc-500"}`}
+            onClick={handleRefresh}
+            disabled={isRefreshing || !isConfigured}
+            className={`gap-2 ${isRefreshing ? "text-emerald-400" : "text-zinc-500"}`}
           >
-            <RefreshCw className={`h-4 w-4 ${autoRefresh && !isDeploying ? "animate-spin-slow" : ""}`} />
-            {autoRefresh ? "Auto-refreshing" : "Paused"}
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh Data
           </Button>
           
           <Button 
@@ -345,76 +389,120 @@ export default function ConsolePage() {
       </section>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6 p-4 sm:p-6 overflow-y-auto lg:overflow-hidden min-h-[600px] lg:min-h-0">
-        {/* GENERAL LOGS */}
-        <div className="flex flex-col h-[400px] lg:h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden group">
+      <main className="flex-1 flex flex-col gap-4 lg:gap-6 p-4 sm:p-6">
+        
+        {/* TOP ROW: General & Container Logs */}
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6">
+          
+          {/* GENERAL LOGS */}
+          <div className="flex flex-col h-[500px] lg:h-[600px] bg-black/40 border border-white/5 rounded-2xl overflow-hidden group">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
+              <div className="flex items-center gap-2">
+                <Terminal className="h-4 w-4 text-indigo-400" />
+                <span className="text-sm font-semibold text-white">Deployment Server Logs</span>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={() => setGeneralLogs([])}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1.5 scrollbar-thin scrollbar-thumb-white/10">
+              {generalLogs.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-zinc-600 italic">
+                      Waiting for logs...
+                  </div>
+              ) : (
+                  generalLogs.map((log) => (
+                      <motion.div 
+                        key={log.id} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex gap-3 hover:bg-white/5 px-2 py-0.5 rounded transition-colors group/line"
+                      >
+                          <span className="text-zinc-600 shrink-0 select-none">
+                              {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </span>
+                          <span className={`break-words ${
+                              log.text.includes("error") || log.text.includes("Failed") ? "text-rose-400" : 
+                              log.text.includes("success") ? "text-emerald-400" : 
+                              "text-zinc-300"
+                          }`}>
+                              {log.text}
+                          </span>
+                      </motion.div>
+                  ))
+              )}
+              <div ref={generalLogsEndRef} />
+            </div>
+          </div>
+
+          {/* CONTAINER LOGS */}
+          <div className="flex flex-col h-[500px] lg:h-[600px] bg-black/40 border border-white/5 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Server className="h-4 w-4 text-emerald-400" />
+                  <span className="text-sm font-semibold text-white">Container Logs</span>
+                </div>
+                <Select value={selectedService} onValueChange={setSelectedService}>
+                  <SelectTrigger className="w-[140px] h-8 bg-white/5 border-white/10 text-xs focus:ring-0">
+                    <SelectValue placeholder="Select Service" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-white/10">
+                    {services.map(s => (
+                      <SelectItem key={s.id} value={s.id} className="text-xs focus:bg-white/10">{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={() => setContainerLogs("")}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] whitespace-pre-wrap leading-relaxed text-zinc-400 scrollbar-thin scrollbar-thumb-white/10">
+               {containerLogs || "No logs available for this service."}
+               <div ref={containerLogsEndRef} />
+            </div>
+          </div>
+
+        </div>
+
+        {/* BOTTOM ROW: COMMAND HISTORY */}
+        <div className="flex flex-col h-[500px] lg:h-[600px] bg-black/40 border border-white/5 rounded-2xl overflow-hidden group">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
             <div className="flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-indigo-400" />
-              <span className="text-sm font-semibold text-white">Deployment Server Logs</span>
+              <History className="h-4 w-4 text-amber-400" />
+              <span className="text-sm font-semibold text-white">System Command History</span>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={() => setGeneralLogs([])}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={() => setCommandHistory(null)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1.5 scrollbar-thin scrollbar-thumb-white/10">
-            {generalLogs.length === 0 ? (
+          <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-1.5 scrollbar-thin scrollbar-thumb-white/10">
+            {allHistory.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-zinc-600 italic">
-                    Waiting for logs...
+                    Waiting for history...
                 </div>
             ) : (
-                generalLogs.map((log) => (
+                allHistory.map((entry, idx) => (
                     <motion.div 
-                      key={log.id} 
+                      key={idx} 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex gap-3 hover:bg-white/5 px-2 py-0.5 rounded transition-colors group/line"
+                      className="flex gap-3 hover:bg-white/5 px-2 py-1 rounded transition-colors group/line"
                     >
                         <span className="text-zinc-600 shrink-0 select-none">
-                            {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            {new Date(entry.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
-                        <span className={`break-words ${
-                            log.text.includes("error") || log.text.includes("Failed") ? "text-rose-400" : 
-                            log.text.includes("success") ? "text-emerald-400" : 
-                            "text-zinc-300"
-                        }`}>
-                            {log.text}
+                        <span className="break-words text-zinc-300">
+                            {entry.command}
                         </span>
                     </motion.div>
                 ))
             )}
-            <div ref={generalLogsEndRef} />
+            <div ref={commandHistoryEndRef} />
           </div>
         </div>
 
-        {/* CONTAINER LOGS */}
-        <div className="flex flex-col h-[400px] lg:h-full bg-black/40 border border-white/5 rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/2">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Server className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm font-semibold text-white">Container Logs</span>
-              </div>
-              <Select value={selectedService} onValueChange={setSelectedService}>
-                <SelectTrigger className="w-[180px] h-8 bg-white/5 border-white/10 text-xs focus:ring-0">
-                  <SelectValue placeholder="Select Service" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10">
-                  {services.map(s => (
-                    <SelectItem key={s.id} value={s.id} className="text-xs focus:bg-white/10">{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={() => setContainerLogs("")}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] whitespace-pre-wrap leading-relaxed text-zinc-400 scrollbar-thin scrollbar-thumb-white/10">
-             {containerLogs || "No logs available for this service."}
-             <div ref={containerLogsEndRef} />
-          </div>
-        </div>
       </main>
 
       {/* --- TOKEN MODAL --- */}
