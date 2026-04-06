@@ -246,9 +246,12 @@ export default function BattlePage({ params }: PageProps) {
         if (battle.startTime || battle.createdAt) {
           const startTimestamp = new Date(battle.startTime || battle.createdAt).getTime();
 
-           // Compute duration based on problems: each = 1m (for testing)
+           // Compute duration based on problems: Easy=10m, Medium=15m, Hard=35m
            let durationSeconds = (battle.problems || []).reduce((acc: number, p: any) => {
-                  return acc + (1 * 60); 
+                  const diff = (p.difficulty || "").toLowerCase();
+                  if (diff === "easy") return acc + (10 * 60);
+                  if (diff === "hard") return acc + (35 * 60);
+                  return acc + (15 * 60); // Default to 15m
               }, 0);
 
            if (durationSeconds === 0) durationSeconds = 5400; // fallback
