@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const res = await fetch('http://34.126.214.18:6969/api/internal/merge', {
+    const res = await fetch('http://127.0.0.1:6969/api/internal/merge', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

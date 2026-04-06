@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <b>A real-time 1v1 DSA battle platform</b><br/>
+  <b>🚀 A real-time 1v1 DSA battle platform</b><br/>
   Compete. Code. Conquer.
 </p>
 
@@ -20,7 +20,7 @@
 
 ---
 
-### What is CodeArena?
+### 🧠 What is CodeArena?
 
 CodeArena is a competitive coding platform where developers go head-to-head in real-time DSA battles.
 
@@ -31,7 +31,7 @@ CodeArena is a competitive coding platform where developers go head-to-head in r
 
 ---
 
-### Tech Stack
+### 🛠️ Tech Stack
 
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="45" alt="TypeScript"/>
@@ -49,7 +49,7 @@ CodeArena is a competitive coding platform where developers go head-to-head in r
 
 ---
 
-### Features (Planned / In Progress)
+### ✨ Features (Planned / In Progress)
 
 - Live coding battles  
 - DSA-focused problem sets  

@@ -88,13 +88,13 @@ export default function BattlePage({ params }: PageProps) {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
-  // WebSocket Connection and Event Handling
+  // WebSocket Connection
   useEffect(() => {
     if (!session?.user || !battleID) return;
     const currentUserId = (session.user as any).id;
     
     // Connect to backend server running Socket.IO (on port 3000 locally)
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "https://wss-codearena.onrender.com";
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 

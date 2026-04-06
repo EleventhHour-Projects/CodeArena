@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,11 +12,10 @@ import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { FriendsList } from "@/components/friends-list";
 import { useMounted } from "@/hooks/use-mounted";
 
-function HomeContent() {
+export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"private" | "arena">("arena");
   const [loading, setLoading] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [challengeUsername, setChallengeUsername] = useState("");
@@ -27,7 +26,6 @@ function HomeContent() {
     const c = searchParams.get("challenge");
     if (c) {
       setChallengeUsername(c);
-      setModalMode("private");
       setModalOpen(true);
       // Clean up URL
       router.replace("/");
@@ -43,7 +41,6 @@ function HomeContent() {
         toast.info("You are already in a battle. Redirecting...");
         router.push(`/battle/${data.battleId}`);
       } else {
-        setModalMode("arena");
         setModalOpen(true);
       }
     } catch (err) {
@@ -163,14 +160,6 @@ function HomeContent() {
             </button>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="group relative"
-          >
-          </motion.div>
-
           {/* Friends list */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -224,16 +213,7 @@ function HomeContent() {
         open={modalOpen}
         onOpenChange={(o) => { setModalOpen(o); if (!o) setChallengeUsername(""); }}
         initialOpponent={challengeUsername}
-        initialMode={modalMode}
       />
     </div>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomeContent />
-    </Suspense>
   );
 }

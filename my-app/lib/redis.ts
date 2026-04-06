@@ -1,7 +1,7 @@
 // lib/redis.ts
 import { createClient, RedisClientType } from 'redis';
 
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 declare global {
   var _redisClientPromise: Promise<RedisClientType> | undefined;

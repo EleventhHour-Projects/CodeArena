@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
 
-    const response = await fetch('http://34.126.214.18:6969/api/admin/problem', {
+    const response = await fetch('http://127.0.0.1:6969/api/admin/problem', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

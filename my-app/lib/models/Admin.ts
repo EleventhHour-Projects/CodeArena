@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 
 export interface IAdmin extends Document {
   username: string;
-  image?: string;
   password?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -15,10 +14,6 @@ const AdminSchema: Schema<IAdmin> = new Schema(
       required: true,
       unique: true,
       trim: true,
-    },
-    image: {
-      type: String,
-      default: '',
     },
     password: {
       type: String,

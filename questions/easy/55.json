@@ -7,9 +7,9 @@
   ],
   "title": "Find the Peaks",
   "difficulty": "Easy",
-  "description": "You are given an array mountain.\n\nYour task is to find all peak indices.\n\nA peak is an element that:\n\nis strictly greater than both its neighbors\nis not the first or last element\n\nReturn a list of indices of all peaks (in any order).\nIf no element is strictly greater than both neighbors then return [-1]\n\nExample 1\nInput: [2,4,4]\nOutput: [-1]\nExplanation: No element is strictly greater than both neighbors\n\nExample 2\nInput: [1,4,3,8,5]\nOutput: [1,3]\nExplanation:\n\nindex 1 → 4 > 1 and 3\nindex 3 → 8 > 3 and 5",
-  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
-  "output_format": "Print space-separated integers in one line.",
-  "constraints": "3 <= mountain.length <= 100\n1 <= mountain[i] <= 100",
+  "description": "You are given an array mountain.\n\nYour task is to find all peak indices.\n\nA peak is an element that:\n\nis strictly greater than both its neighbors\nis not the first or last element\n\nReturn a list of indices of all peaks (in any order).\nIf no element is strictly greater than both neighbors then return [-1]\n\nExample 1\nInput: [2,4,4]\nOutput: [-1]\nExplanation: No element is strictly greater than both neighbors\n\nExample 2\nInput: [1,4,3,8,5]\nOutput: [1,3]\nExplanation:\n\nindex 1 → 4 > 1 and 3\nindex 3 → 8 > 3 and 5\n\nConstraints:\n\n3 <= mountain.length <= 100\n1 <= mountain[i] <= 100",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
   "verified": true
 }

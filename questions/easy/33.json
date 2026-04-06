@@ -11,9 +11,9 @@
   ],
   "title": "Sum of All Subset XOR Totals",
   "difficulty": "Easy",
-  "description": "You are given an array nums.\n\nFor every possible subset of nums:\n\nCompute the XOR of its elements\nAdd all these XOR values together\n\nReturn the final sum.\n\nImportant Points\nA subset can be:\nEmpty → XOR = 0\nAny combination of elements\nTotal subsets = 2^n\nEven duplicate-value subsets (from different positions) count separately\nExamples\n\nExample 1\n\nnums = [1,3]\n→ 6\n\nExample 2\n\nnums = [5,1,6]\n→ 28\n\nExample 3\n\nnums = [3,4,5,6,7,8]\n→ 480",
-  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
-  "output_format": "Print a single integer.",
-  "constraints": "1 ≤ n ≤ 12\n1 ≤ nums[i] ≤ 20",
+  "description": "You are given an array nums.\n\nFor every possible subset of nums:\n\nCompute the XOR of its elements\nAdd all these XOR values together\n\nReturn the final sum.\n\nImportant Points\nA subset can be:\nEmpty → XOR = 0\nAny combination of elements\nTotal subsets = 2^n\nEven duplicate-value subsets (from different positions) count separately\nExamples\n\nExample 1\n\nnums = [1,3]\n→ 6\n\nExample 2\n\nnums = [5,1,6]\n→ 28\n\nExample 3\n\nnums = [3,4,5,6,7,8]\n→ 480\nConstraints\n1 ≤ n ≤ 12\n1 ≤ nums[i] ≤ 20",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
   "verified": true
 }

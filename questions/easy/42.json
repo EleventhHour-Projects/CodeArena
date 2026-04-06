@@ -8,9 +8,9 @@
   ],
   "title": "Transform Array by Parity",
   "difficulty": "Easy",
-  "description": "You are given an array nums.\n\nPerform these steps in order:\n\nReplace every number:\nEven → 0\nOdd → 1\nSort the array in non-decreasing order\nTask\n\nReturn the final transformed array.\n\nExamples\n\nExample 1\n\n[4,3,2,1]\n→ [0,0,1,1]\n\nExample 2\n\n[1,5,1,4,2]\n→ [0,0,1,1,1]",
-  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
-  "output_format": "Print space-separated integers in one line.",
-  "constraints": "1 ≤ n ≤ 100\n1 ≤ nums[i] ≤ 1000",
+  "description": "You are given an array nums.\n\nPerform these steps in order:\n\nReplace every number:\nEven → 0\nOdd → 1\nSort the array in non-decreasing order\nTask\n\nReturn the final transformed array.\n\nExamples\n\nExample 1\n\n[4,3,2,1]\n→ [0,0,1,1]\n\nExample 2\n\n[1,5,1,4,2]\n→ [0,0,1,1,1]\nConstraints\n1 ≤ n ≤ 100\n1 ≤ nums[i] ≤ 1000",
+  "input_format": "Read from standard input. Format details depends on the problem.",
+  "output_format": "Print to standard output.",
+  "constraints": "Please read problem description for constraints.",
   "verified": true
 }
