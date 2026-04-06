@@ -7,9 +7,9 @@
   ],
   "title": "Compute Alternating Sum",
   "difficulty": "Easy",
-  "description": "You are given an array nums.\n\nCompute the alternating sum:\n\nnums[0] - nums[1] + nums[2] - nums[3] + ...\nRule\nAdd elements at even indices (0, 2, 4, …)\nSubtract elements at odd indices (1, 3, 5, …)\nTask\n\nReturn the final alternating sum.\n\nExamples\n\nExample 1\n\n[1,3,5,7]\n→ -4\n\nExample 2\n\n[100]\n→ 100\nConstraints\n1 ≤ nums.length ≤ 100\n1 ≤ nums[i] ≤ 100",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given an array nums.\n\nCompute the alternating sum:\n\nnums[0] - nums[1] + nums[2] - nums[3] + ...\nRule\nAdd elements at even indices (0, 2, 4, …)\nSubtract elements at odd indices (1, 3, 5, …)\nTask\n\nReturn the final alternating sum.\n\nExamples\n\nExample 1\n\n[1,3,5,7]\n→ -4\n\nExample 2\n\n[100]\n→ 100",
+  "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ nums.length ≤ 100\n1 ≤ nums[i] ≤ 100",
   "verified": true
 }

@@ -1,12 +1,12 @@
 services:
   express-server:
     build:
-      context: ./express-ts-server
+      context: ./websocket
       dockerfile: Dockerfile
     ports:
       - "6767:6767"
     env_file:
-      - ./express-ts-server/.env
+      - ./websocket/.env
     # Override for Docker network
     environment:
       - REDIS_ADDR=redis:6379
@@ -19,6 +19,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "6969:6969"
+      - "6970:6970"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./questions:/questions
@@ -30,6 +31,23 @@ services:
       - WSSIP=http://express-server:6767/internal/event
     depends_on:
       - redis
+
+  frontend-service:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./questions:/questions
+    env_file:
+      - ./my-app/.env.local
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - express-server
+      - executor-service
 
   redis:
     image: redis:alpine

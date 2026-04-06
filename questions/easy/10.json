@@ -7,9 +7,9 @@
   ],
   "title": "Maximum 69 Number",
   "difficulty": "Easy",
-  "description": "You are given a positive integer num consisting only of the digits 6 and 9.\n\nYou are allowed to change at most one digit:\n\nChange a 6 → 9, or\nChange a 9 → 6\n\nReturn the maximum possible number you can obtain after performing this operation.\n\nExamples\n\nExample 1\nInput: num = 9669\nOutput: 9969\nExplanation:\n\nChanging the first digit → 6669\nChanging the second digit → 9969\nChanging the third digit → 9699\nChanging the fourth digit → 9666\nThe maximum value is 9969.\n\nExample 2\nInput: num = 9996\nOutput: 9999\nExplanation:\nChanging the last digit from 6 to 9 gives the maximum number.\n\nExample 3\nInput: num = 9999\nOutput: 9999\nExplanation:\nNo change improves the number, so the original value is returned.\n\nConstraints\n1 ≤ num ≤ 10⁴\nnum contains only digits 6 and 9",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a positive integer num consisting only of the digits 6 and 9.\n\nYou are allowed to change at most one digit:\n\nChange a 6 → 9, or\nChange a 9 → 6\n\nReturn the maximum possible number you can obtain after performing this operation.\n\nExamples\n\nExample 1\nInput: num = 9669\nOutput: 9969\nExplanation:\n\nChanging the first digit → 6669\nChanging the second digit → 9969\nChanging the third digit → 9699\nChanging the fourth digit → 9666\nThe maximum value is 9969.\n\nExample 2\nInput: num = 9996\nOutput: 9999\nExplanation:\nChanging the last digit from 6 to 9 gives the maximum number.\n\nExample 3\nInput: num = 9999\nOutput: 9999\nExplanation:\nNo change improves the number, so the original value is returned.",
+  "input_format": "The input contains a single integer.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ num ≤ 10⁴\nnum contains only digits 6 and 9",
   "verified": true
 }

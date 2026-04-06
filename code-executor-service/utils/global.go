@@ -9,7 +9,11 @@ package utils
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
+	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -36,6 +40,7 @@ var MONGO_URI string
 var GITHUB_TOKEN string
 var INTERNAL_KEY string
 var WSSIP string
+var MASALA string
 
 // WorkerCTX is a global variable that holds the context for the worker pool, allowing for cancellation and management of worker goroutines in a coordinated manner across the application
 var WorkerCTX context.Context
@@ -147,7 +152,17 @@ type Submission struct {
 	Result          *Result       `bson:"result,omitempty"`
 }
 
-var WorkerPoolData = &WorkerPool{activeWorkerCount: 0, mu: sync.Mutex{}, channel: make(chan CodeConfig, 100), auto: false, muauto: sync.Mutex{}, scalingMu: sync.Mutex{}, ActiveTasks: make(map[string]*CodeConfig)}
+// WorkerPoolData is a global variable that holds the instance of the WorkerPool struct, allowing for centralized management of the worker pool for executing code tasks throughout the application
+// It provides a shared resource for managing the worker pool, including tracking the number of active workers, handling task management through the channel, and managing auto-scaling settings for the worker pool based on workload and resource availability
+var WorkerPoolData = &WorkerPool{
+	activeWorkerCount: 0,
+	mu:                sync.Mutex{},
+	channel:           make(chan CodeConfig, 100),
+	auto:              false,
+	muauto:            sync.Mutex{},
+	scalingMu:         sync.Mutex{},
+	ActiveTasks:       make(map[string]*CodeConfig),
+}
 
 // Increment increments the active worker count by 1 in a thread-safe manner
 func (wp *WorkerPool) Increment() {
@@ -335,4 +350,130 @@ func (wp *WorkerPool) StealActiveTask(containerID string) *CodeConfig {
 		return task
 	}
 	return nil
+}
+
+// User is a struct that represents a user in the MongoDB collection, including fields for the user ID, username, email, name, and rating
+// The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and bson:"_id,omitempty" used for the ID field to allow MongoDB to automatically generate an ObjectID if not provided
+type User struct {
+	ID            bson.ObjectID `bson:"_id"`
+	Username      string        `bson:"username"`
+	Email         string        `bson:"email"`
+	Name          string        `bson:"name"`
+	Rating        int           `bson:"rating"`
+	AllotedConnID string        `bson:"allotedConnId,omitempty"`
+	CurrentBattleID bson.ObjectID `bson:"currentBattleId,omitempty"`
+	Difficulty    string        `bson:"difficulty,omitempty"`
+}
+
+type BattleProblem struct {
+	Difficulty string `bson:"difficulty"`
+	ID         int    `bson:"id"`
+}
+
+type Battle struct {
+	ID         bson.ObjectID   `bson:"_id,omitempty"`
+	Player1    bson.ObjectID   `bson:"player1"`
+	Player2    bson.ObjectID   `bson:"player2"`
+	Status     string          `bson:"status"`
+	CreatedAt  time.Time       `bson:"createdAt"`
+	Difficulty string          `bson:"difficulty"`
+	Type       string          `bson:"type"`
+	Problems   []BattleProblem `bson:"problems"`
+	StartTime  time.Time       `bson:"startTime,omitempty"`
+}
+
+type Token struct {
+	Username   string
+	Difficulty string
+	Expires    time.Time
+}
+
+type TokenStore struct {
+	mu    sync.Mutex
+	store map[string]Token
+}
+
+var TokenStoreInstance = &TokenStore{
+	store: make(map[string]Token),
+	mu:    sync.Mutex{},
+}
+
+func (tc *TokenStore) GenerateToken(username string, difficulty string) string {
+	b := make([]byte, 16)
+	rand.Read(b)
+
+	randomPart := hex.EncodeToString(b)
+
+	data := fmt.Sprintf("%s:%s:%s",
+		username,
+		randomPart,
+		MASALA,
+	)
+
+	hash := sha256.Sum256([]byte(data))
+	token := hex.EncodeToString(hash[:])
+
+	tc.mu.Lock()
+	tc.store[token] = Token{
+		Username:   username,
+		Difficulty: difficulty,
+		Expires:    time.Now().Add(10 * time.Minute),
+	}
+	tc.mu.Unlock()
+
+	return token
+}
+
+func (tc *TokenStore) VerifyToken(token, username string) (string, bool) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+
+	data, ok := tc.store[token]
+	if !ok {
+		return "", false
+	}
+
+	if time.Now().After(data.Expires) {
+		delete(tc.store, token)
+		return "", false
+	}
+
+	if data.Username != username {
+		return "", false
+	}
+
+	return data.Difficulty, true
+}
+
+func (tc *TokenStore) ConsumeToken(token string) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	delete(tc.store, token)
+}
+
+func (tc *TokenStore) StartCleanup() {
+	go func() {
+		for {
+			time.Sleep(5 * time.Minute)
+
+			tc.mu.Lock()
+			for k, v := range tc.store {
+				if time.Now().After(v.Expires) {
+					delete(tc.store, k)
+				}
+			}
+			tc.mu.Unlock()
+		}
+	}()
+}
+
+func (tc *TokenStore) UserExists(username string) bool {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	for _, token := range tc.store {
+		if token.Username == username {
+			return true
+		}
+	}
+	return false
 }

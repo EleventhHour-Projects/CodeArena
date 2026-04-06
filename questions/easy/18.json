@@ -7,9 +7,9 @@
   ],
   "title": "Find the Pivot Integer",
   "difficulty": "Easy",
-  "description": "You are given a positive integer n.\n\nFind an integer x (where 1 ≤ x ≤ n) such that:\n\nThe sum of all integers from 1 to x (inclusive) is equal to\nThe sum of all integers from x to n (inclusive)\nTask\n\nReturn the pivot integer x.\n\nIf no such integer exists, return -1.\nIt is guaranteed that at most one such integer exists.\nExamples\n\nExample 1\nInput: n = 8\nOutput: 6\n\nExplanation:\n\nSum from 1 → 6 = 1 + 2 + 3 + 4 + 5 + 6 = 21\nSum from 6 → 8 = 6 + 7 + 8 = 21\n\nExample 2\nInput: n = 1\nOutput: 1\n\nExplanation:\n\n1 = 1\n\nExample 3\nInput: n = 4\nOutput: -1\n\nExplanation:\nNo integer satisfies the condition.\n\nConstraints\n1 ≤ n ≤ 1000",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a positive integer n.\n\nFind an integer x (where 1 ≤ x ≤ n) such that:\n\nThe sum of all integers from 1 to x (inclusive) is equal to\nThe sum of all integers from x to n (inclusive)\nTask\n\nReturn the pivot integer x.\n\nIf no such integer exists, return -1.\nIt is guaranteed that at most one such integer exists.\nExamples\n\nExample 1\nInput: n = 8\nOutput: 6\n\nExplanation:\n\nSum from 1 → 6 = 1 + 2 + 3 + 4 + 5 + 6 = 21\nSum from 6 → 8 = 6 + 7 + 8 = 21\n\nExample 2\nInput: n = 1\nOutput: 1\n\nExplanation:\n\n1 = 1\n\nExample 3\nInput: n = 4\nOutput: -1\n\nExplanation:\nNo integer satisfies the condition.",
+  "input_format": "The input contains a single integer.",
+  "output_format": "Print a single integer.",
+  "constraints": "1 ≤ n ≤ 1000",
   "verified": true
 }

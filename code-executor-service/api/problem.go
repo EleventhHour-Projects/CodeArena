@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/nottechdm/notnet/pkg/notnet"
 )
 
 // ProblemPayload represents the structure of the payload received when creating a new problem,
@@ -78,21 +78,21 @@ func getNextId(difficulty string) (int, error) {
 }
 
 // SaveProblem is a handler function that creates a new problem
-func SaveProblem(c fiber.Ctx) error {
+func SaveProblem(req *notnet.Request, res *notnet.Response) error {
 	var payload ProblemPayload
-	b := c.Body()
-	if err := json.Unmarshal(b, &payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	err := req.BindJSON(&payload)
+	if err != nil {
+		return res.String(400, "Invalid request body")
 	}
 
 	difficulty := payload.Difficulty
 	if difficulty == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Difficulty is required"})
+		return res.String(400, "Difficulty is required")
 	}
 
 	nextId, err := getNextId(difficulty)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return res.String(500, "Failed to get next ID")
 	}
 
 	questionJson := QuestionJson{
@@ -113,15 +113,15 @@ func SaveProblem(c fiber.Ctx) error {
 	testcaseDir := filepath.Join(questionsDir, "testcase")
 
 	if err := os.MkdirAll(testcaseDir, 0755); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create testcase directory"})
+		return res.String(500, "Failed to create testcase directory")
 	}
 	if err := os.MkdirAll(questionDir, 0755); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create difficulty directory"})
+		return res.String(500, "Failed to create difficulty directory")
 	}
 
 	questionBytes, err := json.MarshalIndent(questionJson, "", "    ")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal question details"})
+		return res.String(500, "Failed to marshal question details")
 	}
 
 	testcasesWrapper := map[string]interface{}{
@@ -130,18 +130,16 @@ func SaveProblem(c fiber.Ctx) error {
 
 	testcasesBytes, err := json.MarshalIndent(testcasesWrapper, "", "    ")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal testcases"})
+		return res.String(500, "Failed to marshal testcases")
 	}
 
 	// Push directly to GitHub (NO LOCAL SAVE)
 	err = PushToGithub(questionBytes, testcasesBytes, difficulty, nextId, payload.Title)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to push to GitHub: " + err.Error(),
-		})
+		return res.String(500, "Failed to push to GitHub: "+err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return res.JSON(200, map[string]interface{}{
 		"message": fmt.Sprintf("Successfully generated question! ID: %d", nextId),
 		"id":      nextId,
 		"slug":    payload.Slug,

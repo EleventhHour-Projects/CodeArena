@@ -156,7 +156,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md w-[95%] rounded-2xl p-0 overflow-hidden">
+      <DialogContent className="dark bg-[#121214] border-white/10 text-white max-w-md w-[95%] rounded-2xl p-0 overflow-hidden">
         <div className="max-h-[85vh] overflow-y-auto custom-scrollbar p-6">
           <DialogHeader className="mb-6">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -176,7 +176,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 <SelectTrigger className="w-full bg-[#09090b] border-white/10 text-zinc-300 h-11 focus:ring-amber-500/20">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1c1c1f] border-white/10 text-zinc-300">
+                <SelectContent className="dark bg-[#1c1c1f] border-white/10 text-zinc-300">
                   <SelectItem value="Cheating">Cheating</SelectItem>
                   <SelectItem value="Bug">Bug Report</SelectItem>
                   <SelectItem value="Suggestion/Feedback">Feedback</SelectItem>
@@ -193,7 +193,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   <SelectTrigger className="w-full bg-[#09090b] border-white/10 text-zinc-300 h-11">
                     <SelectValue placeholder={battles.length === 0 && !isLoadingBattles ? "No recent battles" : "Choose a battle"} />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1c1c1f] border-white/10 text-zinc-300 max-h-[200px]">
+                  <SelectContent className="dark bg-[#1c1c1f] border-white/10 text-zinc-300 max-h-[200px]">
                     {battles.map((b) => (
                       <SelectItem key={b.id} value={b.id}>
                         vs {b.opponent.username} ({new Date(b.createdAt).toLocaleDateString()})

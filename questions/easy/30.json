@@ -10,9 +10,9 @@
   ],
   "title": "Flipping an Image",
   "difficulty": "Easy",
-  "description": "You are given a square binary matrix image of size n × n.\n\nDo the following for each row:\n\nReverse the row (flip horizontally)\nInvert all values:\n0 → 1\n1 → 0\n\nReturn the final matrix.\n\nExamples\n\nExample 1\n\nInput:\n[[1,1,0],[1,0,1],[0,0,0]]\n\nOutput:\n[[1,0,0],[0,1,0],[1,1,1]]\n\nExample 2\n\nInput:\n[[1,1,0,0],[1,0,0,1],[0,1,1,1],[1,0,1,0]]\n\nOutput:\n[[1,1,0,0],[0,1,1,0],[0,0,0,1],[1,0,1,0]]\nConstraints\n1 ≤ n ≤ 20\nimage[i][j] is either 0 or 1\nMatrix is always square",
-  "input_format": "Read from standard input. Format details depends on the problem.",
-  "output_format": "Print to standard output.",
-  "constraints": "Please read problem description for constraints.",
+  "description": "You are given a square binary matrix image of size n × n.\n\nDo the following for each row:\n\nReverse the row (flip horizontally)\nInvert all values:\n0 → 1\n1 → 0\n\nReturn the final matrix.\n\nExamples\n\nExample 1\n\nInput:\n[[1,1,0],[1,0,1],[0,0,0]]\n\nOutput:\n[[1,0,0],[0,1,0],[1,1,1]]\n\nExample 2\n\nInput:\n[[1,1,0,0],[1,0,0,1],[0,1,1,1],[1,0,1,0]]\n\nOutput:\n[[1,1,0,0],[0,1,1,0],[0,0,0,1],[1,0,1,0]]",
+  "input_format": "The first line contains two integers m and n.\nThe next m lines each contain n space-separated integers.",
+  "output_format": "Print the result line by line using space-separated integers.",
+  "constraints": "1 ≤ n ≤ 20\nimage[i][j] is either 0 or 1\nMatrix is always square",
   "verified": true
 }

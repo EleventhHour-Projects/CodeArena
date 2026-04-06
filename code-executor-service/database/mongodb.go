@@ -22,6 +22,7 @@ type MongoDBClient struct {
 	SumissionsCollection *mongo.Collection
 	UsersCollection      *mongo.Collection
 	ExecutionCode        *mongo.Collection
+	BattlesCollection    *mongo.Collection
 	// mu is a mutex to ensure thread-safe access to the MongoDB client and collections
 	mu sync.RWMutex
 }
@@ -48,6 +49,7 @@ func InitMongoDB() {
 		SumissionsCollection: client.Database("code-arena").Collection("submissions"),
 		UsersCollection:      client.Database("code-arena").Collection("users"),
 		ExecutionCode:        client.Database("code-arena").Collection("executionCodes"),
+		BattlesCollection:    client.Database("code-arena").Collection("battles"),
 		mu:                   sync.RWMutex{},
 	}
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const res = await fetch('http://127.0.0.1:6969/metrics', {
+    const res = await fetch('http://34.126.214.18:6969/metrics', {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
