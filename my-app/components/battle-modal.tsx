@@ -45,6 +45,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   const [searchTime, setSearchTime] = useState(0);
   const [arenaOpponent, setArenaOpponent] = useState<{ username: string; rating: number } | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
+  const [poolSize, setPoolSize] = useState<number>(0);
 
   // Sync initial state
   useEffect(() => {
@@ -115,6 +116,24 @@ export const BattleModal: React.FC<BattleModalProps> = ({
     return () => clearInterval(pollId);
   }, [mode, status, inviteId, router, onOpenChange]);
 
+  // Arena: Pool Size Polling
+  useEffect(() => {
+    if (status !== "searching") return;
+    const fetchPoolSize = async () => {
+      try {
+        const res = await fetch("/api/matchmaking/poolsize");
+        const data = await res.json();
+        if (data.success && data.matchmaking_size !== undefined) {
+          setPoolSize(data.matchmaking_size);
+        }
+      } catch (err) {}
+    };
+    
+    fetchPoolSize();
+    const interval = setInterval(fetchPoolSize, 3000);
+    return () => clearInterval(interval);
+  }, [status]);
+
   // Arena: Search
   const startArenaSearch = async () => {
     if (!session?.user) {
@@ -167,6 +186,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
     if (socketRef.current) socketRef.current.close();
     setStatus("idle");
     setSearchTime(0);
+    setPoolSize(0);
   };
 
   const handleArenaAccept = () => {
@@ -314,6 +334,11 @@ export const BattleModal: React.FC<BattleModalProps> = ({
               <div className="text-center">
                 <p className="text-2xl font-mono font-bold text-white">{formatTime(searchTime)}</p>
                 <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">Searching... ({difficulty})</p>
+                {poolSize > 0 && (
+                  <p className="text-xs text-green-500 mt-2 font-bold animate-pulse">
+                    {poolSize} {poolSize === 1 ? "player" : "players"} in matchmaking pool
+                  </p>
+                )}
               </div>
               <Button variant="ghost" onClick={stopArenaSearch} className="text-zinc-600 hover:text-red-500 uppercase text-[10px] font-bold">
                 Cancel

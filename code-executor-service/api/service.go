@@ -249,6 +249,13 @@ func IsAlreadyInMatchmaking(req *notnet.Request, res *notnet.Response) error {
 	})
 }
 
+func MatchmakingSize(req *notnet.Request, res *notnet.Response) error {
+	size := utils.ConnectionPoolInstance.GetConnectionsSize()
+	return res.JSON(200, map[string]interface{}{
+		"matchmaking_size": size,
+	})
+}
+
 // StartService initializes the NotNet app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -285,5 +292,6 @@ func StartService() {
 	app.GET("/api/internal/usage", GetServerUsageInfo)
 	app.GET("/api/internal/pid", ServerPID)
 	app.POST("/api/matchmaking/register", RegisterForMatchmaking)
+	app.GET("/api/poolsize", MatchmakingSize)
 	log.Fatal(app.Listen(":6969"))
 }

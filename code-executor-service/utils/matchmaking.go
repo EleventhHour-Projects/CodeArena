@@ -222,3 +222,9 @@ func (cp *Connection) ConnExists(AllotedConnID string) bool {
 	_, exists := cp.Pool[AllotedConnID]
 	return exists
 }
+
+func (cp *Connection) GetConnectionsSize() int {
+	cp.mu.RLock()
+	defer cp.mu.RUnlock()
+	return len(cp.Pool)
+}
