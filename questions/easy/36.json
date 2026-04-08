@@ -6,7 +6,7 @@
   ],
   "title": "Divisible and Non-divisible Sums Difference",
   "difficulty": "Easy",
-  "description": "You are given two integers n and m.\n\nConsider numbers from 1 to n.\n\nDefinitions\nnum1 = sum of numbers not divisible by m\nnum2 = sum of numbers divisible by m\nTask\n\nReturn:\n\nnum1 - num2\nExamples\n\nExample 1\n\nn = 10, m = 3\n→ 19\n\nExample 2\n\nn = 5, m = 6\n→ 15\n\nExample 3\n\nn = 5, m = 1\n→ -15",
+  "description": "You are given two integers n and m.\n\nConsider numbers from 1 to n.\n\nDefinitions\nnum1 = sum of numbers not divisible by m\nnum2 = sum of numbers divisible by m\nTask\n\nReturn:\n\nnum1 - num2",
   "input_format": "The first line contains an integer n.\nThe second line contains an integer m.",
   "output_format": "Print a single integer.",
   "constraints": "1 ≤ n, m ≤ 1000",

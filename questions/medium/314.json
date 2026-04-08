@@ -8,7 +8,7 @@
   ],
   "title": "Information Spreading Simulation",
   "difficulty": "Medium",
-  "description": "On day 1, one person learns a secret. A person starts sharing the secret delay days after learning it and continues to share it with one new person every day until they forget the secret (exactly forget days after learning it). Find the total number of people who know the secret at the end of day n, modulo 10^9 + 7.\n\nExample 1\nInput: n = 6, delay = 2, forget = 4\nOutput: 5\n\nExample 2\nInput: n = 4, delay = 1, forget = 3\nOutput: 6",
+  "description": "On day 1, one person learns a secret. A person starts sharing the secret delay days after learning it and continues to share it with one new person every day until they forget the secret (exactly forget days after learning it). Find the total number of people who know the secret at the end of day n, modulo 10^9 + 7.",
   "input_format": "The first line contains an integer n representing the number of days.\nThe second line contains an integer delay.\nThe third line contains an integer forget.",
   "output_format": "Print the total number of people who remember the secret at the end of day n, modulo 1000000007.",
   "constraints": "2 <= n <= 1000\n1 <= delay < forget <= n",

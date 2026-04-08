@@ -8,7 +8,7 @@
   ],
   "title": "Nim Game",
   "difficulty": "Easy",
-  "description": "You are playing a game with n stones.\n\nRules:\n\nYou go first\nPlayers take turns\nOn each turn, you can remove 1, 2, or 3 stones\nThe player who removes the last stone wins\n\nYour task:\n\nReturn true if you can win (assuming both play optimally)\nOtherwise, return false\n\nExample 1\nInput: n = 4\nOutput: false\n\nExample 2\nInput: n = 1\nOutput: true\n\nExample 3\nInput: n = 2\nOutput: true",
+  "description": "You are playing a game with n stones.\n\nRules:\n\nYou go first\nPlayers take turns\nOn each turn, you can remove 1, 2, or 3 stones\nThe player who removes the last stone wins\n\nYour task:\n\nReturn true if you can win (assuming both play optimally)\nOtherwise, return false",
   "input_format": "The input contains a single integer.",
   "output_format": "Print 'true' or 'false'.",
   "constraints": "1 <= n <= 2^31 - 1",

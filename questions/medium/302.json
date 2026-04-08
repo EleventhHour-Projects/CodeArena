@@ -8,7 +8,7 @@
   ],
   "title": "Competitive Score-Based Ranking",
   "difficulty": "Medium",
-  "description": "You are given a 2D integer matrix representing student scores across multiple exams. Each row corresponds to a student, and each column corresponds to a specific exam. You are also given an index k. Your task is to reorder the rows (students) such that they are sorted in descending order based on their performance in the k-th exam (column k).\n\nExample 1\n\nInput:\nscore = [[10,6,9,1],[7,5,11,2],[4,8,3,15]], k = 2\n\nOutput:\n[[7,5,11,2],[10,6,9,1],[4,8,3,15]]\n\nExplanation:\n\nStudent 1 scored 11 in exam 2 → highest → rank 1\nStudent 0 scored 9 → rank 2\nStudent 2 scored 3 → rank 3\nExample 2\n\nInput:\nscore = [[3,4],[5,6]], k = 0\n\nOutput:\n[[5,6],[3,4]]\n\nExplanation:\n\nStudent 1 scored 5 in exam 0 → highest → rank 1\nStudent 0 scored 3 → rank 2",
+  "description": "You are given a 2D integer matrix representing student scores across multiple exams. Each row corresponds to a student, and each column corresponds to a specific exam. You are also given an index k. Your task is to reorder the rows (students) such that they are sorted in descending order based on their performance in the k-th exam (column k).",
   "input_format": "The first line contains two integers m and n (number of students and exams).\nThe next m lines each contain n space-separated integers representing scores for each student.\nThe last line contains an integer k (the exam index to sort by).",
   "output_format": "Print the resulting m x n matrix after sorting students by their k-th score.",
   "constraints": "1 <= m, n <= 250\n1 <= score[i][j] <= 100000\nAll elements in score are distinct\n0 <= k < n",

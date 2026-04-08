@@ -8,7 +8,7 @@
   ],
   "title": "Identifying the Maximal Self-Referenced Lucky Value",
   "difficulty": "Medium",
-  "description": "Within an integer array 'arr', a value x is defined as a 'lucky integer' if its frequency—the number of times it appears in the array—is exactly equal to x itself.\n\nYour task is to examine the given array and determine the largest lucky integer present. If the array contains no lucky integers, output -1.\n\nExample 1\nInput:\n4\n2 2 3 4\nOutput: 2\nExplanation: The number 2 occurs 2 times, making it a lucky integer. 3 occurs once and 4 occurs once, so they are not lucky.\n\nExample 2\nInput:\n6\n1 2 2 3 3 3\nOutput: 3\nExplanation: 1 occurs once, 2 occurs twice, and 3 occurs three times. All are lucky integers, and 3 is the largest.\n\nExample 3\nInput:\n5\n2 2 2 3 3\nOutput: -1",
+  "description": "Within an integer array 'arr', a value x is defined as a 'lucky integer' if its frequency—the number of times it appears in the array—is exactly equal to x itself.\n\nYour task is to examine the given array and determine the largest lucky integer present. If the array contains no lucky integers, output -1.",
   "input_format": "The first line contains an integer n representing the size of the array.\nThe second line contains n space-separated integers representing the elements of the array.",
   "output_format": "Print the largest lucky integer found in the array, or -1 if no such integer exists.",
   "constraints": "1 <= n <= 500\n1 <= arr[i] <= 500",

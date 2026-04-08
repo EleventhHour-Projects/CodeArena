@@ -6,7 +6,7 @@
   ],
   "title": "Reverse Integer",
   "difficulty": "Hard",
-  "description": "You are given an integer x.\n\nReverse its digits and return the result.\n\nImportant Rules\nIf x is negative → keep the sign\nRemove leading zeros after reversing\nExample: 120 → 21\nIf the reversed number goes outside 32-bit signed range:\n[-2^31, 2^31 - 1]\n\n→ return 0\n\nExamples\n\nExample 1\n\nx = 123\n→ 321\n\nExample 2\n\nx = -123\n→ -321\n\nExample 3\n\nx = 120\n→ 21",
+  "description": "You are given an integer x.\n\nReverse its digits and return the result.\n\nImportant Rules\nIf x is negative → keep the sign\nRemove leading zeros after reversing\nExample: 120 → 21\nIf the reversed number goes outside 32-bit signed range:\n[-2^31, 2^31 - 1]\n\n→ return 0",
   "input_format": "A single line containing the integer x.",
   "output_format": "Print a single integer representing the reversed value (or 0 if it overflows).",
   "constraints": "-2^31 ≤ x ≤ 2^31 - 1\nYou cannot use 64-bit integers",

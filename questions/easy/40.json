@@ -8,7 +8,7 @@
   ],
   "title": "Final Prices With a Special Discount in a Shop",
   "difficulty": "Easy",
-  "description": "You are given an array prices.\n\nFor each item i, you can get a discount:\n\nFind the first item to the right (j > i) such that\nprices[j] ≤ prices[i]\nIf found → discount = prices[j]\nOtherwise → no discount\nTask\n\nFor each index i, compute:\n\nfinal_price = prices[i] - discount\n\nReturn the array of final prices.\n\nExamples\n\nExample 1\n\n[8,4,6,2,3]\n→ [4,2,4,2,3]\n\nExample 2\n\n[1,2,3,4,5]\n→ [1,2,3,4,5]\n\nExample 3\n\n[10,1,1,6]\n→ [9,0,1,6]",
+  "description": "You are given an array prices.\n\nFor each item i, you can get a discount:\n\nFind the first item to the right (j > i) such that\nprices[j] ≤ prices[i]\nIf found → discount = prices[j]\nOtherwise → no discount\nTask\n\nFor each index i, compute:\n\nfinal_price = prices[i] - discount\n\nReturn the array of final prices.",
   "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
   "output_format": "Print space-separated integers in one line.",
   "constraints": "1 ≤ n ≤ 500\n1 ≤ prices[i] ≤ 1000",

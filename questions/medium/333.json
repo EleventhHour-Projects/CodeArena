@@ -8,7 +8,7 @@
   ],
   "title": "Smallest Inexpressible Bitwise OR",
   "difficulty": "Medium",
-  "description": "Given an array of integers 'nums', you can form various values by calculating the bitwise OR of any non-empty subsequence. An integer x is said to be 'expressible' if there exists at least one subsequence whose elements, when OR-ed together, equal x.\n\nYour task is to identify the smallest positive integer (greater than 0) that is NOT expressible using any subsequence from the given array.\n\nExample 1\nInput:\n2\n2 1\nOutput: 4\nExplanation: Subsequences generate OR values: 1, 2, and (1|2)=3. The smallest missing positive integer is 4.\n\nExample 2\nInput:\n3\n5 3 2\nOutput: 1\nExplanation: 1 cannot be formed by any OR operation.",
+  "description": "Given an array of integers 'nums', you can form various values by calculating the bitwise OR of any non-empty subsequence. An integer x is said to be 'expressible' if there exists at least one subsequence whose elements, when OR-ed together, equal x.\n\nYour task is to identify the smallest positive integer (greater than 0) that is NOT expressible using any subsequence from the given array.",
   "input_format": "The first line contains an integer n, the number of elements in the array.\nThe second line contains n space-separated integers representing the array 'nums'.",
   "output_format": "Print the smallest positive integer that cannot be formed as a bitwise OR of any subsequence.",
   "constraints": "1 <= nums.length <= 100,000\n1 <= nums[i] <= 1,000,000,000",
