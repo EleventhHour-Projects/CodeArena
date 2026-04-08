@@ -23,18 +23,18 @@ interface BattleModalProps {
   initialMode?: "private" | "arena";
 }
 
-export const BattleModal: React.FC<BattleModalProps> = ({ 
-  open, 
-  onOpenChange, 
+export const BattleModal: React.FC<BattleModalProps> = ({
+  open,
+  onOpenChange,
   initialOpponent = "",
   initialMode = "arena"
 }) => {
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const [mode, setMode] = useState<"private" | "arena">(initialMode);
   const [difficulty, setDifficulty] = useState<string>("medium");
-  
+
   // States
   const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
   const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "searching" | "found" | "accepted" | "starting">("idle");
@@ -107,11 +107,11 @@ export const BattleModal: React.FC<BattleModalProps> = ({
             toast.error("Invite rejected.");
             setStatus("idle");
           } else if (data.status === "Expired") {
-             toast.error("Invite expired.");
-             setStatus("idle");
+            toast.error("Invite expired.");
+            setStatus("idle");
           }
         }
-      } catch (err) {}
+      } catch (err) { }
     }, 2000);
     return () => clearInterval(pollId);
   }, [mode, status, inviteId, router, onOpenChange]);
@@ -123,16 +123,16 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       try {
         const res = await fetch("/api/matchmaking/poolsize");
         const data = await res.json();
-        if (data.success && data.matchmaking_size !== undefined) {
-          setPoolSize(data.matchmaking_size);
+        if (data.success) {
+          setPoolSize(data[difficulty] || 0);
         }
-      } catch (err) {}
+      } catch (err) { }
     };
-    
+
     fetchPoolSize();
     const interval = setInterval(fetchPoolSize, 3000);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, difficulty]);
 
   // Arena: Search
   const startArenaSearch = async () => {
@@ -153,7 +153,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         setStatus("idle");
         return;
       }
-      
+
       const wsUrl = `wss://matchmake.codearena.pro/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
@@ -226,7 +226,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       return;
     }
     if (!newOpen && (status === "searching" || status === "found" || status === "accepted")) {
-        if (!confirm("Exit this battle setup?")) return;
+      if (!confirm("Exit this battle setup?")) return;
     }
     if (!newOpen) {
       stopArenaSearch();
@@ -258,14 +258,14 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         {/* Mode Selector */}
         {(status === "idle" || status === "sending") && (
           <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 mb-6">
-            <button 
+            <button
               onClick={() => setMode("arena")}
               disabled={status === "sending"}
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === "arena" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"} ${status === "sending" ? "opacity-50" : ""}`}
             >
               Arena
             </button>
-            <button 
+            <button
               onClick={() => setMode("private")}
               disabled={status === "sending"}
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === "private" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"} ${status === "sending" ? "opacity-50" : ""}`}
@@ -286,11 +286,10 @@ export const BattleModal: React.FC<BattleModalProps> = ({
                     <button
                       key={d}
                       onClick={() => setDifficulty(d)}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                        difficulty === d 
-                        ? "bg-green-600/20 text-green-500 border border-green-500/30" 
-                        : "text-zinc-500 hover:text-zinc-400"
-                      }`}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${difficulty === d
+                          ? "bg-green-600/20 text-green-500 border border-green-500/30"
+                          : "text-zinc-500 hover:text-zinc-400"
+                        }`}
                     >
                       {d}
                     </button>
@@ -335,7 +334,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
                 <p className="text-2xl font-mono font-bold text-white">{formatTime(searchTime)}</p>
                 <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">Searching... ({difficulty})</p>
                 {poolSize > 0 && (
-                  <p className="text-xs text-green-500 mt-2 font-bold animate-pulse">
+                  <p className="text-xs text-green-500 mt-2 font-bold ">
                     {poolSize} {poolSize === 1 ? "player" : "players"} in matchmaking pool
                   </p>
                 )}
@@ -359,19 +358,19 @@ export const BattleModal: React.FC<BattleModalProps> = ({
           {(status === "found" || status === "accepted") && arenaOpponent && (
             <div className="space-y-6 pt-2">
               <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl">
-                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
-                     <User className="w-5 h-5 text-zinc-500" />
-                   </div>
-                   <div>
-                     <p className="text-sm font-bold">{arenaOpponent.username}</p>
-                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-                       <Trophy className="w-3 h-3 text-green-500" />
-                       {arenaOpponent.rating} Rating
-                     </div>
-                   </div>
-                 </div>
-                 <div className="text-xs font-black italic text-zinc-700">FOUND</div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
+                    <User className="w-5 h-5 text-zinc-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{arenaOpponent.username}</p>
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                      <Trophy className="w-3 h-3 text-green-500" />
+                      {arenaOpponent.rating} Rating
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs font-black italic text-zinc-700">FOUND</div>
               </div>
 
               <div className="flex flex-col gap-2">

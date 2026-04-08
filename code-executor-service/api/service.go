@@ -250,9 +250,11 @@ func IsAlreadyInMatchmaking(req *notnet.Request, res *notnet.Response) error {
 }
 
 func MatchmakingSize(req *notnet.Request, res *notnet.Response) error {
-	size := utils.ConnectionPoolInstance.GetConnectionsSize()
+	size := utils.UserConnCount.GetConnectionsSize()
 	return res.JSON(200, map[string]interface{}{
-		"matchmaking_size": size,
+		"easy":   size.Easy,
+		"medium": size.Medium,
+		"hard":   size.Hard,
 	})
 }
 

@@ -27,11 +27,21 @@ func MatchMaker() {
 
 	// Group available users by difficulty
 	byDifficulty := make(map[string][]*utils.User)
+	utils.UserConnCount.Mu.Lock()
 	for _, u := range allUsers {
 		if _, ok := utils.MatchPoolInstance.GetMatchByConnID(u.AllotedConnID); !ok {
 			byDifficulty[u.Difficulty] = append(byDifficulty[u.Difficulty], u)
+			switch u.Difficulty {
+			case "Easy":
+				utils.UserConnCount.Easy++
+			case "Medium":
+				utils.UserConnCount.Medium++
+			case "Hard":
+				utils.UserConnCount.Hard++
+			}
 		}
 	}
+	utils.UserConnCount.Mu.Unlock()
 
 	for _, users := range byDifficulty {
 		n := len(users)

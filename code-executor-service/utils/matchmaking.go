@@ -43,6 +43,12 @@ var (
 	RejectionRegistryInstance = &RejectionRegistry{
 		Rejections: make(map[string]time.Time),
 	}
+
+	UserConnCount = &UserConnectionCount{
+		Easy:   0,
+		Medium: 0,
+		Hard:   0,
+	}
 )
 
 type RejectionRegistry struct {
@@ -223,8 +229,13 @@ func (cp *Connection) ConnExists(AllotedConnID string) bool {
 	return exists
 }
 
-func (cp *Connection) GetConnectionsSize() int {
-	cp.mu.RLock()
-	defer cp.mu.RUnlock()
-	return len(cp.Pool)
+type UserConnectionCount struct {
+	Easy   int
+	Medium int
+	Hard   int
+	Mu     sync.RWMutex
+}
+
+func (ucc *UserConnectionCount) GetConnectionsSize() *UserConnectionCount {
+	return UserConnCount
 }
