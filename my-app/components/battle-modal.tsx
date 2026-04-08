@@ -174,7 +174,15 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       };
 
       socket.onclose = () => {
-        if (status === "searching" || status === "found") setStatus("idle");
+        setStatus((prev) => {
+          if (prev === "searching" || prev === "found") {
+            toast.error("Matchmaking connection closed.");
+            return "idle";
+          }
+          return prev;
+        });
+        setSearchTime(0);
+        setPoolSize(0);
       };
 
     } catch (err) {
@@ -183,7 +191,10 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   };
 
   const stopArenaSearch = () => {
-    if (socketRef.current) socketRef.current.close();
+    if (socketRef.current) {
+      socketRef.current.onclose = null;
+      socketRef.current.close();
+    }
     setStatus("idle");
     setSearchTime(0);
     setPoolSize(0);
