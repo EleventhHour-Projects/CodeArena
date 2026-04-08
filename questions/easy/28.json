@@ -9,7 +9,7 @@
   ],
   "title": "Sort the People",
   "difficulty": "Easy",
-  "description": "You are given two arrays:\n\nnames: an array of strings representing names\nheights: an array of distinct positive integers representing heights\n\nBoth arrays have the same length n, where:\n\nnames[i] corresponds to heights[i]\nTask\n\nReturn the array names sorted in descending order of heights.\n\nExamples\n\nExample 1\nInput:\nnames = [\"Mary\",\"John\",\"Emma\"]\nheights = [180,165,170]\n\nOutput:\n[\"Mary\",\"Emma\",\"John\"]\n\nExample 2\nInput:\nnames = [\"Alice\",\"Bob\",\"Bob\"]\nheights = [155,185,150]\n\nOutput:\n[\"Bob\",\"Alice\",\"Bob\"]",
+  "description": "You are given two arrays:\n\nnames: an array of strings representing names\nheights: an array of distinct positive integers representing heights\n\nBoth arrays have the same length n, where:\n\nnames[i] corresponds to heights[i]\nTask\n\nReturn the array names sorted in descending order of heights.",
   "input_format": "The first line contains an integer n.\nThe second line contains n space-separated names.\nThe third line contains an integer k (the number of heights, equal to n).\nThe fourth line contains k space-separated integers representing heights.",
   "output_format": "Print a single line string.",
   "constraints": "1 ≤ n ≤ 1000\n1 ≤ heights[i] ≤ 10⁵\nAll values in heights are distinct\nnames[i] consists of English letters",

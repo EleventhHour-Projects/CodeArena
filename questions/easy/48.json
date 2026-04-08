@@ -8,7 +8,7 @@
   ],
   "title": "Buy Two Chocolates",
   "difficulty": "Easy",
-  "description": "You are given:\n\nAn array prices → cost of chocolates\nAn integer money → your budget\nTask\nYou must buy exactly 2 chocolates\nTotal cost must be ≤ money (no debt)\nAmong all valid pairs, choose the pair with the minimum total cost\nOutput\nReturn:\nmoney - (cost of chosen 2 chocolates)\nIf you cannot buy 2 chocolates without exceeding money, return:\nmoney\nExamples\n\nExample 1\n\nprices = [1,2,2], money = 3\n→ 0\n\nExample 2\n\nprices = [3,2,3], money = 3\n→ 3",
+  "description": "You are given:\n\nAn array prices → cost of chocolates\nAn integer money → your budget\nTask\nYou must buy exactly 2 chocolates\nTotal cost must be ≤ money (no debt)\nAmong all valid pairs, choose the pair with the minimum total cost\nOutput\nReturn:\nmoney - (cost of chosen 2 chocolates)\nIf you cannot buy 2 chocolates without exceeding money, return:\nmoney",
   "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.\nThe third line contains an integer.",
   "output_format": "Print a single integer.",
   "constraints": "2 ≤ n ≤ 50\n1 ≤ prices[i], money ≤ 100",

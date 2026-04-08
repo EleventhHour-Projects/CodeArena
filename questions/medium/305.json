@@ -7,7 +7,7 @@
   ],
   "title": "Mountain Peak Identification",
   "difficulty": "Medium",
-  "description": "You are given an array that follows a \"mountain\" pattern: it strictly increases to a maximum value at some index i and then strictly decreases. Your task is to find the index i of this peak element. Your solution must have a time complexity of O(log n).\n\nExample 1\nInput:\narr = [0,1,0]\nOutput:\n1\n\nExample 2\nInput:\narr = [0,2,1,0]\nOutput:\n1\n\nExample 3\nInput:\narr = [0,10,5,2]\nOutput:\n1",
+  "description": "You are given an array that follows a \"mountain\" pattern: it strictly increases to a maximum value at some index i and then strictly decreases. Your task is to find the index i of this peak element. Your solution must have a time complexity of O(log n).",
   "input_format": "The first line contains an integer n representing the size of the array.\nThe second line contains n space-separated integers representing the mountain array elements.",
   "output_format": "Print a single integer representing the zero-indexed position of the peak element.",
   "constraints": "3 <= n <= 100000\n0 <= arr[i] <= 1000000\narr is guaranteed to be a valid mountain array",

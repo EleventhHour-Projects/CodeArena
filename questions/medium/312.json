@@ -8,7 +8,7 @@
   ],
   "title": "Enumerating Homogeneous Square Subdomains",
   "difficulty": "Medium",
-  "description": "Given an m x n binary matrix consisting only of 0s and 1s, count the total number of square submatrices that are composed entirely of 1s.\n\nExample 1\nInput:\n[\n  [0,1,1,1],\n  [1,1,1,1],\n  [0,1,1,1]\n]\nOutput: 15\n\nExample 2\nInput:\n[\n  [1,0,1],\n  [1,1,0],\n  [1,1,0]\n]\nOutput: 7",
+  "description": "Given an m x n binary matrix consisting only of 0s and 1s, count the total number of square submatrices that are composed entirely of 1s.",
   "input_format": "The first line contains two integers m and n representing the matrix dimensions.\nThe next m lines each contain n space-separated integers (0 or 1).",
   "output_format": "Print the total count of square submatrices containing only integers value 1.",
   "constraints": "1 <= m, n <= 300\nmatrix[i][j] is either 0 or 1",

@@ -9,7 +9,7 @@
   ],
   "title": "Letter Tile Possibilities",
   "difficulty": "Hard",
-  "description": "You are given a string tiles, where each character represents a tile with a letter printed on it.\n\nTask\n\nReturn the number of non-empty sequences that can be formed using the given tiles.\n\nRules\nEach tile can be used at most once in a sequence\nYou can use any subset of tiles\nThe order of letters matters\nDuplicate sequences should be counted only once\nExamples\n\nExample 1\nInput: tiles = \"AAB\"\nOutput: 8\n\nExplanation:\nPossible sequences:\n\"A\", \"B\", \"AA\", \"AB\", \"BA\", \"AAB\", \"ABA\", \"BAA\"\n\nExample 2\nInput: tiles = \"AAABBC\"\nOutput: 188\n\nExample 3\nInput: tiles = \"V\"\nOutput: 1",
+  "description": "You are given a string tiles, where each character represents a tile with a letter printed on it.\n\nTask\n\nReturn the number of non-empty sequences that can be formed using the given tiles.\n\nRules\nEach tile can be used at most once in a sequence\nYou can use any subset of tiles\nThe order of letters matters\nDuplicate sequences should be counted only once",
   "input_format": "A single line containing the string tiles.",
   "output_format": "Print a single integer representing the number of non-empty sequences that can be formed.",
   "constraints": "1 ≤ tiles.length ≤ 7\ntiles contains only uppercase English letters",

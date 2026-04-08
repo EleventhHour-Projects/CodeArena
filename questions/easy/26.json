@@ -9,7 +9,7 @@
   ],
   "title": "First Letter to Appear Twice",
   "difficulty": "Easy",
-  "description": "You are given a string s consisting of lowercase English letters.\n\nTask\n\nReturn the first letter that appears twice in the string.\n\nDefinition\n\nA letter a is considered to appear before another letter b if:\n\nthe index of the second occurrence of 'a' < the index of the second occurrence of 'b'\nExamples\n\nExample 1\nInput: s = \"abccbaacz\"\nOutput: \"c\"\n\nExplanation:\n\nc appears at indices 2 and 3 → second occurrence at index 3\nOther letters repeat later\n→ So c is the earliest to appear twice\n\nExample 2\nInput: s = \"abcdd\"\nOutput: \"d\"\n\nExplanation:\n\nOnly d appears twice",
+  "description": "You are given a string s consisting of lowercase English letters.\n\nTask\n\nReturn the first letter that appears twice in the string.\n\nDefinition\n\nA letter a is considered to appear before another letter b if:\n\nthe index of the second occurrence of 'a' < the index of the second occurrence of 'b'",
   "input_format": "The input contains a single string.",
   "output_format": "Print a single line string.",
   "constraints": "2 ≤ s.length ≤ 100\ns contains only lowercase English letters\nAt least one character appears twice",

@@ -8,7 +8,7 @@
   ],
   "title": "Is Subsequence",
   "difficulty": "Easy",
-  "description": "Given two strings s and t, determine whether s is a subsequence of t.\n\nA string s is a subsequence of t if it can be formed by deleting some (or no) characters from t without changing the relative order of the remaining characters.\n\nExample 1\nInput:\nabc\nahbgdc\nOutput: true\n\nExample 2\nInput:\naxc\nahbgdc\nOutput: false\n\nExample 3\nInput:\n-\nahbgdc\nOutput: true\n(Note: '-' represents an empty string)",
+  "description": "Given two strings s and t, determine whether s is a subsequence of t.\n\nA string s is a subsequence of t if it can be formed by deleting some (or no) characters from t without changing the relative order of the remaining characters.",
   "input_format": "The first line contains string s and the second line contains string t. lowercase English letters (a-z) are used. If a string is empty, it is represented by a hyphen '-'.",
   "output_format": "Print 'true' if s is a subsequence of t, otherwise print 'false'.",
   "constraints": "0 <= s.length <= 100, 0 <= t.length <= 10^4",

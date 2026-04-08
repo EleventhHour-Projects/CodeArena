@@ -9,7 +9,7 @@
   ],
   "title": "Largest Perimeter Triangle",
   "difficulty": "Easy",
-  "description": "You are given an array nums where each value represents a side length.\n\nYour task is to:\n\nPick any 3 lengths that can form a valid triangle\nReturn the maximum possible perimeter of such a triangle\n\nA triangle is valid if:\n\nThe sum of any two sides is greater than the third side\n\nIf no valid triangle can be formed, return 0.\n\nExample 1\nInput: [2, 1, 2]\nOutput: 5\nExplanation: Triangle with sides 1, 2, 2 → perimeter = 5\n\nExample 2\nInput: [1, 2, 1, 10]\nOutput: 0\nExplanation: No combination satisfies the triangle condition",
+  "description": "You are given an array nums where each value represents a side length.\n\nYour task is to:\n\nPick any 3 lengths that can form a valid triangle\nReturn the maximum possible perimeter of such a triangle\n\nA triangle is valid if:\n\nThe sum of any two sides is greater than the third side\n\nIf no valid triangle can be formed, return 0.",
   "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
   "output_format": "Print a single integer.",
   "constraints": "3 <= nums.length <= 10^4\n1 <= nums[i] <= 10^6",

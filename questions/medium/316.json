@@ -7,7 +7,7 @@
   ],
   "title": "Strategic Pursuit Evasion on 2D Grid",
   "difficulty": "Medium",
-  "description": "You start at (0, 0) on an infinite 2D grid and want to reach a target point (tx, ty). There are multiple ghosts at various starting positions [gx, gy]. In each turn, you and all ghosts can move one unit in any cardinal direction or stay still. You successfully escape if and only if you reach the target strictly before any ghost can catch you (occupy the same cell). All movements occur simultaneously. Return true if escape is guaranteed regardless of the ghosts' optimal strategies.\n\nExample 1\nInput: ghosts = [[1,0],[0,3]], target = [0,1]\nOutput: true\n\nExample 2\nInput: ghosts = [[1,0]], target = [2,0]\nOutput: false",
+  "description": "You start at (0, 0) on an infinite 2D grid and want to reach a target point (tx, ty). There are multiple ghosts at various starting positions [gx, gy]. In each turn, you and all ghosts can move one unit in any cardinal direction or stay still. You successfully escape if and only if you reach the target strictly before any ghost can catch you (occupy the same cell). All movements occur simultaneously. Return true if escape is guaranteed regardless of the ghosts' optimal strategies.",
   "input_format": "The first line contains two integers n and c representing the number of ghosts and the coordinates dimension (always 2).\nThe next n lines each contain c integers gx and gy representing a ghost's starting position.\nThe next line contains an integer c (dimension).\nThe last line contains c integers tx and ty for the target point.",
   "output_format": "Print \"true\" (without quotes) if you can escape, otherwise \"false\".",
   "constraints": "1 <= n <= 100\n-10000 <= tx, ty, gx, gy <= 10000",

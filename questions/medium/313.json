@@ -8,7 +8,7 @@
   ],
   "title": "Optimal Hub Selection with Distance Constraints",
   "difficulty": "Medium",
-  "description": "There are n cities labeled from 0 to n - 1. Cities are connected by bidirectional weighted roads. Given a distanceThreshold, identify the city that can reach the fewest number of other cities within that distance. Reachability is defined as the shortest path distance being less than or equal to the threshold. If multiple cities share the same minimum count, return the one with the highest index.\n\nExample 1\nInput: n = 4, edges = [[0,1,3],[1,2,1],[1,3,4],[2,3,1]], threshold = 4\nOutput: 3\n\nExample 2\nInput: n = 5, edges = [[0,1,2],[0,4,8],[1,2,3],[1,4,2],[2,3,1],[3,4,1]], threshold = 2\nOutput: 0",
+  "description": "There are n cities labeled from 0 to n - 1. Cities are connected by bidirectional weighted roads. Given a distanceThreshold, identify the city that can reach the fewest number of other cities within that distance. Reachability is defined as the shortest path distance being less than or equal to the threshold. If multiple cities share the same minimum count, return the one with the highest index.",
   "input_format": "The first line contains an integer n (cities).\nThe second line contains two integers m and c (number of edges and a constant 3).\nThe next m lines each contain three integers u, v, w (road between u and v with weight w).\nThe last line contains an integer distanceThreshold.",
   "output_format": "Print the index of the city with the smallest number of neighbors at or below the threshold distance. If multiple exist, return the largest index.",
   "constraints": "2 <= n <= 100\n1 <= m <= n * (n - 1) / 2\n0 <= from < to < n\n1 <= weight, distanceThreshold <= 10000",

@@ -8,7 +8,7 @@
   ],
   "title": "Cumulative Oscillation Count in Integer Range",
   "difficulty": "Medium",
-  "description": "The \"oscillation\" or \"waviness\" of a number is determined by the total count of its relative extrema (peaks and valleys) among its digits. A digit is a peak if it is strictly larger than both its neighbors, and a valley if it is strictly smaller. Boundary digits (first and last) are never peaks or valleys. Numbers with fewer than 3 digits have a waviness of 0.\n\nExample 1\nInput: 120 130\nOutput: 3\n\nExample 2\nInput: 198 202\nOutput: 3\n\nExample 3\nInput: 4848 4848\nOutput: 2",
+  "description": "The \"oscillation\" or \"waviness\" of a number is determined by the total count of its relative extrema (peaks and valleys) among its digits. A digit is a peak if it is strictly larger than both its neighbors, and a valley if it is strictly smaller. Boundary digits (first and last) are never peaks or valleys. Numbers with fewer than 3 digits have a waviness of 0.",
   "input_format": "The first line contains an integer L.\nThe second line contains an integer R.",
   "output_format": "Print the sum of waviness values for all integers in the given range.",
   "constraints": "1 <= L <= R <= 100000",

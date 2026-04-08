@@ -7,7 +7,7 @@
   ],
   "title": "Modular String Hashing Transformation",
   "difficulty": "Medium",
-  "description": "You are given a string s of length n and an integer k. The length n is a multiple of k. Divide s into n/k contiguous blocks of length k. For each block, calculate the sum of the positions of its characters in the English alphabet (a=0, b=1, ..., z=25). Map this sum modulo 26 back to a character and concatenate these characters to form a new string of length n/k.\n\nExample 1\nInput:\ns = \"abcd\", k = 2\nOutput:\n\"bf\"\n\nExample 2\nInput:\ns = \"mxz\", k = 3\nOutput:\n\"i\"",
+  "description": "You are given a string s of length n and an integer k. The length n is a multiple of k. Divide s into n/k contiguous blocks of length k. For each block, calculate the sum of the positions of its characters in the English alphabet (a=0, b=1, ..., z=25). Map this sum modulo 26 back to a character and concatenate these characters to form a new string of length n/k.",
   "input_format": "The first line contains the string s.\nThe second line contains the integer k.",
   "output_format": "Print the transformed string of length n/k.",
   "constraints": "1 <= k <= 100\nk <= s.length <= 1000\ns.length is divisible by k\ns contains only lowercase English letters",

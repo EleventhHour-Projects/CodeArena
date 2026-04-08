@@ -9,7 +9,7 @@
   ],
   "title": "Optimal Pair Balance Minimization",
   "difficulty": "Medium",
-  "description": "Given an array of even length n, you must partition the elements into n/2 pairs such that every element is used exactly once. For any given partition, let the weight be the maximum sum of any pair. Find the minimum possible weight across all possible partitions.\n\nExample 1\n\nInput:\nnums = [3,5,2,3]\n\nOutput:\n7\n\nExplanation:\nMaximum pair sum = max(6, 7) = 7\n\nExample 2\n\nInput:\nnums = [3,5,4,2,4,6]\n\nOutput:\n8\n\nExplanation:\nAll pairs sum to 8, so max pair sum = 8",
+  "description": "Given an array of even length n, you must partition the elements into n/2 pairs such that every element is used exactly once. For any given partition, let the weight be the maximum sum of any pair. Find the minimum possible weight across all possible partitions.",
   "input_format": "The first line contains an integer n (even length).\nThe second line contains n space-separated integers representing the array elements.",
   "output_format": "Print a single integer representing the minimum possible maximum pair sum.",
   "constraints": "2 <= n <= 100000\nn is even\n1 <= nums[i] <= 100000",

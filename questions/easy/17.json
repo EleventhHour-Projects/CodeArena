@@ -8,7 +8,7 @@
   ],
   "title": "Count Largest Group",
   "difficulty": "Easy",
-  "description": "You are given an integer n.\n\nConsider all numbers from 1 to n (inclusive). Group these numbers based on the sum of their digits.\n\nTwo numbers belong to the same group if they have the same digit sum.\nTask\n\nReturn the number of groups that have the maximum size (i.e., the most elements).\n\nExamples\n\nExample 1\nInput: n = 13\nOutput: 4\n\nExplanation:\nGroups based on digit sum:\n\n[1,10], [2,11], [3,12], [4,13], [5], [6], [7], [8], [9]\n\nThe largest group size is 2, and there are 4 such groups.\n\nExample 2\nInput: n = 2\nOutput: 2\n\nExplanation:\nGroups:\n\n[1], [2]\n\nEach group has size 1, so answer = 2.",
+  "description": "You are given an integer n.\n\nConsider all numbers from 1 to n (inclusive). Group these numbers based on the sum of their digits.\n\nTwo numbers belong to the same group if they have the same digit sum.\nTask\n\nReturn the number of groups that have the maximum size (i.e., the most elements).",
   "input_format": "The input contains a single integer.",
   "output_format": "Print a single integer.",
   "constraints": "1 ≤ n ≤ 10⁴",

@@ -8,7 +8,7 @@
   ],
   "title": "N-th Tribonacci Number",
   "difficulty": "Easy",
-  "description": "The Tribonacci sequence is defined as follows:\n\nT₀ = 0\nT₁ = 1\nT₂ = 1\nFor n ≥ 0:\nTₙ₊₃ = Tₙ + Tₙ₊₁ + Tₙ₊₂\n\nGiven an integer n, return the value of Tₙ.\n\nExamples\n\nExample 1\nInput: n = 4\nOutput: 4\nExplanation:\n\nT₃ = 0 + 1 + 1 = 2\nT₄ = 1 + 1 + 2 = 4\n\nExample 2\nInput: n = 25\nOutput: 1389537",
+  "description": "The Tribonacci sequence is defined as follows:\n\nT₀ = 0\nT₁ = 1\nT₂ = 1\nFor n ≥ 0:\nTₙ₊₃ = Tₙ + Tₙ₊₁ + Tₙ₊₂\n\nGiven an integer n, return the value of Tₙ.",
   "input_format": "The input contains a single integer.",
   "output_format": "Print a single integer.",
   "constraints": "0 ≤ n ≤ 37\nThe result fits within a 32-bit signed integer (≤ 2³¹ - 1)",

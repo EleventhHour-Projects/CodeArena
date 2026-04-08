@@ -9,7 +9,7 @@
   ],
   "title": "Allocate Mailboxes",
   "difficulty": "Hard",
-  "description": "You are given:\n\nAn array houses, where each value is the position of a house on a line\nAn integer k = number of mailboxes you can place\nTask\n\nPlace k mailboxes anywhere on the line such that:\n\nEvery house is assigned to its nearest mailbox\nThe total distance from each house to its nearest mailbox is minimized\n\nReturn this minimum total distance\n\nKey Idea\nEach house uses the closest mailbox\nYou can place mailboxes at any position (not necessarily at house positions)\nExamples\n\nExample 1\n\nhouses = [1,4,8,10,20], k = 3\nOutput: 5\n\nExample 2\n\nhouses = [2,3,5,12,18], k = 2\nOutput: 9",
+  "description": "You are given:\n\nAn array houses, where each value is the position of a house on a line\nAn integer k = number of mailboxes you can place\nTask\n\nPlace k mailboxes anywhere on the line such that:\n\nEvery house is assigned to its nearest mailbox\nThe total distance from each house to its nearest mailbox is minimized\n\nReturn this minimum total distance\n\nKey Idea\nEach house uses the closest mailbox\nYou can place mailboxes at any position (not necessarily at house positions)",
   "input_format": "The first line contains an integer n, the number of houses. The second line contains n space-separated integers representing the positions of the houses. The third line contains an integer k, the number of mailboxes.",
   "output_format": "Print a single integer representing the minimum total distance.",
   "constraints": "1 ≤ k ≤ n ≤ 100\n1 ≤ houses[i] ≤ 10000\nAll house positions are unique",

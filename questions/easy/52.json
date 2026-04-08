@@ -10,7 +10,7 @@
   ],
   "title": "Delete Greatest Value in Each Row",
   "difficulty": "Easy",
-  "description": "You are given a matrix grid of size m × n.\n\nRepeat the following until all columns are removed:\n\nFrom each row, remove the largest element\nAmong all removed elements in this step, find the maximum\nAdd that value to your answer\n\nAfter each step, the number of columns decreases by 1.\n\nReturn the final answer.\n\nExample 1\nInput: [[1,2,4],[3,3,1]]\nOutput: 8\n\nExplanation:\nStep 1 → remove [4, 3] → max = 4\nStep 2 → remove [2, 3] → max = 3\nStep 3 → remove [1, 1] → max = 1\nTotal = 4 + 3 + 1 = 8\n\nExample 2\nInput: [[10]]\nOutput: 10",
+  "description": "You are given a matrix grid of size m × n.\n\nRepeat the following until all columns are removed:\n\nFrom each row, remove the largest element\nAmong all removed elements in this step, find the maximum\nAdd that value to your answer\n\nAfter each step, the number of columns decreases by 1.\n\nReturn the final answer.",
   "input_format": "The first line contains two integers m and n.\nThe next m lines each contain n space-separated integers.",
   "output_format": "Print a single integer.",
   "constraints": "1 <= m, n <= 50\n1 <= grid[i][j] <= 100",

@@ -9,7 +9,7 @@
   ],
   "title": "Toggle Light Bulbs",
   "difficulty": "Easy",
-  "description": "You are given an array bulbs.\n\nThere are 100 bulbs (1 to 100), all initially off.\n\nFor each value bulbs[i]:\n\nIf that bulb is off → turn it on\nIf it is on → turn it off\n\nAfter processing all values, return:\n\nA list of bulb numbers that are on\nSorted in ascending order\n\nIf no bulbs are on, return [-1].\n\nExample 1\nInput: [10,30,20,10]\nOutput: [20,30]\n\nExample 2\nInput: [100,100]\nOutput: [-1]",
+  "description": "You are given an array bulbs.\n\nThere are 100 bulbs (1 to 100), all initially off.\n\nFor each value bulbs[i]:\n\nIf that bulb is off → turn it on\nIf it is on → turn it off\n\nAfter processing all values, return:\n\nA list of bulb numbers that are on\nSorted in ascending order\n\nIf no bulbs are on, return [-1].",
   "input_format": "The first line contains an integer n.\nThe second line contains n space-separated integers.",
   "output_format": "Print space-separated integers in one line.",
   "constraints": "1 <= bulbs.length <= 100\n1 <= bulbs[i] <= 100",
