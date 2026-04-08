@@ -48,6 +48,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
+	users, _ := utils.UserPoolInstance.GetAllUsers()
+	for _, u := range users {
+		if u.Username == username {
+			if oldConn, exists := utils.ConnectionPoolInstance.GetConnection(u.AllotedConnID); exists {
+				oldConn.Close()
+				utils.ConnectionPoolInstance.RemoveConnection(u.AllotedConnID)
+			}
+			utils.UserPoolInstance.RemoveUser(u.AllotedConnID)
+			break
+		}
+	}
 
 	utils.ConnectionPoolInstance.AddConnection(tkn, conn)
 	utils.UserPoolInstance.AddUser(&utils.User{
