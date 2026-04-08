@@ -32,11 +32,11 @@ func MatchMaker() {
 		if _, ok := utils.MatchPoolInstance.GetMatchByConnID(u.AllotedConnID); !ok {
 			byDifficulty[u.Difficulty] = append(byDifficulty[u.Difficulty], u)
 			switch u.Difficulty {
-			case "Easy":
+			case "easy":
 				utils.UserConnCount.Easy++
-			case "Medium":
+			case "medium":
 				utils.UserConnCount.Medium++
-			case "Hard":
+			case "hard":
 				utils.UserConnCount.Hard++
 			}
 		}
