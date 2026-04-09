@@ -28,8 +28,9 @@ interface Friend {
 /* ─── helpers ────────────────────────────────────────────── */
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
-function getStatus(friend: Friend): "in-battle" | "online" | "offline" {
+function getStatus(friend: Friend, onlineSet?: Set<string>): "in-battle" | "online" | "offline" {
   if (friend.currentBattleId) return "in-battle";
+  if (onlineSet?.has(friend._id)) return "online";
   if (!friend.lastActive) return "offline";
   return Date.now() - new Date(friend.lastActive).getTime() < ONLINE_THRESHOLD_MS
     ? "online"
@@ -109,6 +110,8 @@ export const FriendsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
   const [filter, setFilter] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
 
   // add-friend state
   const [addOpen, setAddOpen] = useState(false);
@@ -124,7 +127,10 @@ export const FriendsList: React.FC = () => {
     try {
       const res = await fetch("/api/friends");
       const data = await res.json();
-      if (data.success) setFriends(data.friends);
+      if (data.success) {
+        setFriends(data.friends);
+        if (data.userId) setUserId(data.userId);
+      }
       else if (res.status === 401) setIsGuest(true);
     } catch {
       setIsGuest(true);
@@ -139,6 +145,24 @@ export const FriendsList: React.FC = () => {
     const id = setInterval(fetchFriends, 30_000);
     return () => clearInterval(id);
   }, [fetchFriends]);
+
+  // SSE Effect
+  useEffect(() => {
+    if (!userId) return;
+    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}`;
+    const source = new EventSource(sseUrl);
+
+    source.addEventListener("friends_update", (e) => {
+      try {
+        const onlineIds: string[] = JSON.parse(e.data);
+        setOnlineSet(new Set(onlineIds || []));
+      } catch (err) {}
+    });
+
+    return () => {
+      source.close();
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (addOpen) setTimeout(() => inputRef.current?.focus(), 80);
@@ -204,10 +228,10 @@ export const FriendsList: React.FC = () => {
   // Sort: in-battle → online → offline
   const sorted = [...filtered].sort((a, b) => {
     const order = { "in-battle": 0, online: 1, offline: 2 };
-    return order[getStatus(a)] - order[getStatus(b)];
+    return order[getStatus(a, onlineSet)] - order[getStatus(b, onlineSet)];
   });
 
-  const onlineCount = friends.filter((f) => getStatus(f) !== "offline").length;
+  const onlineCount = friends.filter((f) => getStatus(f, onlineSet) !== "offline").length;
 
   /* ── loading ──────────────────────────────────────────── */
   if (loading) {
@@ -322,7 +346,7 @@ export const FriendsList: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <AnimatePresence initial={false}>
             {sorted.map((friend, i) => {
-              const status = getStatus(friend);
+              const status = getStatus(friend, onlineSet);
               const cfg = STATUS_CONFIG[status];
               const tier = getRatingTier(friend.rating);
 

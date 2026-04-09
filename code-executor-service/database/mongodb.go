@@ -23,6 +23,7 @@ type MongoDBClient struct {
 	UsersCollection      *mongo.Collection
 	ExecutionCode        *mongo.Collection
 	BattlesCollection    *mongo.Collection
+	FriendCollection     *mongo.Collection
 	// mu is a mutex to ensure thread-safe access to the MongoDB client and collections
 	mu sync.RWMutex
 }
@@ -50,6 +51,7 @@ func InitMongoDB() {
 		UsersCollection:      client.Database("code-arena").Collection("users"),
 		ExecutionCode:        client.Database("code-arena").Collection("executionCodes"),
 		BattlesCollection:    client.Database("code-arena").Collection("battles"),
+		FriendCollection:     client.Database("code-arena").Collection("friends"),
 		mu:                   sync.RWMutex{},
 	}
 
@@ -59,6 +61,6 @@ func InitMongoDB() {
 	}
 	_, err = MongoDB.SumissionsCollection.Indexes().CreateOne(context.Background(), indexModel)
 	if err != nil {
-		log.Println(utils.Red + "Failed to create unique index for execCodeId:" + utils.Reset, err)
+		log.Println(utils.Red+"Failed to create unique index for execCodeId:"+utils.Reset, err)
 	}
 }

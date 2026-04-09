@@ -3,6 +3,7 @@ package matchmaking
 import (
 	"context"
 	"executor-service/database"
+	"executor-service/sse"
 	"executor-service/utils"
 	"fmt"
 	"net/http"
@@ -161,6 +162,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func MatchmakingService(ctx context.Context) {
 	port := "6970"
 	http.HandleFunc("/wss/matchmaking", handler)
+	http.HandleFunc("/sse/friends", sse.FriendHandler)
 	fmt.Println("Server running on port:", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {

@@ -284,3 +284,28 @@ func (m *MongoDBClient) CreateBattle(p1ID, p2ID bson.ObjectID, difficulty string
 
 	return battleID, nil
 }
+
+func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
+	objID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"user": objID}
+	cursor, err := m.FriendCollection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	var friends []string
+	for cursor.Next(context.Background()) {
+		var friend utils.Friend
+		if err := cursor.Decode(&friend); err != nil {
+			fmt.Printf("Error decoding friend document: %v\n", err)
+			continue
+		}
+		friends = append(friends, friend.Friend.Hex())
+	}
+
+	return friends, nil
+}

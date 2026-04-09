@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
         const friends = friendDocs.map((f) => f.friend);
 
-        return NextResponse.json({ success: true, friends });
+        return NextResponse.json({ success: true, friends, userId: me._id.toString() });
     } catch (err) {
         console.error("GET /api/friends error:", err);
         return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
