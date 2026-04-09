@@ -27,6 +27,7 @@ type DashboardStats = {
   topUsers: any[];
   recentBattles: any[];
   growthTrend: { date: string; users: number }[];
+  onlineUsersList: any[];
 };
 
 type WorkerDetail = {
@@ -70,14 +71,20 @@ export default function AdminDashboard() {
 
   const fetchData = async (p: string) => {
     try {
-      const [statsRes, execRes, autoRes, usageRes] = await Promise.all([
+      const [statsRes, execRes, autoRes, usageRes, onlineRes] = await Promise.all([
         fetch(`/api/admin/stats?period=${p}`),
         fetch("/api/admin/executor-info"),
         fetch("/api/admin/executor/auto"),
-        fetch("/api/admin/executor/usage")
+        fetch("/api/admin/executor/usage"),
+        fetch("/api/admin/online-users")
       ]);
 
-      if (statsRes.ok) setStats(await statsRes.json());
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        let onlineUsersData = [];
+        if (onlineRes.ok) onlineUsersData = await onlineRes.json();
+        setStats({ ...statsData, onlineUsersList: onlineUsersData });
+      }
 
       let executorData = {};
       if (execRes.ok) executorData = await execRes.json();
@@ -342,6 +349,62 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
+        
+        {/* ONLINE USERS SECTION */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-10"
+        >
+          <div className="bg-card/30 border border-border/60 rounded-3xl p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  Currently Online Users
+                </h2>
+                <span className="text-xs font-bold text-emerald-400/80 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                  {stats?.onlineUsersList?.length || 0} active
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <AnimatePresence>
+                {stats?.onlineUsersList?.length ? (
+                  stats.onlineUsersList.map((user) => (
+                    <motion.div
+                      key={user._id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="group relative flex flex-col items-center p-4 rounded-2xl bg-muted/20 border border-border/40 hover:border-primary/30 transition-all"
+                    >
+                      <div className="relative mb-3">
+                        <img
+                          src={user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
+                          className="h-12 w-12 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors"
+                          alt={user.username}
+                        />
+                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background shadow-lg" />
+                      </div>
+                      <span className="text-xs font-bold truncate w-full text-center mb-1">{user.username}</span>
+                      <span className="text-[9px] text-muted-foreground font-mono truncate w-full text-center">
+                        {user.rating} Elo
+                      </span>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-10 text-center text-xs text-muted-foreground italic bg-muted/10 rounded-2xl border border-dashed border-border">
+                    No users currently streaming data...
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </motion.div>
+
 
 
 

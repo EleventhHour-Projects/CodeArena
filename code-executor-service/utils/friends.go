@@ -50,3 +50,13 @@ func (o *OnlineUsers) IsOnline(userID []string) []string {
 	}
 	return onlineUsers
 }
+
+func (o *OnlineUsers) GetAllOnlineUsers() []string {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+	onlineUsers := make([]string, 0, len(o.User))
+	for id := range o.User {
+		onlineUsers = append(onlineUsers, id)
+	}
+	return onlineUsers
+}

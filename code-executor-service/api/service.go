@@ -204,6 +204,14 @@ func ServerPID(req *notnet.Request, res *notnet.Response) error {
 	})
 }
 
+func GetOnlineUsersList(req *notnet.Request, res *notnet.Response) error {
+	if req.Header("X-Internal-Key") != utils.INTERNAL_KEY {
+		return res.String(401, "Unauthorized")
+	}
+	users := utils.OnlineUser.GetAllOnlineUsers()
+	return res.JSON(200, users)
+}
+
 func RegisterForMatchmaking(req *notnet.Request, res *notnet.Response) error {
 	var Rreq struct {
 		UserID     string `json:"user_id"`
@@ -318,6 +326,7 @@ func StartService() {
 	app.GET("/api/internal/auto", GetAutoStatus)
 	app.GET("/api/internal/usage", GetServerUsageInfo)
 	app.GET("/api/internal/pid", ServerPID)
+	app.GET("/api/internal/online-users", GetOnlineUsersList)
 	app.POST("/api/matchmaking/register", RegisterForMatchmaking)
 	app.POST("/api/friends/sse-token", GetSseToken)
 	app.GET("/api/poolsize", MatchmakingSize)
