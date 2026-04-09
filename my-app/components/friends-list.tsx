@@ -131,7 +131,6 @@ export const FriendsList: React.FC = () => {
       if (data.success) {
         setFriends(data.friends);
         if (data.userId) setUserId(data.userId);
-        if (data.sseToken) setSseToken(data.sseToken);
       }
       else if (res.status === 401) setIsGuest(true);
     } catch {
@@ -147,6 +146,27 @@ export const FriendsList: React.FC = () => {
     const id = setInterval(fetchFriends, 30_000);
     return () => clearInterval(id);
   }, [fetchFriends]);
+
+  /* SSE Token Fetching */
+  const fetchSseToken = useCallback(async () => {
+    try {
+      const res = await fetch("/api/friends/sse-token");
+      const data = await res.json();
+      if (data.success) {
+        setSseToken(data.sseToken);
+        if (data.userId) setUserId(data.userId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch SSE token:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSseToken();
+    // Refresh token every 9 minutes (tokens expire in 10m)
+    const id = setInterval(fetchSseToken, 9 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchSseToken]);
 
   // SSE Effect
   useEffect(() => {
@@ -164,7 +184,7 @@ export const FriendsList: React.FC = () => {
     return () => {
       source.close();
     };
-  }, [userId]);
+  }, [userId, sseToken]);
 
   useEffect(() => {
     if (addOpen) setTimeout(() => inputRef.current?.focus(), 80);
