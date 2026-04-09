@@ -42,7 +42,7 @@ func (o *OnlineUsers) Remove(userID string) {
 func (o *OnlineUsers) IsOnline(userID []string) []string {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
-	var onlineUsers []string
+	onlineUsers := []string{}
 	for _, id := range userID {
 		if o.User[id] > 0 {
 			onlineUsers = append(onlineUsers, id)

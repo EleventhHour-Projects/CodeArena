@@ -30,7 +30,13 @@ const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
 function getStatus(friend: Friend, onlineSet?: Set<string>): "in-battle" | "online" | "offline" {
   if (friend.currentBattleId) return "in-battle";
-  if (onlineSet?.has(friend._id)) return "online";
+
+  // If we have an onlineSet from SSE, it is the authoritative source
+  if (onlineSet) {
+    return onlineSet.has(friend._id) ? "online" : "offline";
+  }
+
+  // Fallback for initial load or guest mode
   if (!friend.lastActive) return "offline";
   return Date.now() - new Date(friend.lastActive).getTime() < ONLINE_THRESHOLD_MS
     ? "online"
