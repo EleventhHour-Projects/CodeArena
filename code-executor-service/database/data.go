@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"executor-service/utils"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -297,14 +298,19 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 	}
 	defer cursor.Close(context.Background())
 
-	friends := make([]string, 0)
+	var friends []string
 	for cursor.Next(context.Background()) {
 		var friend utils.Friend
 		if err := cursor.Decode(&friend); err != nil {
-			fmt.Printf("Error decoding friend document: %v\n", err)
-			continue
+			log.Printf("Error decoding friend document: %v\n", err)
+			return nil, err
 		}
 		friends = append(friends, friend.Friend.Hex())
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Cursor error in ListFriends: %v\n", err)
+		return nil, err
 	}
 
 	return friends, nil
