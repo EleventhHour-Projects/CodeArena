@@ -87,9 +87,8 @@ const Avatar = ({
     )}
     {/* Status dot */}
     <span
-      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${STATUS_CONFIG[status].dot} ${
-        status === "online" ? "animate-pulse" : ""
-      }`}
+      className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${STATUS_CONFIG[status].dot} ${status === "online" ? "animate-pulse" : ""
+        }`}
     />
   </div>
 );
@@ -168,17 +167,16 @@ export const FriendsList: React.FC = () => {
     return () => clearInterval(id);
   }, [fetchSseToken]);
 
-  // SSE Effect
   useEffect(() => {
     if (!userId || !sseToken) return;
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
+    const sseUrl = `http://34.126.214.18:6970/sse/friends?userId=${userId}&token=${sseToken}`;
     const source = new EventSource(sseUrl);
 
     source.addEventListener("friends_update", (e) => {
       try {
         const onlineIds: string[] = JSON.parse(e.data);
         setOnlineSet(new Set(onlineIds || []));
-      } catch (err) {}
+      } catch (err) { }
     });
 
     return () => {
@@ -296,11 +294,10 @@ export const FriendsList: React.FC = () => {
 
         <button
           onClick={() => setAddOpen((o) => !o)}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
-            addOpen
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition-all ${addOpen
               ? "bg-primary text-primary-foreground"
               : "bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
-          }`}
+            }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
           Add
@@ -381,13 +378,12 @@ export const FriendsList: React.FC = () => {
                   exit={{ opacity: 0, scale: 0.97 }}
                   transition={{ duration: 0.18, delay: i * 0.03 }}
                   style={{ willChange: "transform, opacity" }}
-                  className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${
-                    status === "in-battle"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${status === "in-battle"
                       ? "bg-red-500/5 border-red-500/15 hover:border-red-500/25"
                       : status === "online"
-                      ? "bg-primary/5 border-primary/10 hover:border-primary/20"
-                      : "bg-muted/20 border-border/40 hover:border-border/60"
-                  }`}
+                        ? "bg-primary/5 border-primary/10 hover:border-primary/20"
+                        : "bg-muted/20 border-border/40 hover:border-border/60"
+                    }`}
                 >
                   <Avatar friend={friend} status={status} />
 
