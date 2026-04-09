@@ -24,7 +24,26 @@ export async function GET(req: NextRequest) {
 
         const friends = friendDocs.map((f) => f.friend);
 
-        return NextResponse.json({ success: true, friends, userId: me._id.toString() });
+        // Fetch SSE Token from executor service
+        let sseToken = null;
+        try {
+            const tokenRes = await fetch("http://34.126.214.18:6969/api/friends/sse-token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Internal-Key": process.env.INTERNAL_KEY || "",
+                },
+                body: JSON.stringify({ userId: me._id.toString() }),
+            });
+            if (tokenRes.ok) {
+                const tokenData = await tokenRes.json();
+                sseToken = tokenData.token;
+            }
+        } catch (err) {
+            console.error("Failed to fetch SSE token:", err);
+        }
+
+        return NextResponse.json({ success: true, friends, userId: me._id.toString(), sseToken });
     } catch (err) {
         console.error("GET /api/friends error:", err);
         return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });

@@ -13,25 +13,30 @@ type Friend struct {
 }
 
 type OnlineUsers struct {
-	User map[string]bool
+	User map[string]int
 	mu   sync.RWMutex
 }
 
 var OnlineUser = &OnlineUsers{
-	User: make(map[string]bool),
+	User: make(map[string]int),
 	mu:   sync.RWMutex{},
 }
 
 func (o *OnlineUsers) Add(userID string) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	o.User[userID] = true
+	o.User[userID]++
 }
 
 func (o *OnlineUsers) Remove(userID string) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	delete(o.User, userID)
+	if _, ok := o.User[userID]; ok {
+		o.User[userID]--
+		if o.User[userID] <= 0 {
+			delete(o.User, userID)
+		}
+	}
 }
 
 func (o *OnlineUsers) IsOnline(userID []string) []string {
@@ -39,7 +44,7 @@ func (o *OnlineUsers) IsOnline(userID []string) []string {
 	defer o.mu.RUnlock()
 	var onlineUsers []string
 	for _, id := range userID {
-		if o.User[id] {
+		if o.User[id] > 0 {
 			onlineUsers = append(onlineUsers, id)
 		}
 	}

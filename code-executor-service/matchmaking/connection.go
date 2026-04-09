@@ -30,7 +30,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	difficulty, ok := utils.TokenStoreInstance.VerifyToken(tkn, username)
+	difficulty, ok := utils.TokenStoreInstance.VerifyToken(tkn, username, "matchmaking")
 	if !ok {
 		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 		return

@@ -16,6 +16,17 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 
 	userId := r.URL.Query().Get("userId")
+	token := r.URL.Query().Get("token")
+
+	if userId == "" || token == "" {
+		http.Error(w, "userId and token are required", http.StatusBadRequest)
+		return
+	}
+
+	if !utils.TokenStoreInstance.VerifySseToken(token, userId) {
+		http.Error(w, "Invalid or expired SSE token", http.StatusUnauthorized)
+		return
+	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -24,9 +35,18 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticker := time.NewTicker(5 * time.Second)
+	refreshTicker := time.NewTicker(2 * time.Minute) // Refresh friend list every 2 minutes
 	defer ticker.Stop()
+	defer refreshTicker.Stop()
 	defer utils.OnlineUser.Remove(userId)
 	utils.OnlineUser.Add(userId)
+
+	friends, err := database.MongoDB.ListFriends(userId)
+	if err != nil {
+		http.Error(w, "Failed to fetch friends", http.StatusInternalServerError)
+		return
+	}
+
 	ctx := r.Context()
 
 	for {
@@ -34,15 +54,20 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 		case <-ctx.Done():
 			return
 
+		case <-refreshTicker.C:
+			newFriends, err := database.MongoDB.ListFriends(userId)
+			if err == nil {
+				friends = newFriends
+			}
+
 		case <-ticker.C:
-			friends, err := database.MongoDB.ListFriends(userId)
+			onlineFriends := utils.OnlineUser.IsOnline(friends)
+			data, err := json.Marshal(onlineFriends)
 			if err != nil {
-				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to fetch friends\"}\n\n")
+				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to marshal friends\"}\n\n")
 				flusher.Flush()
 				continue
 			}
-			onlineFriends := utils.OnlineUser.IsOnline(friends)
-			data, _ := json.Marshal(onlineFriends)
 			fmt.Fprintf(w, "event: friends_update\n")
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()

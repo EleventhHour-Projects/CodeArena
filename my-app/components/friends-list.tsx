@@ -111,6 +111,7 @@ export const FriendsList: React.FC = () => {
   const [isGuest, setIsGuest] = useState(false);
   const [filter, setFilter] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [sseToken, setSseToken] = useState<string | null>(null);
   const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
 
   // add-friend state
@@ -130,6 +131,7 @@ export const FriendsList: React.FC = () => {
       if (data.success) {
         setFriends(data.friends);
         if (data.userId) setUserId(data.userId);
+        if (data.sseToken) setSseToken(data.sseToken);
       }
       else if (res.status === 401) setIsGuest(true);
     } catch {
@@ -148,8 +150,8 @@ export const FriendsList: React.FC = () => {
 
   // SSE Effect
   useEffect(() => {
-    if (!userId) return;
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}`;
+    if (!userId || !sseToken) return;
+    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
     const source = new EventSource(sseUrl);
 
     source.addEventListener("friends_update", (e) => {

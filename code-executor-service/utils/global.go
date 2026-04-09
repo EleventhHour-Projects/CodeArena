@@ -384,6 +384,8 @@ type Battle struct {
 
 type Token struct {
 	Username   string
+	UserID     bson.ObjectID
+	Type       string // "matchmaking", "sse"
 	Difficulty string
 	Expires    time.Time
 }
@@ -398,15 +400,16 @@ var TokenStoreInstance = &TokenStore{
 	mu:    sync.Mutex{},
 }
 
-func (tc *TokenStore) GenerateToken(username string, difficulty string) string {
+func (tc *TokenStore) GenerateToken(userID bson.ObjectID, username string, difficulty string, tokenType string) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 
 	randomPart := hex.EncodeToString(b)
 
-	data := fmt.Sprintf("%s:%s:%s",
+	data := fmt.Sprintf("%s:%s:%s:%s",
 		username,
 		randomPart,
+		tokenType,
 		MASALA,
 	)
 
@@ -416,6 +419,8 @@ func (tc *TokenStore) GenerateToken(username string, difficulty string) string {
 	tc.mu.Lock()
 	tc.store[token] = Token{
 		Username:   username,
+		UserID:     userID,
+		Type:       tokenType,
 		Difficulty: difficulty,
 		Expires:    time.Now().Add(10 * time.Minute),
 	}
@@ -424,7 +429,7 @@ func (tc *TokenStore) GenerateToken(username string, difficulty string) string {
 	return token
 }
 
-func (tc *TokenStore) VerifyToken(token, username string) (string, bool) {
+func (tc *TokenStore) VerifyToken(token, username string, tokenType string) (string, bool) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
 
@@ -438,7 +443,7 @@ func (tc *TokenStore) VerifyToken(token, username string) (string, bool) {
 		return "", false
 	}
 
-	if data.Username != username {
+	if data.Username != username || data.Type != tokenType {
 		return "", false
 	}
 
@@ -449,6 +454,27 @@ func (tc *TokenStore) ConsumeToken(token string) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
 	delete(tc.store, token)
+}
+
+func (tc *TokenStore) VerifySseToken(token string, userID string) bool {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+
+	data, ok := tc.store[token]
+	if !ok || data.Type != "sse" {
+		return false
+	}
+
+	if time.Now().After(data.Expires) {
+		delete(tc.store, token)
+		return false
+	}
+
+	if data.UserID.Hex() != userID {
+		return false
+	}
+
+	return true
 }
 
 func (tc *TokenStore) StartCleanup() {
