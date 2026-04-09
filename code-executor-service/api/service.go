@@ -223,7 +223,7 @@ func RegisterForMatchmaking(req *notnet.Request, res *notnet.Response) error {
 		diff = "medium"
 	}
 
-	tkn := utils.TokenStoreInstance.GenerateToken(u.Username, diff)
+	tkn := utils.TokenStoreInstance.GenerateToken(u.ID, u.Username, diff, "matchmaking")
 
 	return res.JSON(200, map[string]interface{}{
 		"token":   tkn,
@@ -255,6 +255,31 @@ func MatchmakingSize(req *notnet.Request, res *notnet.Response) error {
 		"easy":   size.Easy,
 		"medium": size.Medium,
 		"hard":   size.Hard,
+	})
+}
+
+func GetSseToken(req *notnet.Request, res *notnet.Response) error {
+	if req.Header("X-Internal-Key") != utils.INTERNAL_KEY {
+		return res.String(401, "Unauthorized")
+	}
+	var Rreq struct {
+		UserID string `json:"userId"`
+	}
+	err := req.BindJSON(&Rreq)
+	if err != nil {
+		return res.String(400, "Invalid request body")
+	}
+
+	u, err := database.MongoDB.GetUser(Rreq.UserID)
+	if err != nil {
+		return res.String(404, "User not found")
+	}
+
+	tkn := utils.TokenStoreInstance.GenerateToken(u.ID, u.Username, "", "sse")
+
+	return res.JSON(200, map[string]interface{}{
+		"token":   tkn,
+		"expires": time.Now().Add(10 * time.Minute),
 	})
 }
 
@@ -294,6 +319,7 @@ func StartService() {
 	app.GET("/api/internal/usage", GetServerUsageInfo)
 	app.GET("/api/internal/pid", ServerPID)
 	app.POST("/api/matchmaking/register", RegisterForMatchmaking)
+	app.POST("/api/friends/sse-token", GetSseToken)
 	app.GET("/api/poolsize", MatchmakingSize)
 	log.Fatal(app.Listen(":6969"))
 }

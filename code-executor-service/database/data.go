@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"executor-service/utils"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -283,4 +284,34 @@ func (m *MongoDBClient) CreateBattle(p1ID, p2ID bson.ObjectID, difficulty string
 	_, _ = m.UsersCollection.UpdateOne(context.Background(), bson.M{"_id": p2ID}, bson.M{"$set": bson.M{"currentBattleId": battleID}})
 
 	return battleID, nil
+}
+
+func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
+	objID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"user": objID}
+	cursor, err := m.FriendCollection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	var friends []string
+	for cursor.Next(context.Background()) {
+		var friend utils.Friend
+		if err := cursor.Decode(&friend); err != nil {
+			log.Printf("Error decoding friend document: %v\n", err)
+			return nil, err
+		}
+		friends = append(friends, friend.Friend.Hex())
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Cursor error in ListFriends: %v\n", err)
+		return nil, err
+	}
+
+	return friends, nil
 }
