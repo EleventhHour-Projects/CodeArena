@@ -37,6 +37,8 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 		case <-ticker.C:
 			friends, err := database.MongoDB.ListFriends(userId)
 			if err != nil {
+				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to fetch friends\"}\n\n")
+				flusher.Flush()
 				continue
 			}
 			onlineFriends := utils.OnlineUser.IsOnline(friends)

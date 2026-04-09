@@ -297,7 +297,7 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 	}
 	defer cursor.Close(context.Background())
 
-	var friends []string
+	friends := make([]string, 0)
 	for cursor.Next(context.Background()) {
 		var friend utils.Friend
 		if err := cursor.Decode(&friend); err != nil {

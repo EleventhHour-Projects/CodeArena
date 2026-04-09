@@ -7,19 +7,19 @@ import (
 )
 
 type Friend struct {
-	ID     bson.ObjectID `json:"_id"`
-	User   bson.ObjectID `json:"user"`
-	Friend bson.ObjectID `json:"friend"`
+	ID     bson.ObjectID `bson:"_id"`
+	User   bson.ObjectID `bson:"user"`
+	Friend bson.ObjectID `bson:"friend"`
 }
 
 type OnlineUsers struct {
 	User map[string]bool
-	mu   sync.Mutex
+	mu   sync.RWMutex
 }
 
 var OnlineUser = &OnlineUsers{
 	User: make(map[string]bool),
-	mu:   sync.Mutex{},
+	mu:   sync.RWMutex{},
 }
 
 func (o *OnlineUsers) Add(userID string) {
@@ -35,6 +35,8 @@ func (o *OnlineUsers) Remove(userID string) {
 }
 
 func (o *OnlineUsers) IsOnline(userID []string) []string {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
 	var onlineUsers []string
 	for _, id := range userID {
 		if o.User[id] {
