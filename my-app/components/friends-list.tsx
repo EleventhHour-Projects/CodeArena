@@ -147,9 +147,7 @@ export const FriendsList: React.FC = () => {
 
   useEffect(() => {
     fetchFriends();
-    // Poll every 30s to refresh lastActive / currentBattleId
-    const id = setInterval(fetchFriends, 30_000);
-    return () => clearInterval(id);
+    // Use SSE for real-time status updates instead of polling
   }, [fetchFriends]);
 
   /* SSE Token Fetching */
