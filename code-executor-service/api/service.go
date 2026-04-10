@@ -380,5 +380,9 @@ func StartService() {
 	app.POST("/api/invites/sse-token", GetInviteSseToken)
 	app.POST("/api/invites/delete", DeleteInvitiationsForUser)
 	app.GET("/api/poolsize", MatchmakingSize)
+
+	// Start background sync for invitations
+	go FetchInviteFromDatabase()
+
 	log.Fatal(app.Listen(":6969"))
 }
