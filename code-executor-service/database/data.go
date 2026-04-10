@@ -319,8 +319,11 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 
 func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
 	var invites []utils.Invite
-	// Only fetch Pending invites from the database
-	cursor, err := m.BattleInviteCollection.Find(context.Background(), bson.M{"status": "Pending"})
+	// Only fetch Pending and Non-Expired invites from the database
+	cursor, err := m.BattleInviteCollection.Find(context.Background(), bson.M{
+		"status":    "Pending",
+		"expiresAt": bson.M{"$gt": time.Now()},
+	})
 	if err != nil {
 		return nil, err
 	}
