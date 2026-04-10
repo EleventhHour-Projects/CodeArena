@@ -12,6 +12,11 @@ type Friend struct {
 	Friend bson.ObjectID `bson:"friend"`
 }
 
+type FriendStatus struct {
+	ID              string `json:"id"`
+	CurrentBattleID string `json:"bid,omitempty"`
+}
+
 type OnlineUsers struct {
 	User map[string]int
 	mu   sync.RWMutex
@@ -59,4 +64,24 @@ func (o *OnlineUsers) GetAllOnlineUsers() []string {
 		onlineUsers = append(onlineUsers, id)
 	}
 	return onlineUsers
+}
+
+func (o *OnlineUsers) GetOnlineFriendStatuses(friends []User) []FriendStatus {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+	onlineFriends := []FriendStatus{}
+	for _, f := range friends {
+		idHex := f.ID.Hex()
+		if o.User[idHex] > 0 {
+			bid := ""
+			if !f.CurrentBattleID.IsZero() {
+				bid = f.CurrentBattleID.Hex()
+			}
+			onlineFriends = append(onlineFriends, FriendStatus{
+				ID:              idHex,
+				CurrentBattleID: bid,
+			})
+		}
+	}
+	return onlineFriends
 }

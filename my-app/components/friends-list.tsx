@@ -25,18 +25,29 @@ interface Friend {
   currentBattleId?: string | null;
 }
 
+import { useStatus } from "@/app/providers/StatusProvider";
+
 /* ─── helpers ────────────────────────────────────────────── */
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
-function getStatus(friend: Friend, onlineSet?: Set<string>): "in-battle" | "online" | "offline" {
-  if (friend.currentBattleId) return "in-battle";
-
-  // If we have an onlineSet from SSE, it is the authoritative source
+function getStatus(
+  friend: Friend,
+  onlineSet?: Set<string>,
+  battleMap?: Map<string, string>
+): "in-battle" | "online" | "offline" {
+  // 1. If we have SSE data, it is the authoritative source for real-time status
   if (onlineSet) {
-    return onlineSet.has(friend._id) ? "online" : "offline";
+    const isOnline = onlineSet.has(friend._id);
+    if (!isOnline) return "offline";
+
+    // Check battleMap for real-time battle status
+    if (battleMap && battleMap.get(friend._id)) return "in-battle";
+
+    return "online";
   }
 
-  // Fallback for initial load or guest mode
+  // 2. Fallback for initial load (before SSE connects)
+  if (friend.currentBattleId) return "in-battle";
   if (!friend.lastActive) return "offline";
   return Date.now() - new Date(friend.lastActive).getTime() < ONLINE_THRESHOLD_MS
     ? "online"
@@ -115,9 +126,8 @@ export const FriendsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
   const [filter, setFilter] = useState("");
+  const { onlineSet, battleMap, userId: statusUserId } = useStatus();
   const [userId, setUserId] = useState<string | null>(null);
-  const [sseToken, setSseToken] = useState<string | null>(null);
-  const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
 
   // add-friend state
   const [addOpen, setAddOpen] = useState(false);
@@ -150,50 +160,9 @@ export const FriendsList: React.FC = () => {
     // Use SSE for real-time status updates instead of polling
   }, [fetchFriends]);
 
-  /* SSE Token Fetching */
-  const fetchSseToken = useCallback(async () => {
-    try {
-      const res = await fetch("/api/friends/sse-token");
-      const data = await res.json();
-      if (data.success) {
-        setSseToken(data.sseToken);
-        if (data.userId) setUserId(data.userId);
-      }
-    } catch (err) {
-      console.error("Failed to fetch SSE token:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchSseToken();
-    // Refresh token every 9 minutes (tokens expire in 10m)
-    const id = setInterval(fetchSseToken, 9 * 60 * 1000);
-    return () => clearInterval(id);
-  }, [fetchSseToken]);
-
-  // SSE Effect
-  useEffect(() => {
-    if (!userId || !sseToken) return;
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
-    const source = new EventSource(sseUrl);
-
-    source.addEventListener("friends_update", (e) => {
-      try {
-        const onlineIds: string[] = JSON.parse(e.data);
-        setOnlineSet(new Set(onlineIds || []));
-      } catch (err) { }
-    });
-
-    source.onerror = () => {
-      // If the connection fails, it might be due to an expired token
-      // Triggering fetchSseToken will update sseToken and restart the effect
-      fetchSseToken();
-    };
-
-    return () => {
-      source.close();
-    };
-  }, [userId, sseToken]);
+    if (statusUserId) setUserId(statusUserId);
+  }, [statusUserId]);
 
   useEffect(() => {
     if (addOpen) setTimeout(() => inputRef.current?.focus(), 80);
@@ -259,10 +228,15 @@ export const FriendsList: React.FC = () => {
   // Sort: in-battle → online → offline
   const sorted = [...filtered].sort((a, b) => {
     const order = { "in-battle": 0, online: 1, offline: 2 };
-    return order[getStatus(a, onlineSet)] - order[getStatus(b, onlineSet)];
+    return (
+      order[getStatus(a, onlineSet, battleMap)] -
+      order[getStatus(b, onlineSet, battleMap)]
+    );
   });
 
-  const onlineCount = friends.filter((f) => getStatus(f, onlineSet) !== "offline").length;
+  const onlineCount = friends.filter(
+    (f) => getStatus(f, onlineSet, battleMap) !== "offline"
+  ).length;
 
   /* ── loading ──────────────────────────────────────────── */
   if (loading) {
@@ -376,7 +350,7 @@ export const FriendsList: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <AnimatePresence initial={false}>
             {sorted.map((friend, i) => {
-              const status = getStatus(friend, onlineSet);
+              const status = getStatus(friend, onlineSet, battleMap);
               const cfg = STATUS_CONFIG[status];
               const tier = getRatingTier(friend.rating);
 

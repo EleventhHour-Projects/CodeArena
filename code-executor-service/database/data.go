@@ -287,7 +287,7 @@ func (m *MongoDBClient) CreateBattle(p1ID, p2ID bson.ObjectID, difficulty string
 	return battleID, nil
 }
 
-func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
+func (m *MongoDBClient) ListFriends(userID string) ([]utils.User, error) {
 	objID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
 		return nil, err
@@ -299,14 +299,14 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 	}
 	defer cursor.Close(context.Background())
 
-	var friends []string
+	var friendIDs []bson.ObjectID
 	for cursor.Next(context.Background()) {
 		var friend utils.Friend
 		if err := cursor.Decode(&friend); err != nil {
 			log.Printf("Error decoding friend document: %v\n", err)
 			return nil, err
 		}
-		friends = append(friends, friend.Friend.Hex())
+		friendIDs = append(friendIDs, friend.Friend)
 	}
 
 	if err := cursor.Err(); err != nil {
@@ -314,7 +314,23 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 		return nil, err
 	}
 
-	return friends, nil
+	// Fetch user details for all friends to get real-time info like currentBattleId
+	if len(friendIDs) == 0 {
+		return []utils.User{}, nil
+	}
+
+	userCursor, err := m.UsersCollection.Find(context.Background(), bson.M{"_id": bson.M{"$in": friendIDs}})
+	if err != nil {
+		return nil, err
+	}
+	defer userCursor.Close(context.Background())
+
+	var users []utils.User
+	if err := userCursor.All(context.Background(), &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
