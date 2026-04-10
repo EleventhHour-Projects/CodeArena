@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"executor-service/utils"
+
 	"fmt"
 	"log"
 	"os"
@@ -314,4 +315,34 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 	}
 
 	return friends, nil
+}
+
+func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
+	var invites []utils.Invite
+	cursor, err := m.BattleInviteCollection.Find(context.Background(), bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var invite utils.Invite
+		if err := cursor.Decode(&invite); err != nil {
+			log.Printf("Error decoding invite document: %v\n", err)
+			return nil, err
+		}
+		// Populate Player1 info for the frontend
+		p1, err := m.GetUser(invite.Player1ID.Hex())
+		if err == nil {
+			invite.Player1 = p1
+		}
+		invites = append(invites, invite)
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Cursor error in GetAllInvites: %v\n", err)
+		return nil, err
+	}
+
+	return invites, nil
 }

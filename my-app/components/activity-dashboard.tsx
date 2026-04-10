@@ -52,6 +52,9 @@ export const ActivityDashboard = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [actingOn, setActingOn] = useState<string | null>(null);
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [sseToken, setSseToken] = useState<string | null>(null);
+
   const fetchDashboardData = async (isInitial = false) => {
     if (isInitial) setLoading(true);
     try {
@@ -78,11 +81,50 @@ export const ActivityDashboard = () => {
     }
   };
 
+  const fetchSseToken = async () => {
+    try {
+      const res = await fetch("/api/battle/invitations/sse-token");
+      const data = await res.json();
+      if (data.success) {
+        setSseToken(data.sseToken);
+        if (data.userId) setUserId(data.userId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch invite SSE token:", err);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData(true);
-    const intervalId = setInterval(() => fetchDashboardData(false), 5000);
-    return () => clearInterval(intervalId);
+    fetchSseToken();
+
+    // Refresh token every 9 minutes
+    const tokenInterval = setInterval(fetchSseToken, 9 * 60 * 1000);
+    return () => clearInterval(tokenInterval);
   }, []);
+
+  useEffect(() => {
+    if (!userId || !sseToken) return;
+    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
+    const source = new EventSource(sseUrl);
+
+    source.addEventListener("invite_update", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setInvitations(data || []);
+      } catch (err) {
+        console.error("Error parsing invite SSE data:", err);
+      }
+    });
+
+    source.onerror = () => {
+      fetchSseToken();
+    };
+
+    return () => {
+      source.close();
+    };
+  }, [userId, sseToken]);
 
   const handleRejoin = () => {
     if (activeBattleId) router.push(`/battle/${activeBattleId}`);

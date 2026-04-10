@@ -163,6 +163,7 @@ func MatchmakingService(ctx context.Context) {
 	port := "6970"
 	http.HandleFunc("/wss/matchmaking", handler)
 	http.HandleFunc("/sse/friends", sse.FriendHandler)
+	http.HandleFunc("/sse/invites", sse.InviteHandler)
 	fmt.Println("Server running on port:", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {

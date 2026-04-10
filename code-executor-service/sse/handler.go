@@ -74,3 +74,53 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func InviteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	userId := r.URL.Query().Get("userId")
+	token := r.URL.Query().Get("token")
+
+	if userId == "" || token == "" {
+		http.Error(w, "userId and token are required", http.StatusBadRequest)
+		return
+	}
+
+	if !utils.TokenStoreInstance.VerifySseToken(token, userId) {
+		http.Error(w, "Invalid or expired SSE token", http.StatusUnauthorized)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	ctx := r.Context()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			invites, ok := utils.InviteStore.GetInvite(userId)
+			if !ok {
+				continue
+			}
+			data, err := json.Marshal(invites)
+			if err != nil {
+				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to marshal invites\"}\n\n")
+				flusher.Flush()
+				continue
+			}
+			fmt.Fprintf(w, "event: invite_update\n")
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+	}
+}

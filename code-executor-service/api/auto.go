@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"executor-service/database"
 	"executor-service/docker"
 	"executor-service/utils"
 	"executor-service/worker"
@@ -120,6 +122,24 @@ func AutoClean() {
 					}
 				}
 			}
+		}
+	}
+}
+
+func FetchInviteFromDatabase() {
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
+	ctx := context.Background()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			invites, err := database.MongoDB.GetAllInvites()
+			if err != nil {
+				continue
+			}
+			utils.InviteStore.AddInvite(invites)
 		}
 	}
 }

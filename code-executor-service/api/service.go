@@ -291,6 +291,29 @@ func GetSseToken(req *notnet.Request, res *notnet.Response) error {
 	})
 }
 
+func DeleteInvitiationsForUser(req *notnet.Request, res *notnet.Response) error {
+	if req.Header("X-Internal-Key") != utils.INTERNAL_KEY {
+		return res.String(401, "Unauthorized")
+	}
+	var Rreq struct {
+		UserID   string `json:"userId"`
+		RemoveID string `json:"removeId"`
+	}
+	err := req.BindJSON(&Rreq)
+	if err != nil {
+		return res.String(400, "Invalid request body")
+	}
+
+	u, err := database.MongoDB.GetUser(Rreq.UserID)
+	if err != nil {
+		return res.String(404, "User not found")
+	}
+
+	utils.InviteStore.RemoveInvite(u.ID.Hex(), Rreq.RemoveID)
+	res.Status(200)
+	return nil
+}
+
 // StartService initializes the NotNet app, sets up the API routes, and starts the server to listen for incoming requests
 // The function also prints out information about the service, including the total number of handlers, the process ID, and the worker pool size
 // The server listens on port 6969 and is configured to disable the startup message for a cleaner output
@@ -329,6 +352,8 @@ func StartService() {
 	app.GET("/api/internal/online-users", GetOnlineUsersList)
 	app.POST("/api/matchmaking/register", RegisterForMatchmaking)
 	app.POST("/api/friends/sse-token", GetSseToken)
+	app.POST("/api/invites/sse-token", GetSseToken)
+	app.POST("/api/invites/delete", DeleteInvitiationsForUser)
 	app.GET("/api/poolsize", MatchmakingSize)
 	log.Fatal(app.Listen(":6969"))
 }
