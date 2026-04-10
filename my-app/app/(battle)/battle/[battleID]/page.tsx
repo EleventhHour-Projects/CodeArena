@@ -351,6 +351,7 @@ export default function BattlePage({ params }: PageProps) {
   const [language, setLanguage] = useState("cpp");
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
   const [isExecuting, setIsExecuting] = useState(false);
+  const [executionType, setExecutionType] = useState<"Run" | "Submit" | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
 
   const fetchSubmissions = async () => {
@@ -438,6 +439,7 @@ export default function BattlePage({ params }: PageProps) {
     }
 
     setIsExecuting(true);
+    setExecutionType(type);
     setPanelTab("result");
     setExecutionResult(null); // Clear previous results
     
@@ -1327,45 +1329,56 @@ export default function BattlePage({ params }: PageProps) {
 
                         {executionResult.status !== "Accepted" && (
                           <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                             {executionResult.errorMsg && (
-                               <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner w-full overflow-x-auto">
-                                 <h4 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2 opacity-80">System Error Log</h4>
-                                 <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{executionResult.errorMsg}</pre>
-                               </div>
-                             )}
+                             {executionType === "Submit" ? (
+                                <div className="p-8 border border-red-500/20 bg-red-500/5 rounded-xl text-center space-y-2 relative overflow-hidden flex flex-col items-center justify-center min-h-[160px]">
+                                  <div className="absolute inset-0 bg-red-500/5 blur-xl"></div>
+                                  <AlertCircle className="w-10 h-10 text-red-500/80 mb-2 relative z-10" />
+                                  <h4 className="text-lg font-bold text-red-500 relative z-10">Submission Rejected</h4>
+                                  <p className="text-sm text-zinc-400 relative z-10 font-medium">Failed on a hidden testcase</p>
+                                </div>
+                             ) : (
+                               <>
+                                 {executionResult.errorMsg && (
+                                   <div className="p-4 border border-red-500/20 bg-red-500/10 rounded-xl shadow-inner w-full overflow-x-auto">
+                                     <h4 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2 opacity-80">System Error Log</h4>
+                                     <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap">{executionResult.errorMsg}</pre>
+                                   </div>
+                                 )}
 
-                             {executionResult.failed_test_case && (
-                               <div className="space-y-4">
-                                  <div className="flex items-center gap-2">
-                                     <div className="h-px flex-1 bg-red-500/20"></div>
-                                     <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">Failed Testcase (Case {executionResult.failed_test_case})</span>
-                                     <div className="h-px flex-1 bg-red-500/20"></div>
-                                  </div>
+                                 {executionResult.failed_test_case && (
+                                   <div className="space-y-4">
+                                      <div className="flex items-center gap-2">
+                                         <div className="h-px flex-1 bg-red-500/20"></div>
+                                         <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">Failed Testcase (Case {executionResult.failed_test_case})</span>
+                                         <div className="h-px flex-1 bg-red-500/20"></div>
+                                      </div>
 
-                                  <div className="grid grid-cols-1 gap-4">
-                                     <div className="space-y-2">
-                                        <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Input</div>
-                                        <div className="bg-[#121214] rounded-lg p-3 border border-white/5 font-mono text-xs whitespace-pre-wrap text-zinc-300">
-                                          {executionResult.failed_test_case || "Input data unavailable"}
-                                        </div>
-                                     </div>
+                                      <div className="grid grid-cols-1 gap-4">
+                                         <div className="space-y-2">
+                                            <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider ml-1">Input</div>
+                                            <div className="bg-[#121214] rounded-lg p-3 border border-white/5 font-mono text-xs whitespace-pre-wrap text-zinc-300">
+                                              {executionResult.failed_test_case || "Input data unavailable"}
+                                            </div>
+                                         </div>
 
-                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                           <div className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider ml-1">Expected Output</div>
-                                           <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10 font-mono text-xs whitespace-pre-wrap text-emerald-100/80">
-                                             {executionResult.expected_output || testcases.find(t => t.input === executionResult.failed_test_case)?.output || "N/A"}
-                                           </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                           <div className="text-[11px] font-bold text-red-500/70 uppercase tracking-wider ml-1">Your Output</div>
-                                           <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/10 font-mono text-xs whitespace-pre-wrap text-red-100/80">
-                                             {executionResult.actual_output || "Empty Output"}
-                                           </div>
-                                        </div>
-                                     </div>
-                                  </div>
-                               </div>
+                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                               <div className="text-[11px] font-bold text-emerald-500/70 uppercase tracking-wider ml-1">Expected Output</div>
+                                               <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/10 font-mono text-xs whitespace-pre-wrap text-emerald-100/80">
+                                                 {executionResult.expected_output || testcases.find(t => t.input === executionResult.failed_test_case)?.output || "N/A"}
+                                               </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                               <div className="text-[11px] font-bold text-red-500/70 uppercase tracking-wider ml-1">Your Output</div>
+                                               <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/10 font-mono text-xs whitespace-pre-wrap text-red-100/80">
+                                                 {executionResult.actual_output || "Empty Output"}
+                                               </div>
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                 )}
+                               </>
                              )}
                           </div>
                         )}
