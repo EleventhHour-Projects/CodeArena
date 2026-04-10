@@ -1280,14 +1280,9 @@ export default function BattlePage({ params }: PageProps) {
                       <div key={tc.id} className="flex-1 flex flex-col gap-2">
                         <div className="text-xs font-semibold text-zinc-500 ml-1">Input:</div>
                         <textarea
+                          readOnly
                           value={tc.input}
-                          onChange={(e) => {
-                            const newTestcases = [...testcases];
-                            const index = newTestcases.findIndex(t => t.id === tc.id);
-                            newTestcases[index].input = e.target.value;
-                            setTestcases(newTestcases);
-                          }}
-                          className={`w-full flex-1 bg-[#18181b] border border-white/5 rounded-lg p-3 text-sm font-mono text-zinc-300 outline-none focus:border-indigo-500/50 resize-none transition-colors whitespace-pre-wrap ${scrollbarClasses}`}
+                          className={`w-full flex-1 bg-[#18181b] border border-white/5 rounded-lg p-3 text-sm font-mono text-zinc-300 outline-none resize-none transition-colors whitespace-pre-wrap ${scrollbarClasses} opacity-80 cursor-default`}
                           spellCheck={false}
                         />
                       </div>
