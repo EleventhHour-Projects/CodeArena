@@ -188,27 +188,30 @@ export default function LeaderboardPage() {
            {/* Current User Static Highlight */}
            {session?.user && (
              <div className="w-full max-w-3xl mx-auto mb-2 mt-4 px-2">
-               <div className="flex items-center justify-between p-4 rounded-xl border-2 border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] backdrop-blur-sm">
-                 <div className="flex items-center gap-4">
-                   <div className="w-8 text-center font-black text-indigo-400 text-xl">
-                     {currentUserIndex !== -1 ? currentUserIndex + 1 : '100+'}
+               <div className="flex items-center justify-between p-4 rounded-xl border-2 border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/10 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] backdrop-blur-sm">
+                 <div className="flex items-center gap-3 sm:gap-4">
+                   <div className="flex flex-col items-center justify-center min-w-[60px] sm:min-w-[80px]">
+                     <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600/80 dark:text-indigo-400/80 uppercase tracking-widest leading-none mb-1">Your Rank</span>
+                     <div className="text-center font-black text-indigo-800 dark:text-indigo-400 text-xl sm:text-2xl leading-none">
+                       {currentUserIndex !== -1 ? currentUserIndex + 1 : '100+'}
+                     </div>
                    </div>
                    <Avatar className="w-10 h-10 border border-indigo-500/50 shadow-inner">
                      <AvatarImage src={session.user.image || ''} alt={currentUsername || 'You'} />
-                     <AvatarFallback className="bg-indigo-500/20 text-indigo-400 font-bold text-xs ring-1 ring-inset ring-indigo-500/50">
+                     <AvatarFallback className="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold text-xs ring-1 ring-inset ring-indigo-500/50">
                         {(currentUsername || 'U').slice(0, 2).toUpperCase()}
                      </AvatarFallback>
                    </Avatar>
                    <div>
-                     <div className="font-bold text-indigo-100 flex items-center gap-2">
+                     <div className="font-bold text-indigo-950 dark:text-indigo-100 flex items-center gap-2">
                        {currentUsername || session.user.name} 
-                       <span className="text-[9px] uppercase font-black bg-indigo-500 text-white px-2 py-0.5 rounded-full tracking-widest shadow-sm">You</span>
+                       <span className="text-[9px] uppercase font-black bg-indigo-600 dark:bg-indigo-500 text-white px-2 py-0.5 rounded-full tracking-widest shadow-sm">You</span>
                      </div>
-                     {currentUserData?.name && <div className="text-xs text-indigo-300/70">{currentUserData.name}</div>}
+                     {currentUserData?.name && <div className="text-xs text-indigo-800/80 dark:text-indigo-300/70">{currentUserData.name}</div>}
                    </div>
                  </div>
                  
-                 <div className="font-bold tabular-nums text-indigo-200">
+                 <div className="font-bold tabular-nums text-indigo-900 dark:text-indigo-200">
                    {currentUserData ? getMetricDisplay(currentUserData) : 'Unranked'}
                  </div>
                </div>
