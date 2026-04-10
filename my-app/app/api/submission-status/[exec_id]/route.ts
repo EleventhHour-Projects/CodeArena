@@ -46,7 +46,14 @@ export async function GET(
                     problem_id: execCode.problem?.id,
                     language: execCode.language,
                     created_at: execCode.createdAt,
-                    // Note: 'Run' result details (memory, runtime, output) are not currently saved in the DB by the worker
+                    exec_time: execCode.result?.runTimeMs,
+                    memory: execCode.result?.memoryUsedMB,
+                    failed_test_case: execCode.result?.failedTestCaseNumber,
+                    mle: execCode.result?.mle,
+                    tle: execCode.result?.tle,
+                    actual_output: execCode.result?.actualOutput,
+                    errorMsg: execCode.result?.errorMsg,
+                    expected_output: execCode.result?.expectedOutput,
                 };
                 
                 await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));

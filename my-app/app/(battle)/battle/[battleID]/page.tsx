@@ -1250,12 +1250,12 @@ export default function BattlePage({ params }: PageProps) {
                 <div className="flex">
                   <button
                     onClick={() => setPanelTab('testcases')}
-                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-[2px] transition-colors ${panelTab === 'testcases' ? 'border-zinc-500 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>
+                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${panelTab === 'testcases' ? 'border-zinc-500 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>
                     Testcases
                   </button>
                   <button
                     onClick={() => setPanelTab('result')}
-                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-[2px] transition-colors ${panelTab === 'result' ? 'border-zinc-500 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>
+                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${panelTab === 'result' ? 'border-zinc-500 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>
                     Test Result
                   </button>
                 </div>

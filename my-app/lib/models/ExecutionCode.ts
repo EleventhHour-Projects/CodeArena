@@ -13,6 +13,7 @@ const executionCodeSchema = new mongoose.Schema<ExecutionCode>({
     testcases: { type: [{ input: String, output: String }], required: false },
     status: { type: String, required: true, default: "Pending" },
     type: { type: String, required: true, default: "Run" },
+    result: { type: mongoose.Schema.Types.Mixed, required: false },
     createdAt: { type: Date, required: true, default: Date.now }
 })
 
