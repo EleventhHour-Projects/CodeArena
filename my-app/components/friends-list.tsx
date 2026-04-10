@@ -25,6 +25,8 @@ interface Friend {
   currentBattleId?: string | null;
 }
 
+import { useStatus } from "@/app/providers/StatusProvider";
+
 /* ─── helpers ────────────────────────────────────────────── */
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
@@ -124,10 +126,8 @@ export const FriendsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
   const [filter, setFilter] = useState("");
+  const { onlineSet, battleMap, userId: statusUserId } = useStatus();
   const [userId, setUserId] = useState<string | null>(null);
-  const [sseToken, setSseToken] = useState<string | null>(null);
-  const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
-  const [battleMap, setBattleMap] = useState<Map<string, string>>(new Map());
 
   // add-friend state
   const [addOpen, setAddOpen] = useState(false);
@@ -160,61 +160,9 @@ export const FriendsList: React.FC = () => {
     // Use SSE for real-time status updates instead of polling
   }, [fetchFriends]);
 
-  /* SSE Token Fetching */
-  const fetchSseToken = useCallback(async () => {
-    try {
-      const res = await fetch("/api/friends/sse-token");
-      const data = await res.json();
-      if (data.success) {
-        setSseToken(data.sseToken);
-        if (data.userId) setUserId(data.userId);
-      }
-    } catch (err) {
-      console.error("Failed to fetch SSE token:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchSseToken();
-    // Refresh token every 9 minutes (tokens expire in 10m)
-    const id = setInterval(fetchSseToken, 9 * 60 * 1000);
-    return () => clearInterval(id);
-  }, [fetchSseToken]);
-
-  // SSE Effect
-  useEffect(() => {
-    if (!userId || !sseToken) return;
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
-    const source = new EventSource(sseUrl);
-
-    source.addEventListener("friends_update", (e) => {
-      try {
-        const data: { id: string; bid?: string }[] = JSON.parse(e.data);
-        const newOnline = new Set<string>();
-        const newBattles = new Map<string, string>();
-
-        data.forEach((item) => {
-          newOnline.add(item.id);
-          if (item.bid) newBattles.set(item.id, item.bid);
-        });
-
-        setOnlineSet(newOnline);
-        setBattleMap(newBattles);
-      } catch (err) {
-        console.error("Error parsing friends_update:", err);
-      }
-    });
-
-    source.onerror = () => {
-      // If the connection fails, it might be due to an expired token
-      // Triggering fetchSseToken will update sseToken and restart the effect
-      fetchSseToken();
-    };
-
-    return () => {
-      source.close();
-    };
-  }, [userId, sseToken]);
+    if (statusUserId) setUserId(statusUserId);
+  }, [statusUserId]);
 
   useEffect(() => {
     if (addOpen) setTimeout(() => inputRef.current?.focus(), 80);

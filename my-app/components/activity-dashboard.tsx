@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Bell, Clock, Swords } from "lucide-react";
+import { useStatus } from "@/app/providers/StatusProvider";
 
 interface Invitation {
   _id: string;
@@ -51,9 +52,7 @@ export const ActivityDashboard = () => {
   const [activeBattleId, setActiveBattleId] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [actingOn, setActingOn] = useState<string | null>(null);
-
-  const [userId, setUserId] = useState<string | null>(null);
-  const [sseToken, setSseToken] = useState<string | null>(null);
+  const { triggerRefresh } = useStatus();
 
   const fetchDashboardData = async (isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -81,50 +80,14 @@ export const ActivityDashboard = () => {
     }
   };
 
-  const fetchSseToken = async () => {
-    try {
-      const res = await fetch("/api/battle/invitations/sse-token");
-      const data = await res.json();
-      if (data.success) {
-        setSseToken(data.sseToken);
-        if (data.userId) setUserId(data.userId);
-      }
-    } catch (err) {
-      console.error("Failed to fetch invite SSE token:", err);
-    }
-  };
-
   useEffect(() => {
     fetchDashboardData(true);
-    fetchSseToken();
-
-    // Refresh token every 9 minutes
-    const tokenInterval = setInterval(fetchSseToken, 9 * 60 * 1000);
-    return () => clearInterval(tokenInterval);
   }, []);
 
+  // Sync with global invitations update trigger
   useEffect(() => {
-    if (!userId || !sseToken) return;
-    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
-    const source = new EventSource(sseUrl);
-
-    source.addEventListener("invite_update", (e) => {
-      try {
-        // SSE now acts as a trigger to refetch full details from the Next.js API
-        fetchDashboardData(false);
-      } catch (err) {
-        console.error("Error triggerring refetch on invite SSE event:", err);
-      }
-    });
-
-    source.onerror = () => {
-      fetchSseToken();
-    };
-
-    return () => {
-      source.close();
-    };
-  }, [userId, sseToken]);
+    fetchDashboardData(false);
+  }, [triggerRefresh]);
 
   const handleRejoin = () => {
     if (activeBattleId) router.push(`/battle/${activeBattleId}`);
