@@ -52,7 +52,7 @@ export const ActivityDashboard = () => {
   const [activeBattleId, setActiveBattleId] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [actingOn, setActingOn] = useState<string | null>(null);
-  const { triggerRefresh } = useStatus();
+  const { refreshSignal } = useStatus();
 
   const fetchDashboardData = async (isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -87,7 +87,7 @@ export const ActivityDashboard = () => {
   // Sync with global invitations update trigger
   useEffect(() => {
     fetchDashboardData(false);
-  }, [triggerRefresh]);
+  }, [refreshSignal]);
 
   const handleRejoin = () => {
     if (activeBattleId) router.push(`/battle/${activeBattleId}`);

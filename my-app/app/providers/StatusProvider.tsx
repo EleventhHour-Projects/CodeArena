@@ -8,6 +8,7 @@ interface StatusContextType {
   battleMap: Map<string, string>;
   userId: string | null;
   inviteCount: number;
+  refreshSignal: number;
   triggerRefresh: () => void;
 }
 
@@ -21,10 +22,10 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
   const [battleMap, setBattleMap] = useState<Map<string, string>>(new Map());
   const [inviteCount, setInviteCount] = useState<number>(0);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
   const triggerRefresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshSignal(prev => prev + 1);
   }, []);
 
   // Fetch initial userId from session
@@ -123,7 +124,7 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   }, [userId, inviteToken, triggerRefresh]);
 
   return (
-    <StatusContext.Provider value={{ onlineSet, battleMap, userId, inviteCount, triggerRefresh }}>
+    <StatusContext.Provider value={{ onlineSet, battleMap, userId, inviteCount, refreshSignal, triggerRefresh }}>
       {children}
     </StatusContext.Provider>
   );
