@@ -35,7 +35,7 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticker := time.NewTicker(5 * time.Second)
-	refreshTicker := time.NewTicker(2 * time.Minute) // Refresh friend list every 2 minutes
+	refreshTicker := time.NewTicker(15 * time.Second) // Refresh friend list every 15 seconds for real-time battle status
 	defer ticker.Stop()
 	defer refreshTicker.Stop()
 	defer utils.OnlineUser.Remove(userId)
@@ -64,7 +64,7 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case <-ticker.C:
-			onlineFriends := utils.OnlineUser.IsOnline(friends)
+			onlineFriends := utils.OnlineUser.GetOnlineFriendStatuses(friends)
 			stateJSON, _ := json.Marshal(onlineFriends)
 			currState := string(stateJSON)
 

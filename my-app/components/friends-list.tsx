@@ -28,15 +28,24 @@ interface Friend {
 /* ─── helpers ────────────────────────────────────────────── */
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
-function getStatus(friend: Friend, onlineSet?: Set<string>): "in-battle" | "online" | "offline" {
-  if (friend.currentBattleId) return "in-battle";
-
-  // If we have an onlineSet from SSE, it is the authoritative source
+function getStatus(
+  friend: Friend,
+  onlineSet?: Set<string>,
+  battleMap?: Map<string, string>
+): "in-battle" | "online" | "offline" {
+  // 1. If we have SSE data, it is the authoritative source for real-time status
   if (onlineSet) {
-    return onlineSet.has(friend._id) ? "online" : "offline";
+    const isOnline = onlineSet.has(friend._id);
+    if (!isOnline) return "offline";
+
+    // Check battleMap for real-time battle status
+    if (battleMap && battleMap.get(friend._id)) return "in-battle";
+
+    return "online";
   }
 
-  // Fallback for initial load or guest mode
+  // 2. Fallback for initial load (before SSE connects)
+  if (friend.currentBattleId) return "in-battle";
   if (!friend.lastActive) return "offline";
   return Date.now() - new Date(friend.lastActive).getTime() < ONLINE_THRESHOLD_MS
     ? "online"
@@ -118,6 +127,7 @@ export const FriendsList: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [sseToken, setSseToken] = useState<string | null>(null);
   const [onlineSet, setOnlineSet] = useState<Set<string>>(new Set());
+  const [battleMap, setBattleMap] = useState<Map<string, string>>(new Map());
 
   // add-friend state
   const [addOpen, setAddOpen] = useState(false);
@@ -179,9 +189,20 @@ export const FriendsList: React.FC = () => {
 
     source.addEventListener("friends_update", (e) => {
       try {
-        const onlineIds: string[] = JSON.parse(e.data);
-        setOnlineSet(new Set(onlineIds || []));
-      } catch (err) { }
+        const data: { id: string; bid?: string }[] = JSON.parse(e.data);
+        const newOnline = new Set<string>();
+        const newBattles = new Map<string, string>();
+
+        data.forEach((item) => {
+          newOnline.add(item.id);
+          if (item.bid) newBattles.set(item.id, item.bid);
+        });
+
+        setOnlineSet(newOnline);
+        setBattleMap(newBattles);
+      } catch (err) {
+        console.error("Error parsing friends_update:", err);
+      }
     });
 
     source.onerror = () => {
@@ -259,10 +280,15 @@ export const FriendsList: React.FC = () => {
   // Sort: in-battle → online → offline
   const sorted = [...filtered].sort((a, b) => {
     const order = { "in-battle": 0, online: 1, offline: 2 };
-    return order[getStatus(a, onlineSet)] - order[getStatus(b, onlineSet)];
+    return (
+      order[getStatus(a, onlineSet, battleMap)] -
+      order[getStatus(b, onlineSet, battleMap)]
+    );
   });
 
-  const onlineCount = friends.filter((f) => getStatus(f, onlineSet) !== "offline").length;
+  const onlineCount = friends.filter(
+    (f) => getStatus(f, onlineSet, battleMap) !== "offline"
+  ).length;
 
   /* ── loading ──────────────────────────────────────────── */
   if (loading) {
@@ -376,7 +402,7 @@ export const FriendsList: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <AnimatePresence initial={false}>
             {sorted.map((friend, i) => {
-              const status = getStatus(friend, onlineSet);
+              const status = getStatus(friend, onlineSet, battleMap);
               const cfg = STATUS_CONFIG[status];
               const tier = getRatingTier(friend.rating);
 
