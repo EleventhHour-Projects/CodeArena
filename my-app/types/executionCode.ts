@@ -15,6 +15,14 @@ export interface ExecutionCode {
     problem: BattleProblem;
     testcases?: { input: string; output: string }[];
     status: executionStatus;
+    result: {
+        status: string;
+        output: string;
+        errorMsg: string;
+        failed_test_case: string;
+        expected_output: string;
+        actual_output: string;
+    };
     type: executionType;
     createdAt: Date;
 }

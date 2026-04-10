@@ -143,6 +143,7 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 	_, err = m.ExecutionCode.UpdateOne(context.TODO(), filter, bson.M{
 		"$set": bson.M{
 			"status": passString,
+			"result": status,
 		},
 	})
 	if err != nil {
