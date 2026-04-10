@@ -18,12 +18,13 @@ import (
 // The SubmissionsCollection field is a reference to the "submissions" collection in the "code-arena" database
 // The UsersCollection field is a reference to the "users" collection in the "code-arena" database
 type MongoDBClient struct {
-	Client               *mongo.Client
-	SumissionsCollection *mongo.Collection
-	UsersCollection      *mongo.Collection
-	ExecutionCode        *mongo.Collection
-	BattlesCollection    *mongo.Collection
-	FriendCollection     *mongo.Collection
+	Client                 *mongo.Client
+	SumissionsCollection   *mongo.Collection
+	UsersCollection        *mongo.Collection
+	ExecutionCode          *mongo.Collection
+	BattlesCollection      *mongo.Collection
+	FriendCollection       *mongo.Collection
+	BattleInviteCollection *mongo.Collection
 	// mu is a mutex to ensure thread-safe access to the MongoDB client and collections
 	mu sync.RWMutex
 }
@@ -46,13 +47,14 @@ func InitMongoDB() {
 	fmt.Println(utils.Green + "Pinged your deployment. Successfully connected to MongoDB!" + utils.Reset)
 
 	MongoDB = &MongoDBClient{
-		Client:               client,
-		SumissionsCollection: client.Database("code-arena").Collection("submissions"),
-		UsersCollection:      client.Database("code-arena").Collection("users"),
-		ExecutionCode:        client.Database("code-arena").Collection("executionCodes"),
-		BattlesCollection:    client.Database("code-arena").Collection("battles"),
-		FriendCollection:     client.Database("code-arena").Collection("friends"),
-		mu:                   sync.RWMutex{},
+		Client:                 client,
+		SumissionsCollection:   client.Database("code-arena").Collection("submissions"),
+		UsersCollection:        client.Database("code-arena").Collection("users"),
+		ExecutionCode:          client.Database("code-arena").Collection("executionCodes"),
+		BattlesCollection:      client.Database("code-arena").Collection("battles"),
+		FriendCollection:       client.Database("code-arena").Collection("friends"),
+		BattleInviteCollection: client.Database("code-arena").Collection("battleInvites"),
+		mu:                     sync.RWMutex{},
 	}
 
 	indexModel := mongo.IndexModel{
