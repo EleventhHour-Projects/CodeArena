@@ -92,29 +92,63 @@ export const BattleModal: React.FC<BattleModalProps> = ({
     }
   };
 
-  // Private: Polling
+  const [userId, setUserId] = useState<string | null>(null);
+  const [sseToken, setSseToken] = useState<string | null>(null);
+
+  const fetchSseToken = async () => {
+    try {
+      const res = await fetch("/api/battle/invitations/sse-token");
+      const data = await res.json();
+      if (data.success) {
+        setSseToken(data.sseToken);
+        setUserId(data.userId);
+      }
+    } catch (err) {}
+  };
+
   useEffect(() => {
-    if (mode !== "private" || status !== "waiting" || !inviteId) return;
-    const pollId = setInterval(async () => {
+    if (open) fetchSseToken();
+  }, [open]);
+
+  // Private: SSE listener for invite status
+  useEffect(() => {
+    if (!open || !userId || !sseToken || mode !== "private" || status !== "waiting" || !inviteId) return;
+
+    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
+    const source = new EventSource(sseUrl);
+
+    source.addEventListener("invite_update", (e) => {
       try {
-        const res = await fetch(`/api/battle/invite/${inviteId}`);
-        const data = await res.json();
-        if (data.success) {
-          if (data.status === "Accepted" && data.battleId) {
-            router.push(`/battle/${data.battleId}`);
-            onOpenChange(false);
-          } else if (data.status === "Rejected") {
+        const invites: any[] = JSON.parse(e.data);
+        const myInvite = invites.find((inv) => inv._id === inviteId);
+
+        if (myInvite) {
+          if (myInvite.status === "Accepted") {
+            // Battle started! Redirect to battle page
+            const battleId = myInvite.player1?.currentBattleId;
+            if (battleId) {
+              router.push(`/battle/${battleId}`);
+              onOpenChange(false);
+            }
+          } else if (myInvite.status === "Rejected") {
             toast.error("Invite rejected.");
             setStatus("idle");
-          } else if (data.status === "Expired") {
+          } else if (myInvite.status === "Expired") {
             toast.error("Invite expired.");
             setStatus("idle");
           }
         }
-      } catch (err) { }
-    }, 2000);
-    return () => clearInterval(pollId);
-  }, [mode, status, inviteId, router, onOpenChange]);
+      } catch (err) {
+        console.error("Error parsing invite SSE data:", err);
+      }
+    });
+
+    source.onerror = () => {
+      fetchSseToken();
+    };
+
+    return () => source.close();
+  }, [open, mode, status, inviteId, userId, sseToken, router, onOpenChange]);
 
   // Arena: Pool Size Polling
   useEffect(() => {
