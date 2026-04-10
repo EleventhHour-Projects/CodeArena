@@ -38,10 +38,12 @@ export async function POST(req: Request) {
                     if (pr.player2SolveTime > 0) sB += Math.max(0, max - (pr.player2SolveTime / 20));
                 });
 
+                // Always fetch players to construct final response payload if they were passed over
+                const p1 = await UserModel.findById(battle.player1).session(session);
+                const p2 = await UserModel.findById(battle.player2).session(session);
+
                 // If rating fields are missing (battle completed before schema update), recalculate and persist
                 if (battle.ratingChangeA == null || battle.ratingChangeB == null) {
-                    const p1 = await UserModel.findById(battle.player1).session(session);
-                    const p2 = await UserModel.findById(battle.player2).session(session);
                     if (p1 && p2) {
                         const Ra = p1.rating ?? 0;
                         const Rb = p2.rating ?? 0;
@@ -63,6 +65,22 @@ export async function POST(req: Request) {
                     }
                 }
 
+                let p1SolvedCount = 0;
+                let p2SolvedCount = 0;
+                let p1SolveTimes: Record<string, number> = {};
+                let p2SolveTimes: Record<string, number> = {};
+                
+                (battle.problemResults || []).forEach((pr: any) => {
+                    if (pr.player1SolveTime > 0) {
+                        p1SolvedCount++;
+                        p1SolveTimes[pr.problem?.id || pr.problem] = pr.player1SolveTime;
+                    }
+                    if (pr.player2SolveTime > 0) {
+                        p2SolvedCount++;
+                        p2SolveTimes[pr.problem?.id || pr.problem] = pr.player2SolveTime;
+                    }
+                });
+
                 finalResponse = {
                     success: true,
                     message: "Battle already completed",
@@ -74,6 +92,16 @@ export async function POST(req: Request) {
                     newRa: battle.newRatingA ?? 0,
                     newRb: battle.newRatingB ?? 0,
                     duration: battle.duration,
+                    player1: {
+                        username: p1?.username || "Player 1",
+                        solvedCount: p1SolvedCount,
+                        solveTimes: p1SolveTimes
+                    },
+                    player2: {
+                        username: p2?.username || "Player 2",
+                        solvedCount: p2SolvedCount,
+                        solveTimes: p2SolveTimes
+                    },
                     problemResults: battle.problemResults,
                     battle: battle
                 };
