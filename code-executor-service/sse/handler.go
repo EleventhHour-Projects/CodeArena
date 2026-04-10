@@ -38,10 +38,8 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 	refreshTicker := time.NewTicker(2 * time.Minute) // Refresh friend list every 2 minutes
 	defer ticker.Stop()
 	defer refreshTicker.Stop()
-
-	// Send initial comment to open the connection immediately
-	fmt.Fprintf(w, ": connected\n\n")
-	flusher.Flush()
+	defer utils.OnlineUser.Remove(userId)
+	utils.OnlineUser.Add(userId)
 
 	friends, err := database.MongoDB.ListFriends(userId)
 	if err != nil {
@@ -104,20 +102,15 @@ func InviteHandler(w http.ResponseWriter, r *http.Request) {
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-
-	// Send initial comment to open the connection immediately
-	fmt.Fprintf(w, ": connected\n\n")
-	flusher.Flush()
 	ctx := r.Context()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			invites, _ := utils.InviteStore.GetInvite(userId)
-			// Always send an update, even if empty, to serve as a heartbeat and keep the connection alive
-			if invites == nil {
-				invites = []utils.Invite{}
+			invites, ok := utils.InviteStore.GetInvite(userId)
+			if !ok {
+				continue
 			}
 			data, err := json.Marshal(invites)
 			if err != nil {
