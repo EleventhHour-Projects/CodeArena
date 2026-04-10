@@ -110,10 +110,10 @@ export const ActivityDashboard = () => {
 
     source.addEventListener("invite_update", (e) => {
       try {
-        const data = JSON.parse(e.data);
-        setInvitations(data || []);
+        // SSE now acts as a trigger to refetch full details from the Next.js API
+        fetchDashboardData(false);
       } catch (err) {
-        console.error("Error parsing invite SSE data:", err);
+        console.error("Error triggerring refetch on invite SSE event:", err);
       }
     });
 

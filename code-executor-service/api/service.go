@@ -329,14 +329,12 @@ func DeleteInvitiationsForUser(req *notnet.Request, res *notnet.Response) error 
 		return res.String(400, "Invalid request body")
 	}
 
-	u, err := database.MongoDB.GetUser(Rreq.UserID)
-	if err != nil {
-		return res.String(404, "User not found")
+	if Rreq.RemoveID != "" {
+		utils.InviteStore.RemoveInvite(Rreq.RemoveID)
+	} else if Rreq.UserID != "" {
+		utils.InviteStore.ClearAllForUser(Rreq.UserID)
 	}
-
-	utils.InviteStore.RemoveInvite(u.ID.Hex(), Rreq.RemoveID)
-	res.Status(200)
-	return nil
+	return res.String(200, "Deleted")
 }
 
 // StartService initializes the NotNet app, sets up the API routes, and starts the server to listen for incoming requests

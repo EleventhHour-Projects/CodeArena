@@ -140,6 +140,20 @@ export async function POST(
         invite.status = "Accepted";
         await invite.save();
 
+        // Notify Go backend to remove from SSE store immediately
+        try {
+            await fetch("http://34.126.214.18:6969/api/invites/delete", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Internal-Key": process.env.INTERNAL_KEY || "",
+                },
+                body: JSON.stringify({ userId: curUser._id.toString(), removeId: inviteId }),
+            });
+        } catch (err) {
+            console.error("Failed to notify Go backend of invite acceptance:", err);
+        }
+
         return NextResponse.json(
             { success: true, message: "Battle accepted successfully", battleId: battle._id },
             { status: 200 }

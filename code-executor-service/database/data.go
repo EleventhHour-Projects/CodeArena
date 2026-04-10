@@ -331,11 +331,6 @@ func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
 			log.Printf("Error decoding invite document: %v\n", err)
 			return nil, err
 		}
-		// Populate Player1 info for the frontend
-		p1, err := m.GetUser(invite.Player1ID.Hex())
-		if err == nil {
-			invite.Player1 = p1
-		}
 		invites = append(invites, invite)
 	}
 

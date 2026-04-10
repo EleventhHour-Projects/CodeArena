@@ -31,28 +31,33 @@ func (i *Invitation) AddInvite(invite []Invite) {
 	}
 }
 
-func (i *Invitation) RemoveInvite(player2ID string, inviteID string) {
+func (i *Invitation) RemoveInvite(inviteID string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	if inviteID == "" {
-		delete(i.Invites, player2ID)
-		return
-	}
-	invites, exists := i.Invites[player2ID]
-	if !exists {
-		return
-	}
-	newInvites := make([]Invite, 0, len(invites))
-	for _, inv := range invites {
-		if inv.ID.Hex() != inviteID {
+	for userID, invites := range i.Invites {
+		changed := false
+		newInvites := make([]Invite, 0, len(invites))
+		for _, inv := range invites {
+			if inv.ID.Hex() == inviteID {
+				changed = true
+				continue
+			}
 			newInvites = append(newInvites, inv)
 		}
+		if changed {
+			if len(newInvites) == 0 {
+				delete(i.Invites, userID)
+			} else {
+				i.Invites[userID] = newInvites
+			}
+		}
 	}
-	if len(newInvites) == 0 {
-		delete(i.Invites, player2ID)
-	} else {
-		i.Invites[player2ID] = newInvites
-	}
+}
+
+func (i *Invitation) ClearAllForUser(userID string) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	delete(i.Invites, userID)
 }
 
 func (i *Invitation) GetInvite(player2ID string) ([]Invite, bool) {
