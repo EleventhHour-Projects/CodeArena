@@ -331,6 +331,9 @@ func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
 			log.Printf("Error decoding invite document: %v\n", err)
 			return nil, err
 		}
+		if invite.Status == "Rejected" || invite.Status == "Accepted" {
+			continue
+		}
 		invites = append(invites, invite)
 	}
 
