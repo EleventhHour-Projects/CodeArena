@@ -158,7 +158,7 @@ var WorkerPoolData = &WorkerPool{
 	activeWorkerCount: 0,
 	mu:                sync.Mutex{},
 	channel:           make(chan CodeConfig, 100),
-	auto:              false,
+	auto:              true,
 	muauto:            sync.Mutex{},
 	scalingMu:         sync.Mutex{},
 	ActiveTasks:       make(map[string]*CodeConfig),
