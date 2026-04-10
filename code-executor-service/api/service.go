@@ -291,6 +291,31 @@ func GetSseToken(req *notnet.Request, res *notnet.Response) error {
 	})
 }
 
+func GetInviteSseToken(req *notnet.Request, res *notnet.Response) error {
+	if req.Header("X-Internal-Key") != utils.INTERNAL_KEY {
+		return res.String(401, "Unauthorized")
+	}
+	var Rreq struct {
+		UserID string `json:"userId"`
+	}
+	err := req.BindJSON(&Rreq)
+	if err != nil {
+		return res.String(400, "Invalid request body")
+	}
+
+	u, err := database.MongoDB.GetUser(Rreq.UserID)
+	if err != nil {
+		return res.String(404, "User not found")
+	}
+
+	tkn := utils.TokenStoreInstance.GenerateToken(u.ID, u.Username, "", "invitesse")
+
+	return res.JSON(200, map[string]interface{}{
+		"token":   tkn,
+		"expires": time.Now().Add(10 * time.Minute),
+	})
+}
+
 func DeleteInvitiationsForUser(req *notnet.Request, res *notnet.Response) error {
 	if req.Header("X-Internal-Key") != utils.INTERNAL_KEY {
 		return res.String(401, "Unauthorized")
@@ -352,7 +377,7 @@ func StartService() {
 	app.GET("/api/internal/online-users", GetOnlineUsersList)
 	app.POST("/api/matchmaking/register", RegisterForMatchmaking)
 	app.POST("/api/friends/sse-token", GetSseToken)
-	app.POST("/api/invites/sse-token", GetSseToken)
+	app.POST("/api/invites/sse-token", GetInviteSseToken)
 	app.POST("/api/invites/delete", DeleteInvitiationsForUser)
 	app.GET("/api/poolsize", MatchmakingSize)
 	log.Fatal(app.Listen(":6969"))

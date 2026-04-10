@@ -355,14 +355,14 @@ func (wp *WorkerPool) StealActiveTask(containerID string) *CodeConfig {
 // User is a struct that represents a user in the MongoDB collection, including fields for the user ID, username, email, name, and rating
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and bson:"_id,omitempty" used for the ID field to allow MongoDB to automatically generate an ObjectID if not provided
 type User struct {
-	ID            bson.ObjectID `bson:"_id"`
-	Username      string        `bson:"username"`
-	Email         string        `bson:"email"`
-	Name          string        `bson:"name"`
-	Rating        int           `bson:"rating"`
-	AllotedConnID string        `bson:"allotedConnId,omitempty"`
+	ID              bson.ObjectID `bson:"_id"`
+	Username        string        `bson:"username"`
+	Email           string        `bson:"email"`
+	Name            string        `bson:"name"`
+	Rating          int           `bson:"rating"`
+	AllotedConnID   string        `bson:"allotedConnId,omitempty"`
 	CurrentBattleID bson.ObjectID `bson:"currentBattleId,omitempty"`
-	Difficulty    string        `bson:"difficulty,omitempty"`
+	Difficulty      string        `bson:"difficulty,omitempty"`
 }
 
 type BattleProblem struct {
@@ -385,7 +385,7 @@ type Battle struct {
 type Token struct {
 	Username   string
 	UserID     bson.ObjectID
-	Type       string // "matchmaking", "sse"
+	Type       string // "matchmaking", "sse", "invitesse"
 	Difficulty string
 	Expires    time.Time
 }
@@ -462,6 +462,27 @@ func (tc *TokenStore) VerifySseToken(token string, userID string) bool {
 
 	data, ok := tc.store[token]
 	if !ok || data.Type != "sse" {
+		return false
+	}
+
+	if time.Now().After(data.Expires) {
+		delete(tc.store, token)
+		return false
+	}
+
+	if data.UserID.Hex() != userID {
+		return false
+	}
+
+	return true
+}
+
+func (tc *TokenStore) VerifyInviteSseToken(token string, userID string) bool {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+
+	data, ok := tc.store[token]
+	if !ok || data.Type != "invitesse" {
 		return false
 	}
 

@@ -89,7 +89,7 @@ func InviteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !utils.TokenStoreInstance.VerifySseToken(token, userId) {
+	if !utils.TokenStoreInstance.VerifyInviteSseToken(token, userId) {
 		http.Error(w, "Invalid or expired SSE token", http.StatusUnauthorized)
 		return
 	}
@@ -110,7 +110,7 @@ func InviteHandler(w http.ResponseWriter, r *http.Request) {
 		case <-ticker.C:
 			invites, ok := utils.InviteStore.GetInvite(userId)
 			if !ok {
-				continue
+				invites = []utils.Invite{}
 			}
 			data, err := json.Marshal(invites)
 			if err != nil {
