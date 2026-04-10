@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, RefreshCcw, Activity, CheckSquare, Flame, Globe } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ const LEADERBOARDS = [
 ] as const;
 
 export default function LeaderboardPage() {
+  const { data: session } = useSession();
   const [activeBoard, setActiveBoard] = useState<LeaderboardType>("global");
   const [data, setData] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,6 +75,12 @@ export default function LeaderboardPage() {
 
   // Reorder Top 3 for Podium visualization: 2nd, 1st, 3rd
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+
+  // Current logged in user info
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentUsername = (session?.user as any)?.username;
+  const currentUserIndex = currentUsername ? data.findIndex(u => u.username === currentUsername) : -1;
+  const currentUserData = currentUserIndex !== -1 ? data[currentUserIndex] : null;
 
   return (
     <div className="container max-w-5xl py-8 px-4 mx-auto min-h-screen">
@@ -176,6 +184,39 @@ export default function LeaderboardPage() {
               </AnimatePresence>
             </div>
           )}
+
+           {/* Current User Static Highlight */}
+           {session?.user && (
+             <div className="w-full max-w-3xl mx-auto mb-2 mt-4 px-2">
+               <div className="flex items-center justify-between p-4 rounded-xl border-2 border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] backdrop-blur-sm">
+                 <div className="flex items-center gap-4">
+                   <div className="w-8 text-center font-black text-indigo-400 text-xl">
+                     {currentUserIndex !== -1 ? currentUserIndex + 1 : '100+'}
+                   </div>
+                   <Avatar className="w-10 h-10 border border-indigo-500/50 shadow-inner">
+                     <AvatarImage src={session.user.image || ''} alt={currentUsername || 'You'} />
+                     <AvatarFallback className="bg-indigo-500/20 text-indigo-400 font-bold text-xs ring-1 ring-inset ring-indigo-500/50">
+                        {(currentUsername || 'U').slice(0, 2).toUpperCase()}
+                     </AvatarFallback>
+                   </Avatar>
+                   <div>
+                     <div className="font-bold text-indigo-100 flex items-center gap-2">
+                       {currentUsername || session.user.name} 
+                       <span className="text-[9px] uppercase font-black bg-indigo-500 text-white px-2 py-0.5 rounded-full tracking-widest shadow-sm">You</span>
+                     </div>
+                     {currentUserData?.name && <div className="text-xs text-indigo-300/70">{currentUserData.name}</div>}
+                   </div>
+                 </div>
+                 
+                 <div className="font-bold tabular-nums text-indigo-200">
+                   {currentUserData ? getMetricDisplay(currentUserData) : 'Unranked'}
+                 </div>
+               </div>
+               
+               {/* Divider between current user and the rest list */}
+               {restList.length > 0 && <div className="h-px w-full bg-white/5 mt-8 mb-2 rounded-full"></div>}
+             </div>
+           )}
 
            {/* The Rest of the List (4th onwards) */}
           {restList.length > 0 && (
