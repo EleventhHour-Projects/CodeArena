@@ -49,7 +49,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   const socketRef = useRef<WebSocket | null>(null);
   const [poolSize, setPoolSize] = useState<number>(0);
 
-  // Sync initial state
+  // Sync initial state and reset on close
   useEffect(() => {
     if (open) {
       if (initialOpponent) {
@@ -58,6 +58,11 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       } else {
         setMode(initialMode);
       }
+      fetchSseToken();
+    } else {
+      // RESET ALL POLLING/SSE STATES WHEN CLOSED
+      setStatus("idle");
+      setInviteId(null);
     }
   }, [open, initialOpponent, initialMode]);
 
@@ -73,10 +78,6 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       console.error("Failed to fetch invite SSE token:", err);
     }
   };
-
-  useEffect(() => {
-    if (open) fetchSseToken();
-  }, [open]);
 
   // Private: Send Invite
   const handleSendInvite = async () => {
@@ -111,42 +112,65 @@ export const BattleModal: React.FC<BattleModalProps> = ({
     }
   };
 
-  // Private: Polling/SSE Status Check
+  // Private: SSE + Polling Status Check
   useEffect(() => {
     if (mode !== "private" || status !== "waiting" || !inviteId || !userId || !sseToken) return;
 
     const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
     const source = new EventSource(sseUrl);
 
-    source.addEventListener("invite_update", async () => {
+    // Shared check function
+    const checkStatus = async () => {
       try {
-        // SSE acts as a trigger to check status via Next.js API
         const res = await fetch(`/api/battle/invite/${inviteId}`);
         const data = await res.json();
+        
         if (data.success) {
           if (data.status === "Accepted" && data.battleId) {
             router.push(`/battle/${data.battleId}`);
             onOpenChange(false);
+            return true;
           } else if (data.status === "Rejected") {
-            toast.error("Invite rejected.");
+            toast.error("Invite rejected by opponent.");
             setStatus("idle");
+            return true;
           } else if (data.status === "Expired") {
             toast.error("Invite expired.");
             setStatus("idle");
+            return true;
           }
+        } else if (res.status === 404) {
+          setStatus("idle");
+          return true;
         }
       } catch (err) {
-        console.error("Error checking invite status on SSE signal:", err);
+        console.error("Error checking invite status:", err);
       }
+      return false;
+    };
+
+    // SSE Signal Trigger
+    source.addEventListener("invite_update", () => {
+      checkStatus();
     });
+
+    // Backup Polling (every 2 seconds)
+    const pollInterval = setInterval(async () => {
+      const shouldStop = await checkStatus();
+      if (shouldStop) {
+        clearInterval(pollInterval);
+        source.close();
+      }
+    }, 2000);
 
     source.onerror = () => {
       source.close();
-      // Optionally refetch token or retry
+      fetchSseToken();
     };
 
     return () => {
       source.close();
+      clearInterval(pollInterval);
     };
   }, [mode, status, inviteId, userId, sseToken, router, onOpenChange]);
 
