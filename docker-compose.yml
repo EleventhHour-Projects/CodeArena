@@ -28,7 +28,7 @@ services:
     # Override for Docker network
     environment:
       - REDIS_ADDR=redis:6379
-      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/?authSource=admin
       - WSSIP=http://express-server:6767/internal/event
     depends_on:
       - redis
@@ -45,8 +45,9 @@ services:
     env_file:
       - ./my-app/.env.local
     environment:
+      - REDIS_ADDR=redis:6379
       - REDIS_URL=redis://redis:6379
-      - MONGODB_URI=mongodb://mongodb:27017/code-arena
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/code-arena?authSource=admin
     depends_on:
       - redis
       - express-server
@@ -64,6 +65,9 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
 
 volumes:
   mongodb_data:
