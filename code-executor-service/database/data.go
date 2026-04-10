@@ -319,7 +319,8 @@ func (m *MongoDBClient) ListFriends(userID string) ([]string, error) {
 
 func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
 	var invites []utils.Invite
-	cursor, err := m.BattleInviteCollection.Find(context.Background(), bson.M{})
+	// Only fetch Pending invites from the database
+	cursor, err := m.BattleInviteCollection.Find(context.Background(), bson.M{"status": "Pending"})
 	if err != nil {
 		return nil, err
 	}
@@ -330,9 +331,6 @@ func (m *MongoDBClient) GetAllInvites() ([]utils.Invite, error) {
 		if err := cursor.Decode(&invite); err != nil {
 			log.Printf("Error decoding invite document: %v\n", err)
 			return nil, err
-		}
-		if invite.Status == "Rejected" || invite.Status == "Accepted" {
-			continue
 		}
 		invites = append(invites, invite)
 	}

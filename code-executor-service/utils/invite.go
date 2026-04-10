@@ -26,8 +26,33 @@ type Invitation struct {
 func (i *Invitation) AddInvite(invite []Invite) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
+	// Reset the map to reflect current DB state (avoiding duplicates)
+	i.Invites = make(map[string][]Invite)
 	for _, inv := range invite {
-		i.Invites[inv.Player2.Hex()] = append(i.Invites[inv.Player2.Hex()], inv)
+		inviteID := inv.ID.Hex()
+		
+		// Helper to add unique invite to a user's bucket
+		addUnique := func(userID string) {
+			if userID == "" {
+				return
+			}
+			existing := i.Invites[userID]
+			isDup := false
+			for _, e := range existing {
+				if e.ID.Hex() == inviteID {
+					isDup = true
+					break
+				}
+			}
+			if !isDup {
+				i.Invites[userID] = append(i.Invites[userID], inv)
+			}
+		}
+
+		// Index by receiver (Player2)
+		addUnique(inv.Player2.Hex())
+		// Index by sender (Player1)
+		addUnique(inv.Player1ID.Hex())
 	}
 }
 

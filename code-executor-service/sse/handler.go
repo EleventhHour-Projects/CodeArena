@@ -49,6 +49,9 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	// Store last known state to avoid redundant updates
+	lastState := ""
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -62,15 +65,19 @@ func FriendHandler(w http.ResponseWriter, r *http.Request) {
 
 		case <-ticker.C:
 			onlineFriends := utils.OnlineUser.IsOnline(friends)
-			data, err := json.Marshal(onlineFriends)
-			if err != nil {
-				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to marshal friends\"}\n\n")
+			stateJSON, _ := json.Marshal(onlineFriends)
+			currState := string(stateJSON)
+
+			if currState != lastState {
+				fmt.Fprintf(w, "event: friends_update\n")
+				fmt.Fprintf(w, "data: %s\n\n", currState)
 				flusher.Flush()
-				continue
+				lastState = currState
+			} else {
+				// Send a comment heartbeat to keep connection alive without triggering refetch
+				fmt.Fprintf(w, ": heartbeat\n\n")
+				flusher.Flush()
 			}
-			fmt.Fprintf(w, "event: friends_update\n")
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
 		}
 	}
 }
@@ -103,24 +110,29 @@ func InviteHandler(w http.ResponseWriter, r *http.Request) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	ctx := r.Context()
+	
+	// Track last known count of invitations for this user
+	lastCount := -1
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			invites, ok := utils.InviteStore.GetInvite(userId)
-			if !ok {
-				invites = []utils.Invite{}
-			}
-			data, err := json.Marshal(invites)
-			if err != nil {
-				fmt.Fprintf(w, "event: error\ndata: {\"message\":\"failed to marshal invites\"}\n\n")
+			invites, _ := utils.InviteStore.GetInvite(userId)
+			currCount := len(invites)
+
+			// Only trigger a refetch on the frontend if the number of invites has changed
+			if currCount != lastCount {
+				fmt.Fprintf(w, "event: invite_update\n")
+				fmt.Fprintf(w, "data: {\"count\":%d,\"updated\":true}\n\n", currCount)
 				flusher.Flush()
-				continue
+				lastCount = currCount
+			} else {
+				// Silent heartbeat to prevent timeouts
+				fmt.Fprintf(w, ": heartbeat\n\n")
+				flusher.Flush()
 			}
-			fmt.Fprintf(w, "event: invite_update\n")
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
 		}
 	}
 }

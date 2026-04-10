@@ -40,6 +40,8 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   const [status, setStatus] = useState<"idle" | "sending" | "waiting" | "searching" | "found" | "accepted" | "starting">("idle");
   const [timeLeft, setTimeLeft] = useState(45);
   const [inviteId, setInviteId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [sseToken, setSseToken] = useState<string | null>(null);
 
   // Arena Mode State
   const [searchTime, setSearchTime] = useState(0);
@@ -58,6 +60,23 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       }
     }
   }, [open, initialOpponent, initialMode]);
+
+  const fetchSseToken = async () => {
+    try {
+      const res = await fetch("/api/battle/invitations/sse-token");
+      const data = await res.json();
+      if (data.success) {
+        setSseToken(data.sseToken);
+        if (data.userId) setUserId(data.userId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch invite SSE token:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (open) fetchSseToken();
+  }, [open]);
 
   // Private: Send Invite
   const handleSendInvite = async () => {
@@ -92,11 +111,16 @@ export const BattleModal: React.FC<BattleModalProps> = ({
     }
   };
 
-  // Private: Polling
+  // Private: Polling/SSE Status Check
   useEffect(() => {
-    if (mode !== "private" || status !== "waiting" || !inviteId) return;
-    const pollId = setInterval(async () => {
+    if (mode !== "private" || status !== "waiting" || !inviteId || !userId || !sseToken) return;
+
+    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
+    const source = new EventSource(sseUrl);
+
+    source.addEventListener("invite_update", async () => {
       try {
+        // SSE acts as a trigger to check status via Next.js API
         const res = await fetch(`/api/battle/invite/${inviteId}`);
         const data = await res.json();
         if (data.success) {
@@ -111,10 +135,20 @@ export const BattleModal: React.FC<BattleModalProps> = ({
             setStatus("idle");
           }
         }
-      } catch (err) { }
-    }, 2000);
-    return () => clearInterval(pollId);
-  }, [mode, status, inviteId, router, onOpenChange]);
+      } catch (err) {
+        console.error("Error checking invite status on SSE signal:", err);
+      }
+    });
+
+    source.onerror = () => {
+      source.close();
+      // Optionally refetch token or retry
+    };
+
+    return () => {
+      source.close();
+    };
+  }, [mode, status, inviteId, userId, sseToken, router, onOpenChange]);
 
   // Arena: Pool Size Polling
   useEffect(() => {
