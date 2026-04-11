@@ -61,15 +61,23 @@ services:
 
   mongodb:
     image: mongo:latest
+    user: root
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-      - ./mongodb.key:/etc/mongodb.key
+      - ./mongodb.key:/tmp/mongodb.key:ro
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongodb.key"]
+    entrypoint:
+      - bash
+      - -c
+      - |
+        cp /tmp/mongodb.key /etc/mongodb.key
+        chmod 400 /etc/mongodb.key
+        chown mongodb:mongodb /etc/mongodb.key
+        exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --keyFile /etc/mongodb.key
 
   mongodb-setup:
     image: mongo:latest
