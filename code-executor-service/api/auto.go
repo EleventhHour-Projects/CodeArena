@@ -67,6 +67,10 @@ func Auto() {
 			}
 		}
 
+		if target <= 4 {
+			target = 4
+		}
+
 		KeepXWorkers(target)
 	}
 }
