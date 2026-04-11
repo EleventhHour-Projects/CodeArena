@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import BattleRecordingModel from "@/lib/models/BattleRecording";
+import ReportModel from "@/lib/models/Report";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,8 +26,33 @@ export async function GET(request: NextRequest) {
       BattleRecordingModel.countDocuments(),
     ]);
 
+    // Cross-check which battles have reports
+    const battleIds = recordings.map((r: any) => r.battleId).filter(Boolean);
+    const reports = await ReportModel.find(
+      { battleId: { $in: battleIds } },
+      { battleId: 1, _id: 1, status: 1, category: 1 }
+    ).lean();
+
+    // Build a map: battleId -> report info
+    const reportMap = new Map<string, any>();
+    for (const report of reports) {
+      if (report.battleId) {
+        reportMap.set(report.battleId.toString(), {
+          reportId: report._id.toString(),
+          status: report.status,
+          category: report.category,
+        });
+      }
+    }
+
+    // Attach report info to recordings
+    const enrichedRecordings = recordings.map((rec: any) => ({
+      ...rec,
+      report: rec.battleId ? reportMap.get(rec.battleId.toString()) || null : null,
+    }));
+
     return NextResponse.json({
-      recordings,
+      recordings: enrichedRecordings,
       total,
       page,
       totalPages: Math.ceil(total / limit),
