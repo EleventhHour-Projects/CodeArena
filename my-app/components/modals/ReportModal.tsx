@@ -156,14 +156,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="dark bg-[#121214] border-white/10 text-white max-w-md w-[95%] rounded-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white dark:bg-[#121214] border-black/10 dark:border-white/10 text-zinc-900 dark:text-white max-w-md w-[95%] rounded-2xl p-0 overflow-hidden">
         <div className="max-h-[85vh] overflow-y-auto custom-scrollbar p-6">
           <DialogHeader className="mb-6">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <Flag className={`w-5 h-5 ${category === "Cheating" ? "text-rose-500" : "text-amber-500"}`} />
               {mode === "battle" ? "Report Opponent" : "Report an Issue"}
             </DialogTitle>
-            <DialogDescription className="text-zinc-400 mt-1">
+            <DialogDescription className="text-zinc-600 dark:text-zinc-400 mt-1">
               Help us keep CodeArena safe and bug-free.
             </DialogDescription>
           </DialogHeader>
@@ -173,10 +173,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Category</label>
               <Select value={category} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-full bg-[#09090b] border-white/10 text-zinc-300 h-11 focus:ring-amber-500/20">
+                <SelectTrigger className="w-full bg-zinc-100 dark:bg-[#09090b] border-black/10 dark:border-white/10 text-zinc-800 dark:text-zinc-300 h-11 focus:ring-amber-500/20">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
-                <SelectContent className="dark bg-[#1c1c1f] border-white/10 text-zinc-300">
+                <SelectContent className="bg-white dark:bg-[#1c1c1f] border-black/10 dark:border-white/10 text-zinc-800 dark:text-zinc-300">
                   <SelectItem value="Cheating">Cheating</SelectItem>
                   <SelectItem value="Bug">Bug Report</SelectItem>
                   <SelectItem value="Suggestion/Feedback">Feedback</SelectItem>
@@ -190,10 +190,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Select Battle</label>
                 <Select value={selectedBattleId} onValueChange={handleBattleSelect}>
-                  <SelectTrigger className="w-full bg-[#09090b] border-white/10 text-zinc-300 h-11">
+                  <SelectTrigger className="w-full bg-zinc-100 dark:bg-[#09090b] border-black/10 dark:border-white/10 text-zinc-800 dark:text-zinc-300 h-11">
                     <SelectValue placeholder={battles.length === 0 && !isLoadingBattles ? "No recent battles" : "Choose a battle"} />
                   </SelectTrigger>
-                  <SelectContent className="dark bg-[#1c1c1f] border-white/10 text-zinc-300 max-h-[200px]">
+                  <SelectContent className="bg-white dark:bg-[#1c1c1f] border-black/10 dark:border-white/10 text-zinc-800 dark:text-zinc-300 max-h-[200px]">
                     {battles.map((b) => (
                       <SelectItem key={b.id} value={b.id}>
                         vs {b.opponent.username} ({new Date(b.createdAt).toLocaleDateString()})
@@ -202,7 +202,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                     {hasMoreBattles && (
                       <button
                         onClick={loadMoreBattles}
-                        className="w-full py-2 text-xs text-amber-500 hover:bg-white/5 transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-1"
+                        className="w-full py-2 text-xs text-amber-600 dark:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-1"
                       >
                         {isLoadingBattles ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronDown className="w-3 h-3" />}
                         Load More
@@ -217,7 +217,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Details</label>
               <textarea
-                className="w-full bg-[#09090b] border border-white/10 rounded-xl p-4 text-sm text-zinc-300 outline-none focus:border-amber-500/50 resize-none h-32 transition-colors placeholder:text-zinc-600"
+                className="w-full bg-zinc-100 dark:bg-[#09090b] border border-black/10 dark:border-white/10 rounded-xl p-4 text-sm text-zinc-900 dark:text-zinc-300 outline-none focus:border-amber-500/50 resize-none h-32 transition-colors placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
                 placeholder={category === "Bug" ? "Describe the bug and how to reproduce it..." : "Provide as much detail as possible..."}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -229,19 +229,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <Button
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-white/5 bg-zinc-500/50 hover:bg-zinc-100 text-zinc-100 dark:text-zinc-100 font-bold uppercase tracking-widest text-[10px] h-11"
+              className="flex-1 border-black/10 dark:border-white/10 bg-zinc-200/50 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 dark:hover:text-white font-bold uppercase tracking-widest text-[10px] h-11 cursor-pointer transition-all active:scale-[0.98]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`flex-1 font-bold uppercase tracking-widest text-zinc-300 hover:text-white dark:text-zinc-700 text-[10px] h-11 cursor-pointer ${
-                category === "Cheating" ? "bg-rose-600 hover:bg-rose-500" : "bg-primary hover:bg-primary/90"
+              className={`flex-1 font-bold uppercase tracking-widest text-[10px] h-11 cursor-pointer transition-all active:scale-[0.98] text-black dark:text-white border border-transparent ${
+                category === "Cheating" 
+                  ? "bg-rose-600 hover:bg-rose-500" 
+                  : "bg-zinc-100  border-black/10 dark:border-white/10 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
               {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
               ) : (
                 "Submit Report"
               )}
