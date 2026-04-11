@@ -84,9 +84,21 @@ export default function BattlePage({ params }: PageProps) {
   const [drawsSent, setDrawsSent] = useState(0);
   const battleFinishedRef = useRef(false);
 
+  // ── Battle Recording State ──
+  const recordingBufferRef = useRef<any[]>([]);
+  const lastCodeRef = useRef<string | null>(null);
+  const lastOpponentCodeRef = useRef<string | null>(null);
+  const recordingEventQueueRef = useRef<{ player: 'player1' | 'player2'; event: string }[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
+  const recordingFlushedRef = useRef(false);
+  const recordingMetaRef = useRef<any>(null);
+  const codeRef = useRef<string>("");
+  const currentQuestionRef = useRef<number>(1);
+
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
+
 
   // WebSocket Connection and Event Handling
   useEffect(() => {
@@ -190,6 +202,10 @@ export default function BattlePage({ params }: PageProps) {
   const [executionResult, setExecutionResult] = useState<any>(null);
   const lastProblemIdRef = useRef<number | null>(null);
 
+  // Keep refs in sync with state for recording capture
+  useEffect(() => { codeRef.current = code; }, [code]);
+  useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
+
   // Persistence: Restore code on problem change
   useEffect(() => {
     if (battleID && problem?.id) {
@@ -283,10 +299,105 @@ export default function BattlePage({ params }: PageProps) {
     fetchBattle();
   }, [battleID, session]);
 
+  // ── Battle Recording: 1-second capture + 30-second flush ──
+  useEffect(() => {
+    if (!battleDetails || !session?.user || isBattleOver) return;
+    const currentUserId = (session.user as any).id;
+    const isP1 = String(battleDetails.player1) === String(currentUserId);
+
+    // Store metadata for flush calls
+    recordingMetaRef.current = {
+      battleId: battleID,
+      player1Id: battleDetails.player1,
+      player2Id: battleDetails.player2,
+      player1Username: battleDetails.player1Username || 'Player 1',
+      player2Username: battleDetails.player2Username || 'Player 2',
+      problems: (battleDetails.problems || []).map((p: any) => ({
+        id: p.id,
+        title: p.title || '',
+        difficulty: p.difficulty,
+      })),
+    };
+    recordingStartTimeRef.current = Date.now();
+
+    // 1-second snapshot capture
+    const captureInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+      const currentCode = codeRef.current;
+      const currentProbIdx = currentQuestionRef.current - 1;
+
+      // Diff: only store code if changed
+      const myCodeChanged = currentCode !== lastCodeRef.current;
+      if (myCodeChanged) lastCodeRef.current = currentCode;
+
+      // Drain event queue
+      const events = recordingEventQueueRef.current.splice(0);
+      const p1Event = events.find(e => e.player === 'player1')?.event;
+      const p2Event = events.find(e => e.player === 'player2')?.event;
+
+      const snapshot: any = {
+        timestamp: elapsed,
+        player1: {
+          code: isP1 ? (myCodeChanged ? currentCode : null) : null,
+          problemIndex: isP1 ? currentProbIdx : 0,
+          ...(p1Event ? { event: p1Event } : {}),
+        },
+        player2: {
+          code: !isP1 ? (myCodeChanged ? currentCode : null) : null,
+          problemIndex: !isP1 ? currentProbIdx : 0,
+          ...(p2Event ? { event: p2Event } : {}),
+        },
+      };
+
+      recordingBufferRef.current.push(snapshot);
+    }, 1000);
+
+    // 30-second flush
+    const flushInterval = setInterval(() => {
+      if (recordingBufferRef.current.length === 0) return;
+      const chunk = recordingBufferRef.current.splice(0);
+      const meta = recordingMetaRef.current;
+      fetch('/api/battle/recording', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...meta, snapshots: chunk }),
+      }).catch(err => console.error('Recording flush error:', err));
+    }, 30000);
+
+    return () => {
+      clearInterval(captureInterval);
+      clearInterval(flushInterval);
+    };
+  }, [battleDetails, session, isBattleOver, battleID]);
+
+  // Helper to queue a recording event
+  const queueRecordingEvent = (playerKey: 'player1' | 'player2', event: string) => {
+    recordingEventQueueRef.current.push({ player: playerKey, event });
+  };
+
+  // Final flush helper
+  const flushRecordingFinal = () => {
+    if (recordingFlushedRef.current) return;
+    recordingFlushedRef.current = true;
+    const chunk = recordingBufferRef.current.splice(0);
+    const meta = recordingMetaRef.current;
+    if (!meta) return;
+    const duration = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+    fetch('/api/battle/recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...meta, snapshots: chunk, final: true, duration }),
+    }).catch(err => console.error('Final recording flush error:', err));
+  };
+
   const handleBattleComplete = async (currentBattle: any, resultOverride?: string) => {
     if (isBattleOver) return;
     setIsBattleOver(true);
     toast.info("Battle has ended! Computing final results...", { id: "battle_end" });
+
+    // Flush remaining recording data
+    flushRecordingFinal();
+
     try {
       // Clear localStorage for this battle
       if (currentBattle?.problems) {
@@ -407,6 +518,13 @@ export default function BattlePage({ params }: PageProps) {
         if (data.status !== "PENDING") {
            clearInterval(pollInterval);
            setIsExecuting(false);
+           // Record result event
+           const myPKey = isMePlayer1 ? 'player1' : 'player2';
+           if (data.status === "Accepted") {
+             queueRecordingEvent(myPKey as 'player1' | 'player2', 'accepted');
+           } else {
+             queueRecordingEvent(myPKey as 'player1' | 'player2', 'wrong_answer');
+           }
            setExecutionResult(data);
            
            if (type === "Submit") {
@@ -441,6 +559,10 @@ export default function BattlePage({ params }: PageProps) {
     setIsExecuting(true);
     setExecutionType(type);
     setPanelTab("result");
+
+    // Record the event
+    const myPlayerKey = isMePlayer1 ? 'player1' : 'player2';
+    queueRecordingEvent(myPlayerKey as 'player1' | 'player2', type === 'Run' ? 'run' : 'submit');
     setExecutionResult(null); // Clear previous results
     
     // Create a loading toast and capture its ID
@@ -493,6 +615,10 @@ export default function BattlePage({ params }: PageProps) {
       userId: currentUserId,
       timestamp: Date.now()
     });
+
+    // Record surrender event
+    const myKey = isMePlayer1 ? 'player1' : 'player2';
+    queueRecordingEvent(myKey as 'player1' | 'player2', 'surrender');
     
     const loserResult = isMePlayer1 ? "player2" : "player1";
     handleBattleComplete(battleDetails, loserResult);
@@ -547,6 +673,8 @@ export default function BattlePage({ params }: PageProps) {
     
     setDrawOffer(null);
     if (accepted) {
+      queueRecordingEvent('player1', 'draw');
+      queueRecordingEvent('player2', 'draw');
       handleBattleComplete(battleDetails, "draw");
     } else {
       toast.info("You declined the draw offer.");
