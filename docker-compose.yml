@@ -78,7 +78,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    entrypoint: |
+    entrypoint: >
       bash -c "
       echo 'Waiting for mongodb...'
       until mongosh --host mongodb --eval 'db.adminCommand({ping: 1})' &>/dev/null; do
