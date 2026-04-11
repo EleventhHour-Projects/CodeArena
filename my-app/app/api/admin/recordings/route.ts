@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import BattleRecordingModel from "@/lib/models/BattleRecording";
 import ReportModel from "@/lib/models/Report";
+import { UserModel } from "@/lib/models/User";
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,14 +27,30 @@ export async function GET(request: NextRequest) {
       BattleRecordingModel.countDocuments(),
     ]);
 
+    // Collect all unique player IDs to resolve usernames
+    const playerIds = new Set<string>();
+    for (const rec of recordings as any[]) {
+      if (rec.player1Id) playerIds.add(rec.player1Id.toString());
+      if (rec.player2Id) playerIds.add(rec.player2Id.toString());
+    }
+
+    // Batch-fetch all usernames in one query
+    const users = await UserModel.find(
+      { _id: { $in: Array.from(playerIds) } },
+      { username: 1 }
+    ).lean();
+    const usernameMap = new Map<string, string>();
+    for (const u of users) {
+      usernameMap.set(u._id.toString(), u.username);
+    }
+
     // Cross-check which battles have reports
-    const battleIds = recordings.map((r: any) => r.battleId).filter(Boolean);
+    const battleIds = (recordings as any[]).map((r) => r.battleId).filter(Boolean);
     const reports = await ReportModel.find(
       { battleId: { $in: battleIds } },
       { battleId: 1, _id: 1, status: 1, category: 1 }
     ).lean();
 
-    // Build a map: battleId -> report info
     const reportMap = new Map<string, any>();
     for (const report of reports) {
       if (report.battleId) {
@@ -45,10 +62,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Attach report info to recordings
-    const enrichedRecordings = recordings.map((rec: any) => ({
+    // Enrich recordings with resolved usernames and report info
+    const enrichedRecordings = (recordings as any[]).map((rec) => ({
       ...rec,
-      report: rec.battleId ? reportMap.get(rec.battleId.toString()) || null : null,
+      player1Username:
+        (rec.player1Id && usernameMap.get(rec.player1Id.toString())) ||
+        rec.player1Username ||
+        "Player 1",
+      player2Username:
+        (rec.player2Id && usernameMap.get(rec.player2Id.toString())) ||
+        rec.player2Username ||
+        "Player 2",
+      report: rec.battleId
+        ? reportMap.get(rec.battleId.toString()) || null
+        : null,
     }));
 
     return NextResponse.json({
