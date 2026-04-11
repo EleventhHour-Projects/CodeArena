@@ -28,7 +28,7 @@ services:
     # Override for Docker network
     environment:
       - REDIS_ADDR=redis:6379
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/?authSource=admin
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/?authSource=admin&replicaSet=rs0
       - WSSIP=http://express-server:6767/internal/event
     depends_on:
       - redis
@@ -47,7 +47,7 @@ services:
     environment:
       - REDIS_ADDR=redis:6379
       - REDIS_URL=redis://redis:6379
-      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/code-arena?authSource=admin
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/code-arena?authSource=admin&replicaSet=rs0
     depends_on:
       - redis
       - express-server
@@ -68,6 +68,25 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+
+  mongodb-setup:
+    image: mongo:latest
+    depends_on:
+      - mongodb
+    restart: on-failure
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    entrypoint: >
+      bash -c "
+      echo 'Waiting for mongodb...'
+      until mongosh --host mongodb --eval 'db.adminCommand({ping: 1})' &>/dev/null; do
+        sleep 1
+      done
+      echo 'Initiating replica set...'
+      mongosh --host mongodb -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongodb:27017\"}]})'
+      "
 
 volumes:
   mongodb_data:
