@@ -320,9 +320,10 @@ export default function BattlePage({ params }: PageProps) {
     };
     recordingStartTimeRef.current = Date.now();
 
-    // 1-second snapshot capture
+    // 4fps snapshot capture (250ms interval) for smooth replay
     const captureInterval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+      const elapsedMs = Date.now() - recordingStartTimeRef.current;
+      const elapsed = Math.round(elapsedMs / 250) / 4; // 0.25s resolution
       const currentCode = codeRef.current;
       const currentProbIdx = currentQuestionRef.current - 1;
 
@@ -350,7 +351,7 @@ export default function BattlePage({ params }: PageProps) {
       };
 
       recordingBufferRef.current.push(snapshot);
-    }, 1000);
+    }, 250);
 
     // 30-second flush
     const flushInterval = setInterval(() => {

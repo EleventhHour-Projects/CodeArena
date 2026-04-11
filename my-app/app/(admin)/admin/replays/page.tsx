@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Film, Play, Pause, SkipBack, SkipForward, Clock, Users,
   Swords, ChevronLeft, ChevronRight, Zap, Eye, X, Maximize2,
-  FastForward, Rewind
+  FastForward, Rewind, Flag, Trash2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +21,11 @@ interface Recording {
   duration: number;
   problems: { id: number; title: string; difficulty: string }[];
   createdAt: string;
+  report?: {
+    reportId: string;
+    status: string;
+    category: string;
+  } | null;
 }
 
 interface Snapshot {
@@ -34,8 +41,9 @@ interface FullRecording extends Recording {
 // ─── Helper ───
 const formatDuration = (seconds: number) => {
   if (!seconds || seconds <= 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  const totalSec = Math.floor(seconds);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
@@ -68,6 +76,8 @@ export default function ReplaysPage() {
   const [loading, setLoading] = useState(true);
   const [activeRecording, setActiveRecording] = useState<FullRecording | null>(null);
   const [loadingReplay, setLoadingReplay] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchRecordings = async (p: number) => {
     setLoading(true);
@@ -87,6 +97,25 @@ export default function ReplaysPage() {
   useEffect(() => {
     fetchRecordings(page);
   }, [page]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this recording? This cannot be undone.')) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/recordings/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Recording deleted');
+        setRecordings((prev) => prev.filter((r) => r._id !== id));
+        setTotal((prev) => prev - 1);
+      } else {
+        toast.error('Failed to delete recording');
+      }
+    } catch (err) {
+      toast.error('Error deleting recording');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const openReplay = async (id: string) => {
     setLoadingReplay(true);
@@ -128,13 +157,13 @@ export default function ReplaysPage() {
           className="bg-card/30 border border-border/60 rounded-3xl backdrop-blur-sm overflow-hidden"
         >
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_1fr_100px_120px_140px_100px] gap-4 px-6 py-4 border-b border-border/40 bg-muted/10">
+          <div className="grid grid-cols-[1fr_1fr_80px_110px_110px_140px] gap-4 px-6 py-4 border-b border-border/40 bg-muted/10">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Players</span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Problems</span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Duration</span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Recorded</span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Expires</span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Action</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Actions</span>
           </div>
 
           {loading ? (
@@ -163,14 +192,19 @@ export default function ReplaysPage() {
                     key={rec._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="grid grid-cols-[1fr_1fr_100px_120px_140px_100px] gap-4 px-6 py-4 items-center hover:bg-muted/10 transition-colors group"
+                    className="grid grid-cols-[1fr_1fr_80px_110px_110px_140px] gap-4 px-6 py-4 items-center hover:bg-muted/10 transition-colors group"
                   >
                     {/* Players */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Users className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-                      <span className="text-sm font-semibold truncate">{rec.player1Username}</span>
-                      <span className="text-xs text-muted-foreground/50 italic">vs</span>
-                      <span className="text-sm font-semibold truncate">{rec.player2Username}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Users className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                        <span className="text-sm font-semibold truncate">{rec.player1Username}</span>
+                        <span className="text-xs text-muted-foreground/50 italic">vs</span>
+                        <span className="text-sm font-semibold truncate">{rec.player2Username}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground/40 pl-5.5 truncate">
+                        {rec.battleId?.toString().slice(0, 12)}…
+                      </span>
                     </div>
 
                     {/* Problems */}
@@ -205,8 +239,23 @@ export default function ReplaysPage() {
                       </span>
                     </div>
 
-                    {/* Action */}
-                    <div className="flex justify-end">
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-1.5">
+                      {rec.report && (
+                        <button
+                          onClick={() => router.push(`/admin/reports`)}
+                          title={`Report: ${rec.report.category} (${rec.report.status})`}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            rec.report.status === 'Pending'
+                              ? 'text-amber-500 hover:bg-amber-500/10 animate-pulse'
+                              : rec.report.status === 'Accepted'
+                              ? 'text-red-500 hover:bg-red-500/10'
+                              : 'text-zinc-500 hover:bg-zinc-500/10'
+                          }`}
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -216,6 +265,18 @@ export default function ReplaysPage() {
                         <Eye className="h-3 w-3" />
                         Watch
                       </Button>
+                      <button
+                        onClick={() => handleDelete(rec._id)}
+                        disabled={deletingId === rec._id}
+                        title="Delete recording"
+                        className="p-1.5 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      >
+                        {deletingId === rec._id ? (
+                          <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -290,14 +351,29 @@ function ReplayViewer({
       let lastProblemIndex = 0;
       let currentEvent: string | undefined = undefined;
 
-      for (const snap of recording.snapshots) {
-        if (snap.timestamp > time) break;
+      // Binary search for the last snapshot at or before `time`
+      let lo = 0, hi = recording.snapshots.length - 1;
+      let bestIdx = -1;
+      while (lo <= hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (recording.snapshots[mid].timestamp <= time) {
+          bestIdx = mid;
+          lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+
+      // Walk from start to bestIdx to reconstruct state (code is diff-compressed)
+      for (let i = 0; i <= bestIdx; i++) {
+        const snap = recording.snapshots[i];
         const pData = snap[player];
         if (pData.code !== null && pData.code !== undefined) {
           lastCode = pData.code;
         }
         lastProblemIndex = pData.problemIndex;
-        if (snap.timestamp === time && pData.event) {
+        // Show event if it's within 0.5s of current time (visible for ~2 frames)
+        if (Math.abs(snap.timestamp - time) < 0.5 && pData.event) {
           currentEvent = pData.event;
         }
       }
@@ -324,14 +400,14 @@ function ReplayViewer({
       const maxTime = recording.duration || recording.snapshots[recording.snapshots.length - 1]?.timestamp || 0;
       intervalRef.current = setInterval(() => {
         setCurrentTime((prev) => {
-          const next = prev + 1;
+          const next = Math.round((prev + 0.25) * 100) / 100; // advance 0.25s per tick
           if (next >= maxTime) {
             setIsPlaying(false);
             return maxTime;
           }
           return next;
         });
-      }, 1000 / playbackSpeed);
+      }, 250 / playbackSpeed); // 250ms base interval = 4fps at 1x
     }
 
     return () => {
@@ -535,8 +611,9 @@ function ReplayViewer({
                   type="range"
                   min={0}
                   max={maxTime}
+                  step={0.25}
                   value={currentTime}
-                  onChange={(e) => setCurrentTime(parseInt(e.target.value))}
+                  onChange={(e) => setCurrentTime(parseFloat(e.target.value))}
                   className="w-full h-1.5 appearance-none bg-zinc-800 rounded-full cursor-pointer outline-none
                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
                     [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg
