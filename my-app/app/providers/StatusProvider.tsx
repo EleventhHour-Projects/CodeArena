@@ -10,6 +10,7 @@ interface StatusContextType {
   inviteCount: number;
   refreshSignal: number;
   triggerRefresh: () => void;
+  isFriendsSseLoaded: boolean;
 }
 
 const StatusContext = createContext<StatusContextType | undefined>(undefined);
@@ -23,6 +24,7 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   const [battleMap, setBattleMap] = useState<Map<string, string>>(new Map());
   const [inviteCount, setInviteCount] = useState<number>(0);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [isFriendsSseLoaded, setIsFriendsSseLoaded] = useState(false);
 
   const triggerRefresh = useCallback(() => {
     setRefreshSignal(prev => prev + 1);
@@ -53,6 +55,7 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error("Failed to fetch SSE tokens:", err);
+      setIsFriendsSseLoaded(true);
     }
   }, [userId]);
 
@@ -92,12 +95,16 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
 
         setOnlineSet(newOnline);
         setBattleMap(newBattles);
+        setIsFriendsSseLoaded(true);
       } catch (err) {
         console.error("Error parsing friends_update:", err);
       }
     });
 
-    source.onerror = () => source.close();
+    source.onerror = () => {
+      setIsFriendsSseLoaded(true);
+      source.close();
+    };
     return () => source.close();
   }, [userId, sseToken]);
 
@@ -124,7 +131,15 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   }, [userId, inviteToken, triggerRefresh]);
 
   return (
-    <StatusContext.Provider value={{ onlineSet, battleMap, userId, inviteCount, refreshSignal, triggerRefresh }}>
+    <StatusContext.Provider value={{
+      onlineSet,
+      battleMap,
+      userId,
+      inviteCount,
+      refreshSignal,
+      triggerRefresh,
+      isFriendsSseLoaded
+    }}>
       {children}
     </StatusContext.Provider>
   );

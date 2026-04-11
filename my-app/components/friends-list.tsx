@@ -126,7 +126,7 @@ export const FriendsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
   const [filter, setFilter] = useState("");
-  const { onlineSet, battleMap, userId: statusUserId } = useStatus();
+  const { onlineSet, battleMap, userId: statusUserId, isFriendsSseLoaded } = useStatus();
   const [userId, setUserId] = useState<string | null>(null);
 
   // add-friend state
@@ -239,7 +239,7 @@ export const FriendsList: React.FC = () => {
   ).length;
 
   /* ── loading ──────────────────────────────────────────── */
-  if (loading) {
+  if (loading || (!isGuest && !isFriendsSseLoaded)) {
     return (
       <div className="flex flex-col gap-2 w-full max-w-2xl">
         <SkeletonRow />
