@@ -125,13 +125,13 @@ export default function BattlePage({ params }: PageProps) {
           break;
         case "USER_SOLVED":
           if (isOpponent) {
-            setOpponentSolvedProblems(prev => new Set(prev).add(event.problemId));
+            if (event.problemId) setOpponentSolvedProblems(prev => new Set(prev).add(event.problemId));
             setCrackLevel(prev => Math.min(prev + 1, 3));
             setFloatingMsg("Opponent solved a problem ⚡");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();
           } else {
-            setMySolvedProblems(prev => new Set(prev).add(event.problemId));
+            if (event.problemId) setMySolvedProblems(prev => new Set(prev).add(event.problemId));
             setFloatingMsg("You solved a problem 🚀");
             setTimeout(() => setFloatingMsg(""), 3000);
             if (soundEnabledRef.current) playSuccessSound();

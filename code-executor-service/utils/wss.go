@@ -24,6 +24,7 @@ type WSSPayload struct {
 	UserID       bson.ObjectID  `bson:"userID" json:"userId"`
 	BattleID     bson.ObjectID  `bson:"BattleID" json:"battleId"`
 	SubmissionID *bson.ObjectID `bson:"submissionID" json:"submissionId"`
+	ProblemID    int            `json:"problemId"`
 	Event        EVENTTYPE      `json:"event"`
 }
 
