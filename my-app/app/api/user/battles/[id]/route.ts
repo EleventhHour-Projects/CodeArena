@@ -31,8 +31,8 @@ export async function GET(
         }
 
         const battle = await BattleModel.findById(id)
-            .populate("player1", "name username image")
-            .populate("player2", "name username image")
+            .populate("player1", "name username image email")
+            .populate("player2", "name username image email")
             .lean();
 
         if (!battle) {

@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { 
-  History, 
-  Trophy, 
-  XOctagon, 
-  Minus, 
-  ChevronRight, 
+import {
+  History,
+  Trophy,
+  XOctagon,
+  Minus,
+  ChevronRight,
   ChevronLeft,
   Search,
   Filter,
   Calendar,
   Sword,
+  Clock,
   Target
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,8 @@ import { Loader2 } from "lucide-react";
 interface BattleRecord {
   id: string;
   createdAt: string;
+  startTime?: string;
+  duration?: any;
   difficulty: string;
   type: string;
   opponent: {
@@ -100,15 +103,15 @@ export default function BattleHistoryPage() {
           </motion.div>
 
           {/* Search/Filter Bar */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-center gap-3 bg-card border border-border rounded-2xl p-2 pl-4 shadow-sm"
           >
             <Search className="w-4 h-4 text-muted-foreground" />
-            <input 
-              type="text" 
-              placeholder="Search opponent..." 
+            <input
+              type="text"
+              placeholder="Search opponent..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-sm w-48 md:w-64 text-foreground placeholder:text-muted-foreground/50"
@@ -122,23 +125,23 @@ export default function BattleHistoryPage() {
 
         {/* Stats Summary Panel */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-           <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2">
-              <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Battles</span>
-              <span className="text-3xl font-black text-foreground">{totalBattles}</span>
-           </div>
-           <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2 overflow-hidden relative group">
-              <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Trophy className="w-32 h-32" />
-              </div>
-              <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Wins</span>
-              <span className="text-3xl font-black text-emerald-500">{totalWins}</span>
-           </div>
-           <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2">
-              <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Win Rate</span>
-              <span className="text-3xl font-black text-foreground">
-                {totalBattles > 0 ? Math.round((totalWins / totalBattles) * 100) : 0}%
-              </span>
-           </div>
+          <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2">
+            <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Battles</span>
+            <span className="text-3xl font-black text-foreground">{totalBattles}</span>
+          </div>
+          <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2 overflow-hidden relative group">
+            <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Trophy className="w-32 h-32" />
+            </div>
+            <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Total Wins</span>
+            <span className="text-3xl font-black text-emerald-500">{totalWins}</span>
+          </div>
+          <div className="p-6 rounded-2xl bg-card border border-border shadow-sm flex flex-col gap-2">
+            <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Win Rate</span>
+            <span className="text-3xl font-black text-foreground">
+              {totalBattles > 0 ? Math.round((totalWins / totalBattles) * 100) : 0}%
+            </span>
+          </div>
         </div>
 
         {/* List Content */}
@@ -167,10 +170,9 @@ export default function BattleHistoryPage() {
                     className="group flex flex-col md:flex-row md:items-center justify-between p-5 rounded-3xl bg-card border border-border hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all cursor-pointer relative overflow-hidden"
                   >
                     {/* Subtle Background Accent */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                      battle.result === 'win' ? 'bg-emerald-500' : 
-                      battle.result === 'loss' ? 'bg-rose-500' : 'bg-amber-500'
-                    }`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${battle.result === 'win' ? 'bg-emerald-500' :
+                        battle.result === 'loss' ? 'bg-rose-500' : 'bg-amber-500'
+                      }`} />
 
                     <div className="flex items-center gap-5 flex-1">
                       <Avatar className="w-14 h-14 border-2 border-border group-hover:border-primary/20 transition-colors">
@@ -181,27 +183,42 @@ export default function BattleHistoryPage() {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-foreground">vs {battle.opponent.username}</span>
-                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                            battle.difficulty?.toLowerCase() === 'easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' :
-                            battle.difficulty?.toLowerCase() === 'medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
-                            'text-rose-500 border-rose-500/20 bg-rose-500/5'
-                          }`}>
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${battle.difficulty?.toLowerCase() === 'easy' ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' :
+                              battle.difficulty?.toLowerCase() === 'medium' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' :
+                                'text-rose-500 border-rose-500/20 bg-rose-500/5'
+                            }`}>
                             {battle.difficulty}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {format(new Date(battle.createdAt), "MMM d, yyyy")}</span>
-                          <span className="flex items-center gap-1"><Target className="w-3 h-3" /> {battle.type}</span>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(battle.startTime || battle.createdAt), "MMM d, yyyy · p")}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Target className="w-3 h-3" />
+                            {battle.type}
+                          </span>
+                          {battle.duration && (
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/50 text-[10px] font-bold">
+                              <Clock className="w-2.5 h-2.5" />
+                              {(() => {
+                                const d = battle.duration;
+                                if (typeof d === 'number') return `${Math.floor(d / 60)}m ${d % 60}s`;
+                                if (!d.hours && !d.minutes && !d.seconds) return null;
+                                return `${d.hours ? d.hours + 'h ' : ''}${d.minutes || 0}m ${d.seconds || 0}s`;
+                              })()}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between md:justify-end gap-8 mt-4 md:mt-0">
                       <div className="flex flex-col items-center md:items-end gap-1">
-                        <span className={`text-sm font-black uppercase tracking-widest ${
-                          battle.result === 'win' ? 'text-emerald-500' : 
-                          battle.result === 'loss' ? 'text-rose-500' : 'text-amber-500'
-                        }`}>
+                        <span className={`text-sm font-black uppercase tracking-widest ${battle.result === 'win' ? 'text-emerald-500' :
+                            battle.result === 'loss' ? 'text-rose-500' : 'text-amber-500'
+                          }`}>
                           {battle.result}
                         </span>
                         {battle.ratingChange !== undefined && (
@@ -227,17 +244,16 @@ export default function BattleHistoryPage() {
                     <ChevronLeft className="w-4 h-4" />
                     Previous
                   </button>
-                  
+
                   <div className="flex items-center gap-2">
                     {[...Array(totalPages)].map((_, i) => (
                       <button
                         key={i + 1}
                         onClick={() => setCurrentPage(i + 1)}
-                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                          currentPage === i + 1 
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === i + 1
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                             : "bg-card border border-border hover:border-primary/40 text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         {i + 1}
                       </button>
@@ -259,10 +275,10 @@ export default function BattleHistoryPage() {
         </div>
       </main>
 
-      <BattleDetailModal 
-        battleId={selectedBattleId} 
-        isOpen={!!selectedBattleId} 
-        onClose={() => setSelectedBattleId(null)} 
+      <BattleDetailModal
+        battleId={selectedBattleId}
+        isOpen={!!selectedBattleId}
+        onClose={() => setSelectedBattleId(null)}
       />
     </div>
   );

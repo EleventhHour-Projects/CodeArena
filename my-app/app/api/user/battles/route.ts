@@ -98,6 +98,8 @@ export async function GET(req: NextRequest) {
                 id: battle._id,
                 status: battle.status,
                 createdAt: battle.createdAt,
+                startTime: battle.startTime,
+                duration: battle.duration,
                 difficulty: battle.difficulty,
                 type: battle.type,
                 opponent: {

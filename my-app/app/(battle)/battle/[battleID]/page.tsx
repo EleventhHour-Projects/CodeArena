@@ -920,6 +920,16 @@ export default function BattlePage({ params }: PageProps) {
                        resultStatus === "DEFEAT" ? "A tough loss, but failure is the best teacher." : 
                        "A perfectly balanced match. You both stood your ground."}
                     </p>
+                    {battleStats.duration && (
+                      <div className="pt-2 flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                        <Clock className="w-3.5 h-3.5" />
+                        Total Time: {(() => {
+                           const d = battleStats.duration;
+                           if (typeof d === 'number') return `${Math.floor(d / 60)}m ${d % 60}s`;
+                           return `${d.hours ? d.hours + 'h ' : ''}${d.minutes || 0}m ${d.seconds || 0}s`;
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-8 overflow-y-auto custom-scrollbar">

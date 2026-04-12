@@ -61,9 +61,20 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
   );
 
   // Determine user's result for display
-  const isPlayer1 = session?.user?.email === battle?.player1?.email;
+  const isPlayer1 = session?.user?.email === battle?.player1?.email || (session?.user as any)?.id === battle?.player1?._id?.toString();
   const userResult = !battle?.winner ? 'draw' : 
                     (battle.winner.toString() === (isPlayer1 ? battle.player1._id.toString() : battle.player2._id.toString()) ? 'win' : 'loss');
+  
+  const duration = battle?.duration;
+  const formatDuration = (d: any) => {
+    if (!d) return null;
+    if (typeof d === 'number') return `${Math.floor(d / 60)}m ${d % 60}s`;
+    const parts = [];
+    if (d.hours) parts.push(`${d.hours}h`);
+    if (d.minutes || d.hours) parts.push(`${d.minutes || 0}m`);
+    parts.push(`${d.seconds || 0}s`);
+    return parts.join(' ');
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -98,10 +109,17 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
                     <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
                       Battle Against {isPlayer1 ? battle.player2.username : battle.player1.username}
                     </DialogTitle>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {format(new Date(battle.createdAt), "PPP p")}
-                    </p>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        {format(new Date(battle.startTime || battle.createdAt), "PPP p")}
+                      </span>
+                      {duration && (
+                         <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted font-medium text-xs">
+                           Duration: {formatDuration(duration)}
+                         </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
