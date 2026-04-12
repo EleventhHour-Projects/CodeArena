@@ -9,6 +9,7 @@ import { io, Socket } from "socket.io-client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ReportModal } from "@/components/modals/ReportModal";
 import { Button } from "@/components/ui/button";
+import { formatDuration } from "@/lib/time-utils";
 
 // Minimal synthesized sound effects
 const playTone = (freq: number, type: OscillatorType, duration: number) => {
@@ -682,12 +683,6 @@ export default function BattlePage({ params }: PageProps) {
     }
   };
 
-  const formatSolveTime = (seconds: number) => {
-    if (!seconds || seconds <= 0) return "Not Solved";
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}m ${s}s`;
-  };
 
   // Resizable Panes State
   const [leftWidth, setLeftWidth] = useState(45);
@@ -919,7 +914,12 @@ export default function BattlePage({ params }: PageProps) {
                       {resultStatus === "VICTORY" ? "Incredible performance! You dominated the arena." : 
                        resultStatus === "DEFEAT" ? "A tough loss, but failure is the best teacher." : 
                        "A perfectly balanced match. You both stood your ground."}
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-2 px-3 py-1 bg-white/5 rounded-full w-fit mx-auto border border-white/5">
+                      <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                      <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
+                        Total Duration: <span className="text-zinc-200">{formatDuration(battleStats.duration)}</span>
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-8 overflow-y-auto custom-scrollbar">
@@ -975,13 +975,13 @@ export default function BattlePage({ params }: PageProps) {
                                   <div className="flex flex-col gap-0.5">
                                      <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">You</span>
                                      <span className={`text-xs font-mono font-bold ${myTime > 0 ? "text-emerald-400" : "text-zinc-700"}`}>
-                                       {formatSolveTime(myTime)}
+                                       {formatDuration(myTime)}
                                      </span>
                                   </div>
                                   <div className="flex flex-col gap-0.5">
                                      <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Opponent</span>
                                      <span className={`text-xs font-mono font-bold ${opTime > 0 ? "text-amber-400" : "text-zinc-700"}`}>
-                                       {formatSolveTime(opTime)}
+                                       {formatDuration(opTime)}
                                      </span>
                                   </div>
                                </div>

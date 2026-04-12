@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import { Loader2, Code2, Clock, CheckCircle2, XCircle, AlertCircle, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { formatDuration } from "@/lib/time-utils";
 
 // Custom Badge component since it's missing from UI
 const CustomBadge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
@@ -102,6 +103,9 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
                       <Clock className="w-3.5 h-3.5" />
                       {format(new Date(battle.createdAt), "PPP p")}
                     </p>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-2 flex items-center gap-1.5">
+                      Total Duration: <span className="text-zinc-200">{formatDuration(battle.duration)}</span>
+                    </p>
                   </div>
                 </div>
 
@@ -172,13 +176,13 @@ export function BattleDetailModal({ battleId, isOpen, onClose }: BattleDetailMod
                         <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
                           <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Your Time</p>
                           <p className="text-xl font-bold text-foreground">
-                            {yourTime > 0 ? `${Math.round(yourTime)}s` : "—"}
+                            {yourTime > 0 ? formatDuration(yourTime) : "—"}
                           </p>
                         </div>
                         <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
                           <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Opponent Time</p>
                           <p className="text-xl font-bold text-foreground">
-                            {opponentTime > 0 ? `${Math.round(opponentTime)}s` : "—"}
+                            {opponentTime > 0 ? formatDuration(opponentTime) : "—"}
                           </p>
                         </div>
                       </div>

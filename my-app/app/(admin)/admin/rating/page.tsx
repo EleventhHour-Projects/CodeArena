@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { formatDuration } from '@/lib/time-utils';
 
 // ─── Types ───
 interface UserResult {
@@ -38,14 +39,6 @@ interface UserDetails {
 }
 
 // ─── Helpers ───
-const formatTime = (t: { hours: number; minutes: number; seconds: number } | null | undefined) => {
-  if (!t || (!t.hours && !t.minutes && !t.seconds)) return '—';
-  const parts = [];
-  if (t.hours) parts.push(`${t.hours}h`);
-  if (t.minutes) parts.push(`${t.minutes}m`);
-  if (t.seconds) parts.push(`${t.seconds}s`);
-  return parts.join(' ');
-};
 
 function StatCard({
   icon: Icon,
@@ -364,8 +357,8 @@ export default function RatingPage() {
                     }
                   />
                   <StatCard icon={Flame} label="Streak" value={selectedUser.currentStreak} sub={`Best: ${selectedUser.longestStreak}`} />
-                  <StatCard icon={Zap} label="Fastest Win" value={formatTime(selectedUser.fastestVictory)} />
-                  <StatCard icon={Clock} label="Avg Win" value={formatTime(selectedUser.averageWinningTime)} />
+                  <StatCard icon={Zap} label="Fastest Win" value={formatDuration(selectedUser.fastestVictory)} />
+                  <StatCard icon={Clock} label="Avg Win" value={formatDuration(selectedUser.averageWinningTime)} />
                 </div>
 
                 {/* Problems Solved */}
@@ -383,7 +376,7 @@ export default function RatingPage() {
                     </span>
                   </div>
                   <span className="text-xs font-mono text-muted-foreground/60 ml-auto">
-                    Total battle time: {formatTime(selectedUser.totalTimeSpentInBattles)}
+                    Total battle time: {formatDuration(selectedUser.totalTimeSpentInBattles)}
                   </span>
                 </div>
               </div>
