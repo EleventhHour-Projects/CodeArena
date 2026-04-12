@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import dbConnect from "@/lib/dbConnect";
+import { UserModel } from "@/lib/models/User";
+import { isUserBanned } from "@/lib/auth/userStatus";
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,6 +15,32 @@ export async function POST(req: NextRequest) {
 
         const { difficulty } = await req.json();
         const userId = session.user.id;
+
+        await dbConnect();
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+        }
+
+        // Check if user is banned
+        const banStatus = isUserBanned(user);
+        if (banStatus.banned) {
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    error: `You are banned from joining the arena. ${banStatus.expires ? `Expires: ${banStatus.expires.toLocaleString()}` : 'This is a permanent ban.'}` 
+                },
+                { status: 403 }
+            );
+        }
+
+        // Lazy cleanup if ban has expired
+        if (banStatus.needsCleanup) {
+            await UserModel.updateOne(
+                { _id: user._id },
+                { $set: { isBanned: false, banExpires: null } }
+            );
+        }
 
         // Call the Go matchmaking service
         const response = await fetch("http://34.126.214.18:6969/api/matchmaking/register", {

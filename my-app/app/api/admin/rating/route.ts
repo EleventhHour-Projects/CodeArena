@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     // Send notification to the user
     const sign = action === "add" ? "+" : "-";
-    const emoji = action === "add" ? "⬆️" : "⬇️";
+    const emoji = action === "add" ? "⬆" : "⬇";
     const notifMessage = reason?.trim()
       ? `${emoji} Your rating has been adjusted by ${sign}${amount} (${newRating} total). Reason: ${reason.trim()}`
       : `${emoji} Your rating has been adjusted by ${sign}${amount} (${newRating} total).`;

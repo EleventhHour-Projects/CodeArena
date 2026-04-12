@@ -41,4 +41,8 @@ export interface User{
         medium: number;
         hard: number;
     }
+
+    // Ban Info
+    isBanned?: boolean;
+    banExpires?: Date | null;
 }
