@@ -30,6 +30,12 @@ type DashboardStats = {
   onlineUsersList: any[];
 };
 
+type PoolSize = {
+  easy: number;
+  medium: number;
+  hard: number;
+};
+
 type WorkerDetail = {
   id: string;
   name: string;
@@ -63,6 +69,7 @@ const formatBytes = (bytes: number) => {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [executorInfo, setExecutorInfo] = useState<ExecutorInfo | null>(null);
+  const [poolSize, setPoolSize] = useState<PoolSize | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuto, setIsAuto] = useState<boolean>(false);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -71,12 +78,13 @@ export default function AdminDashboard() {
 
   const fetchData = async (p: string) => {
     try {
-      const [statsRes, execRes, autoRes, usageRes, onlineRes] = await Promise.all([
+      const [statsRes, execRes, autoRes, usageRes, onlineRes, poolRes] = await Promise.all([
         fetch(`/api/admin/stats?period=${p}`),
         fetch("/api/admin/executor-info"),
         fetch("/api/admin/executor/auto"),
         fetch("/api/admin/executor/usage"),
-        fetch("/api/admin/online-users")
+        fetch("/api/admin/online-users"),
+        fetch("/api/matchmaking/poolsize")
       ]);
 
       if (statsRes.ok) {
@@ -97,6 +105,17 @@ export default function AdminDashboard() {
       if (autoRes.ok) {
         const data = await autoRes.json();
         setIsAuto(data.auto);
+      }
+
+      if (poolRes.ok) {
+        const data = await poolRes.json();
+        if (data.success) {
+          setPoolSize({
+            easy: data.easy,
+            medium: data.medium,
+            hard: data.hard
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -409,6 +428,55 @@ export default function AdminDashboard() {
 
 
 
+
+        {/* MATCHMAKING POOL SECTION */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mb-10"
+        >
+          <div className="bg-card/30 border border-border/60 rounded-3xl p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Swords className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  Matchmaking Pool Size
+                </h2>
+                <div className="ml-auto flex items-center gap-1.5 text-primary text-[10px] font-bold px-2.5 py-1 bg-primary/10 rounded-full border border-primary/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  ARENA
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: "Easy", value: poolSize?.easy ?? 0, color: "text-emerald-400", sub: "Beginner" },
+                { label: "Medium", value: poolSize?.medium ?? 0, color: "text-amber-400", sub: "Intermediate" },
+                { label: "Hard", value: poolSize?.hard ?? 0, color: "text-rose-400", sub: "Expert" },
+              ].map((item) => (
+                <div key={item.label} className="bg-muted/20 border border-border/40 rounded-2xl p-5 hover:border-primary/30 transition-all group">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{item.label}</p>
+                      <p className="text-[9px] text-muted-foreground/60">{item.sub}</p>
+                    </div>
+                    <div className={`p-2 rounded-lg ${item.color.replace('text', 'bg')}/10 ${item.color}`}>
+                      <Users className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <h3 className={`text-3xl font-black tracking-tight tabular-nums ${item.color}`}>
+                      {item.value}
+                    </h3>
+                    <span className="text-[10px] text-muted-foreground font-bold mb-1.5 uppercase">Players</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
         {/* DATA GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
