@@ -11,6 +11,7 @@ import {
   Users,
   Wifi,
   WifiOff,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ interface Friend {
   image?: string;
   lastActive?: string; // ISO string
   currentBattleId?: string | null;
+  isBanned?: boolean;
 }
 
 import { useStatus } from "@/app/providers/StatusProvider";
@@ -107,6 +109,13 @@ const Avatar = ({
       className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${STATUS_CONFIG[status].dot} ${status === "online" ? "animate-pulse" : ""
         }`}
     />
+    
+    {/* Ban Overlay */}
+    {friend.isBanned && (
+      <div className="absolute inset-0 bg-red-950/40 rounded-full flex items-center justify-center pointer-events-none backdrop-blur-[0.5px]">
+        <span className="text-white font-black text-[7px] leading-none uppercase tracking-widest px-1 py-0.5 bg-red-600 rounded-sm shadow-sm scale-75">BAN</span>
+      </div>
+    )}
   </div>
 );
 
@@ -396,13 +405,18 @@ export const FriendsList: React.FC = () => {
                       ) : (
                         <span className="text-[11px] text-zinc-600">Offline</span>
                       )}
+                      {friend.isBanned && (
+                        <span className="text-[11px] text-red-400 font-bold ml-1.5 flex items-center gap-1">
+                          <XCircle className="w-3 h-3" /> Suspended
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
-                    {/* Invite button — only when NOT in battle */}
-                    {status !== "in-battle" && (
+                    {/* Invite button — only when NOT in battle and NOT banned */}
+                    {status !== "in-battle" && !friend.isBanned && (
                       <button
                         onClick={() => handleInvite(friend.username)}
                         title="Challenge to battle"
@@ -411,6 +425,12 @@ export const FriendsList: React.FC = () => {
                         <Swords className="w-3 h-3" />
                         Invite
                       </button>
+                    )}
+                    
+                    {friend.isBanned && (
+                       <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-zinc-800/50 border border-border/40 text-muted-foreground/50 shrink-0">
+                         Restricted
+                       </span>
                     )}
 
                     {/* In-battle badge — static, always visible */}

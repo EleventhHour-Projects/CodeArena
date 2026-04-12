@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
         if (!me) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 
         const friendDocs = await FriendModel.find({ user: me._id })
-            .populate("friend", "username name rating image lastActive currentBattleId")
+            .populate("friend", "username name rating image lastActive currentBattleId isBanned")
             .sort({ createdAt: -1 });
 
         const friends = friendDocs.map((f) => f.friend);

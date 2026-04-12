@@ -122,15 +122,21 @@ export async function AppSidebar() {
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-lg relative">
                     <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
                     <AvatarFallback className="rounded-lg">
                       <User2 className="size-4" />
                     </AvatarFallback>
+                    {session?.user?.isBanned && (
+                      <div className="absolute inset-0 bg-red-950/40 rounded-lg flex items-center justify-center pointer-events-none backdrop-blur-[0.5px]">
+                        <span className="text-white font-black text-[6px] uppercase tracking-widest px-1 py-0.5 bg-red-600 rounded-sm shadow-sm scale-75">BAN</span>
+                      </div>
+                    )}
                   </Avatar>
                   <span className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
+                    <span className="truncate font-semibold flex items-center gap-1.5">
                       {session?.user?.username || "Guest"}
+                      {session?.user?.isBanned && <span className="text-[8px] font-black px-1 py-0.5 rounded-sm bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-tighter">BANNED</span>}
                     </span>
                     <span className="truncate text-xs">
                       {session?.user?.email || "Not logged in"}

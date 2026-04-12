@@ -66,6 +66,8 @@ export const authOptions = {
                     session.user.id = dbUser._id.toString();
                     session.user.username = dbUser.username;
                     session.user.rating = dbUser.rating;
+                    session.user.isBanned = dbUser.isBanned;
+                    session.user.banExpires = dbUser.banExpires;
                     if (dbUser.image) {
                         session.user.image = dbUser.image;
                     } else if (session.user.image) {

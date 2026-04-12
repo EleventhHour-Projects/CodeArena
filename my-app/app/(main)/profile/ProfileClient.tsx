@@ -15,6 +15,8 @@ interface CustomUser {
     email?: string | null;
     image?: string | null;
     username?: string;
+    isBanned?: boolean;
+    banExpires?: string | null;
 }
 
 const SNIPPETS = ["{ }", "[ ]", "=>", "&&", "||", "const", "await", "import", "type", "void", "async"];
@@ -83,6 +85,8 @@ const ScanningLine = () => (
 
 export default function ProfileClient({ initialChangeCount }: { initialChangeCount: number }) {
     const { data: session, update } = useSession();
+    const isBanned = (session?.user as CustomUser)?.isBanned;
+    const banExpires = (session?.user as CustomUser)?.banExpires;
     
     // State for username field
     const [username, setUsername] = useState("");
@@ -234,6 +238,28 @@ export default function ProfileClient({ initialChangeCount }: { initialChangeCou
                     SYSTEM_STATUS: ONLINE<br />
                     SECURE_LINK: ESTABLISHED
                 </div>
+
+                {isBanned && (
+                    <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-red-500/20 text-red-500">
+                                <XCircle className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-red-500 uppercase tracking-tight">Account Restricted</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {banExpires 
+                                        ? `Your protocol access is suspended until ${new Date(banExpires).toLocaleString()}.`
+                                        : 'Your protocol access has been permanently terminated.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="hidden sm:block text-[10px] font-mono text-red-500/50 uppercase tracking-widest text-right">
+                            ERROR_CODE: ACCESS_DENIED<br />
+                            STATUS: UNAUTHORIZED
+                        </div>
+                    </div>
+                )}
                 
                 <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/40">
                     
@@ -247,19 +273,33 @@ export default function ProfileClient({ initialChangeCount }: { initialChangeCou
                                     <UserIcon className="w-12 h-12 opacity-30" />
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="absolute bottom-1 right-1 p-1.5 bg-green-500 text-white rounded-full shadow-lg border-2 border-background">
-                                <Check className="w-3 h-3" />
-                            </div>
+                            {!isBanned && (
+                                <div className="absolute bottom-1 right-1 p-1.5 bg-green-500 text-white rounded-full shadow-lg border-2 border-background">
+                                    <Check className="w-3 h-3" />
+                                </div>
+                            )}
+                            {isBanned && (
+                                <div className="absolute inset-0 bg-red-950/40 rounded-full flex items-center justify-center pointer-events-none backdrop-blur-[1px] border-2 border-red-500/50">
+                                    <span className="text-white font-black text-xs uppercase tracking-widest px-2 py-1 bg-red-600 rounded-lg shadow-xl">BAN</span>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="text-center space-y-1">
                             <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate max-w-[200px]">
                                 {session?.user?.name || "Player One"}
                             </h1>
-                            <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono border border-primary/20">
-                                <span className="w-2 h-2 rounded-full bg-green-600 mr-1.5 animate-pulse" />
-                                COMBATANT
-                            </div>
+                            {isBanned ? (
+                                <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-mono border border-red-500/20">
+                                    <XCircle className="w-2.5 h-2.5 mr-1.5" />
+                                    SUSPENDED
+                                </div>
+                            ) : (
+                                <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono border border-primary/20">
+                                    <span className="w-2 h-2 rounded-full bg-green-600 mr-1.5 animate-pulse" />
+                                    COMBATANT
+                                </div>
+                            )}
                         </div>
                     </div>
 
