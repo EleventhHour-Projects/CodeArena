@@ -412,6 +412,14 @@ export default function RatingPage() {
                         <User className="h-8 w-8 text-muted-foreground/40" />
                       </div>
                     )}
+                    
+                    {/* Ban Overlay */}
+                    {selectedUser.isBanned && (
+                      <div className="absolute inset-0 bg-red-950/40 rounded-2xl flex items-center justify-center pointer-events-none border border-red-500/50 backdrop-blur-[1px]">
+                        <span className="text-white font-black text-[10px] uppercase tracking-widest px-2 py-1 bg-red-600 rounded-lg shadow-lg">BAN</span>
+                      </div>
+                    )}
+
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingImage}
