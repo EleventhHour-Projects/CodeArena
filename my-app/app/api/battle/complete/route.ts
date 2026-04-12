@@ -91,6 +91,7 @@ export async function POST(req: Request) {
                     ratingChangeB: battle.ratingChangeB ?? 0,
                     newRa: battle.newRatingA ?? 0,
                     newRb: battle.newRatingB ?? 0,
+                    duration: battle.duration,
                     player1: {
                         username: p1?.username || "Player 1",
                         solvedCount: p1SolvedCount,
@@ -101,17 +102,6 @@ export async function POST(req: Request) {
                         solvedCount: p2SolvedCount,
                         solveTimes: p2SolveTimes
                     },
-                    duration: battle.duration || (() => {
-                        if (battle.startTime && battle.endTime) {
-                            const totalSeconds = Math.max(0, Math.floor((new Date(battle.endTime).getTime() - new Date(battle.startTime).getTime()) / 1000));
-                            return {
-                                hours: Math.floor(totalSeconds / 3600),
-                                minutes: Math.floor((totalSeconds % 3600) / 60),
-                                seconds: totalSeconds % 60
-                            };
-                        }
-                        return { hours: 0, minutes: 0, seconds: 0 };
-                    })(),
                     problemResults: battle.problemResults,
                     battle: battle
                 };
