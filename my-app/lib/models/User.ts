@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema<User>({
     averageWinningTime: { type: Object, required: true, default: { hours: 0, minutes: 0, seconds: 0 } },
     totalTimeSpentInBattles: { type: Object, required: true, default: { hours: 0, minutes: 0, seconds: 0 } },
     totalProblemsSolved: { type: Object, required: true, default: { easy: 0, medium: 0, hard: 0 } },
+    isBanned: { type: Boolean, default: false },
+    banExpires: { type: Date, default: null },
 })
 
 // Create an index on rating for efficient rank calculation

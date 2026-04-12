@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/dbConnect";
 import { UserModel } from "@/lib/models/User";
 import BattleInviteModel from "@/lib/models/BattleInvite";
+import { isUserBanned } from "@/lib/auth/userStatus";
 
 export async function POST(req: NextRequest) {
     try {
@@ -34,6 +35,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { success: false, message: "Current user not found" },
                 { status: 404 }
+            );
+        }
+
+        // Check if current user is banned
+        const banStatus = isUserBanned(curUser);
+        if (banStatus.banned) {
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    message: `You are banned from sending invites. ${banStatus.expires ? `Expires: ${banStatus.expires.toLocaleString()}` : 'This is a permanent ban.'}` 
+                },
+                { status: 403 }
+            );
+        }
+
+        // Lazy cleanup if ban has expired
+        if (banStatus.needsCleanup) {
+            await UserModel.updateOne(
+                { _id: curUser._id },
+                { $set: { isBanned: false, banExpires: null } }
             );
         }
 
