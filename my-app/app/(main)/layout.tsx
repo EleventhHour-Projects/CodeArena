@@ -17,11 +17,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Code Arena",
-  description: "Created by MS & DM",
+  title: "CodeArena",
+  description: "Challenge friends to solve algorithmic problems in real time. Prove your skills, climb the ranks, dominate the arena.",
+  metadataBase: new URL("https://codearena.pro"),
+  openGraph: {
+    title: "CodeArena",
+    description: "Challenge friends to solve algorithmic problems in real time. Prove your skills, climb the ranks, dominate the arena.",
+    url: "https://codearena.pro",
+    siteName: "CodeArena",
+    images: [
+      {
+        url: "/thumbnail.png",
+        width: 1200,
+        height: 630,
+        alt: "CodeArena Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CodeArena",
+    description: "Challenge friends to solve algorithmic problems in real time. Prove your skills, climb the ranks, dominate the arena.",
+    images: ["/thumbnail.png"],
+  },
   icons: {
-    icon: "/logo.svg"
-  }
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

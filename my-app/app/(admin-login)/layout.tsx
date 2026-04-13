@@ -15,8 +15,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Login | Code Arena",
-  description: "Code Arena Administration Login",
+  title: "Admin Login | CodeArena",
+  description: "CodeArena Administration Login",
+  metadataBase: new URL("https://codearena.pro"),
+  openGraph: {
+    title: "Admin Login | CodeArena",
+    description: "CodeArena Administration Login",
+    url: "https://codearena.pro",
+    siteName: "CodeArena",
+    images: [
+      {
+        url: "/thumbnail.png",
+        width: 1200,
+        height: 630,
+        alt: "CodeArena Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Admin Login | CodeArena",
+    description: "CodeArena Administration Login",
+    images: ["/thumbnail.png"],
+  },
 };
 
 export default function AdminLoginShellLayout({
