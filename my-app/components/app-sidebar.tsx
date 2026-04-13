@@ -63,7 +63,7 @@ export async function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" className="data-[state=open]:bg-sidebar-accent hover:bg-muted/50 transition-colors data-[state=open]:text-sidebar-accent-foreground">
-              <Link href="/meet-developers">
+              <Link href="/">
                 <div className="flex items-center justify-center rounded-lg text-sidebar-primary-foreground overflow-hidden h-8 w-8 shrink-0">
                   <Logo width={24} height={18} />
                 </div>
