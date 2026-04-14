@@ -531,7 +531,7 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 		"%s/wss/matchmaking?token=%s&username=%s",
 		base,
 		url.QueryEscape(token),
-		url.QueryEscape(botID),
+		url.QueryEscape("dhananjay"),
 	)
 
 	log.Printf("[MATCHMAKING] Connecting to pool: %s\n", base)
