@@ -57,6 +57,21 @@ services:
       - executor-service
       - mongodb
 
+  bot-service:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_URL=http://executor-service:6969
+      - APP_URL=http://frontend-service:3000
+      - SOCKET_BASE_URL=ws://express-server:6767
+    depends_on:
+      - frontend-service
+      - executor-service
+      - express-server
+
   redis:
     image: redis:alpine
     ports:

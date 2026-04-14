@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
-  Users, Swords, Activity, Server, Clock, Shield, Zap, Code, PlusCircle, LogOut
+  Users, Swords, Activity, Server, Clock, Shield, Zap, Code, PlusCircle, LogOut, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,6 +75,8 @@ export default function AdminDashboard() {
   const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [showAutoWarning, setShowAutoWarning] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("7d");
+  const [botDifficulty, setBotDifficulty] = useState<string>("medium");
+  const [isBotLoading, setIsBotLoading] = useState(false);
 
   const fetchData = async (p: string) => {
     try {
@@ -163,6 +165,48 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       toast.error("An error occurred while stopping worker");
+    }
+  };
+
+  const handleSpawnBot = async () => {
+    setIsBotLoading(true);
+    try {
+      const res = await fetch("/api/admin/bot/spawn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ difficulty: botDifficulty })
+      });
+      if (res.ok) {
+        toast.success("Bot spawn initiated");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to spawn bot");
+      }
+    } catch (err) {
+      toast.error("An error occurred while spawning bot");
+    } finally {
+      setIsBotLoading(false);
+    }
+  };
+
+  const handleStopBot = async () => {
+    setIsBotLoading(true);
+    try {
+      const res = await fetch("/api/admin/bot/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bot_id: "69da0e073660af6b7724e832" })
+      });
+      if (res.ok) {
+        toast.success("Bot stop signal sent");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to stop bot");
+      }
+    } catch (err) {
+      toast.error("An error occurred while stopping bot");
+    } finally {
+      setIsBotLoading(false);
     }
   };
 
@@ -760,6 +804,108 @@ export default function AdminDashboard() {
               Loading executor data...
             </div>
           )}
+        </motion.div>
+        
+        {/* BOT MANAGEMENT PANEL */}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-6 bg-card/30 border border-border/60 rounded-3xl p-6 backdrop-blur-sm"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                    Bot Management
+                  </h2>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight opacity-60">Control competition bots</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Difficulty Selector */}
+                <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
+                  {["easy", "medium", "hard"].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setBotDifficulty(d)}
+                      className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize ${
+                        botDifficulty === d
+                          ? "bg-primary text-primary-foreground shadow-lg"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="h-8 w-[1px] bg-border/40 hidden sm:block" />
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSpawnBot}
+                    disabled={isBotLoading}
+                    size="sm"
+                    className="h-9 px-6 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                  >
+                    {isBotLoading ? (
+                      <div className="h-3 w-3 border-2 border-emerald-400/20 border-t-emerald-400 rounded-full animate-spin mr-2" />
+                    ) : (
+                      <PlusCircle className="h-3.5 w-3.5 mr-2" />
+                    )}
+                    Spawn Bot
+                  </Button>
+                  <Button
+                    onClick={handleStopBot}
+                    disabled={isBotLoading}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 px-6 border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+                  >
+                    {isBotLoading ? (
+                      <div className="h-3 w-3 border-2 border-rose-400/20 border-t-rose-400 rounded-full animate-spin mr-2" />
+                    ) : (
+                      <LogOut className="h-3.5 w-3.5 mr-2 rotate-90" />
+                    )}
+                    Despawn Bot
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 rounded-2xl bg-muted/20 border border-border/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Status Info</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Spawning a bot will automatically register it for matchmaking in the selected difficulty pool. 
+                  Bots follow a realistic probability-based solution schedule and recording snapshots.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-muted/20 border border-border/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Active Bots</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map((v) => (
+                      <div key={v} className="h-8 w-8 rounded-full border-2 border-card bg-zinc-800 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-primary/40" />
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-zinc-500">Service: <span className="text-emerald-400">Online</span></span>
+                </div>
+              </div>
+            </div>
         </motion.div>
 
       </div>
