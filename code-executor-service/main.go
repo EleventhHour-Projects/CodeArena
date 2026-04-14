@@ -149,6 +149,7 @@ func main() {
 	// Loading environment variables
 	loadEnv()
 	utils.REDIS_ADDR = os.Getenv("REDIS_ADDR")
+	utils.REDIS_PASSWORD = os.Getenv("REDIS_PASSWORD")
 	utils.MONGO_URI = os.Getenv("MONGO_URI")
 	utils.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
 	utils.INTERNAL_KEY = os.Getenv("INTERNAL_KEY")

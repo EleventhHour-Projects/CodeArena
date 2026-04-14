@@ -27,7 +27,8 @@ func InitRedis() {
 func NewRedisQueue(addr string) *RedisQueue {
 	return &RedisQueue{
 		client: redis.NewClient(&redis.Options{
-			Addr: addr,
+			Addr:     addr,
+			Password: utils.REDIS_PASSWORD,
 		}),
 	}
 }
