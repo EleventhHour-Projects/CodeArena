@@ -67,7 +67,8 @@ services:
     environment:
       - BACKEND_URL=http://executor-service:6969
       - APP_URL=http://frontend-service:3000
-      - SOCKET_BASE_URL=ws://express-server:6767
+      - MATCHMAKING_WSS_URL=ws://executor-service:6969
+      - BATTLE_WSS_URL=ws://express-server:6767
     depends_on:
       - frontend-service
       - executor-service

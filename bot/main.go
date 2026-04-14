@@ -7,8 +7,38 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 )
+
+// LogBuffer stores the last N lines of logs
+type LogBuffer struct {
+	lines []string
+	max   int
+	mu    sync.Mutex
+}
+
+func (lb *LogBuffer) Write(p []byte) (n int, err error) {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+
+	lb.lines = append(lb.lines, string(p))
+	if len(lb.lines) > lb.max {
+		lb.lines = lb.lines[1:]
+	}
+	return os.Stdout.Write(p)
+}
+
+func (lb *LogBuffer) GetLogs() []string {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+	// Return a copy
+	res := make([]string, len(lb.lines))
+	copy(res, lb.lines)
+	return res
+}
+
+var globalLogBuffer = &LogBuffer{max: 100}
 
 const DEFAULT_BOT_ID = "69da0e073660af6b7724e832"
 
@@ -110,10 +140,22 @@ func stopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func logsHandler(w http.ResponseWriter, r *http.Request) {
+	logs := globalLogBuffer.GetLogs()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"logs": logs,
+	})
+}
+
 func main() {
+	// Redirect logs to our buffer
+	log.SetOutput(globalLogBuffer)
+
 	port := "8000"
 	http.HandleFunc("/api/spawn", spawnHandler)
 	http.HandleFunc("/api/stop", stopHandler)
+	http.HandleFunc("/api/logs", logsHandler)
 
 	fmt.Printf("Bot Service listening on port %s...\n", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {

@@ -18,9 +18,10 @@ import (
 
 // API URLs - Configuration via environment variables
 var (
-	BACKEND_URL     = getEnv("BACKEND_URL", "http://34.126.214.18:6969")
-	APP_URL         = getEnv("APP_URL", "http://localhost:3000")
-	SOCKET_BASE_URL = getEnv("SOCKET_BASE_URL", "wss://wss.codearena.pro")
+	BACKEND_URL         = getEnv("BACKEND_URL", "http://34.126.214.18:6969")
+	APP_URL             = getEnv("APP_URL", "http://localhost:3000")
+	MATCHMAKING_WSS_URL = getEnv("MATCHMAKING_WSS_URL", "wss://matchmake.codearena.pro")
+	BATTLE_WSS_URL      = getEnv("BATTLE_WSS_URL", "wss://wss.codearena.pro")
 )
 
 func getEnv(key, fallback string) string {
@@ -249,11 +250,23 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 }
 
 func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
-	u := url.URL{Scheme: "wss", Host: "wss.codearena.pro", Path: "/socket.io/", RawQuery: "EIO=4&transport=websocket"}
-	log.Printf("Connecting to Battle Socket: %s\n", u.String())
+	// Ensure the URL is correctly parsed from the environment
+	parsed, err := url.Parse(BATTLE_WSS_URL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid BATTLE_WSS_URL: %v", err)
+	}
+
+	u := url.URL{
+		Scheme:   parsed.Scheme,
+		Host:     parsed.Host,
+		Path:     "/socket.io/",
+		RawQuery: "EIO=4&transport=websocket",
+	}
+	log.Printf("[BATTLE] Connecting to Hub: %s\n", u.String())
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
+		log.Printf("[BATTLE] Connection Failed: %v\n", err)
 		return nil, err
 	}
 
@@ -263,6 +276,7 @@ func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
 	// Send JOIN_BATTLE event
 	joinMsg := fmt.Sprintf(`42["JOIN_BATTLE",{"battleId":"%s","userId":"%s"}]`, battleID, botID)
 	conn.WriteMessage(websocket.TextMessage, []byte(joinMsg))
+	log.Printf("[BATTLE] Joined battle %s as %s\n", battleID, botID)
 
 	return conn, nil
 }
@@ -511,12 +525,16 @@ func surrender(p *BotProgress) {
 }
 
 func JoinMatchMakingWebSocket(token, botID string) (string, error) {
+	// Construct the URL using the environment variable
+	base := strings.TrimRight(MATCHMAKING_WSS_URL, "/")
 	wsURL := fmt.Sprintf(
-		"wss://matchmake.codearena.pro/wss/matchmaking?token=%s&username=%s",
+		"%s/wss/matchmaking?token=%s&username=%s",
+		base,
 		url.QueryEscape(token),
 		url.QueryEscape(botID),
 	)
 
+	log.Printf("[MATCHMAKING] Connecting to pool: %s\n", base)
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("websocket connection error: %v", err)
