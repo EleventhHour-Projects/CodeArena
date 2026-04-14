@@ -1,0 +1,9 @@
+# Exclude local build artifacts and sensitive files
+bot-service
+.git
+.gitignore
+.env
+vendor/
+node_modules/
+*.log
+tmp/
