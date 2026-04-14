@@ -40,7 +40,7 @@ func (lb *LogBuffer) GetLogs() []string {
 
 var globalLogBuffer = &LogBuffer{max: 100}
 
-const DEFAULT_BOT_ID = "69da0e073660af6b7724e832"
+const DEFAULT_BOT_ID = "69de72c58961bbd5a5c37278"
 
 var (
 	activeBots = make(map[string]context.CancelFunc)
