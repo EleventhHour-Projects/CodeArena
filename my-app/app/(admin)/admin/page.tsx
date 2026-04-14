@@ -77,6 +77,8 @@ export default function AdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>("7d");
   const [botDifficulty, setBotDifficulty] = useState<string>("medium");
   const [isBotLoading, setIsBotLoading] = useState(false);
+  const [botLogs, setBotLogs] = useState<string[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
 
   const fetchData = async (p: string) => {
     try {
@@ -126,11 +128,32 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchBotLogs = async () => {
+    try {
+      const res = await fetch("/api/admin/bot/logs");
+      if (res.ok) {
+        const data = await res.json();
+        setBotLogs(data.logs || []);
+      }
+    } catch (err) {
+      console.error("Error fetching bot logs:", err);
+    }
+  };
+
   useEffect(() => {
     fetchData(selectedPeriod);
     const interval = setInterval(() => fetchData(selectedPeriod), 5000);
     return () => clearInterval(interval);
   }, [selectedPeriod]);
+
+  useEffect(() => {
+    let interval: any;
+    if (showLogs) {
+      fetchBotLogs();
+      interval = setInterval(fetchBotLogs, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [showLogs]);
 
   const handleSpawnWorker = async () => {
     if (isAuto) {
@@ -408,6 +431,61 @@ export default function AdminDashboard() {
                     Analytical View <Zap className="h-3 w-3 fill-primary/20" />
                   </div>
                 </div>
+              </div>
+
+              {/* Bot Logging Console */}
+              <div className="mt-8 pt-8 border-t border-border/40">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Bot Console</h3>
+                  </div>
+                  <Button 
+                    onClick={() => setShowLogs(!showLogs)} 
+                    variant="outline" 
+                    size="sm"
+                    className="h-8 text-[11px] font-bold"
+                  >
+                    {showLogs ? "Hide Logs" : "View Live Logs"}
+                  </Button>
+                </div>
+
+                <AnimatePresence>
+                  {showLogs && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-zinc-950 rounded-2xl border border-zinc-800 p-4 font-mono text-[11px] leading-relaxed shadow-inner">
+                        <div className="h-64 overflow-y-auto space-y-1 custom-scrollbar scroll-smooth">
+                          {botLogs.length > 0 ? (
+                            botLogs.map((log, i) => (
+                              <div key={i} className="flex gap-3 group">
+                                <span className="opacity-20 select-none w-8 text-right shrink-0">{i + 1}</span>
+                                <span className="text-zinc-400 group-hover:text-zinc-200 transition-colors break-all">
+                                  {log.replace(/\n$/, "")}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="h-full flex items-center justify-center text-zinc-600 italic">
+                              No logs available. Start the bot to see activity...
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between text-[10px] uppercase font-bold text-zinc-500">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                            Live Stream Active
+                          </div>
+                          <span>Buffer: {botLogs.length} lines</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
