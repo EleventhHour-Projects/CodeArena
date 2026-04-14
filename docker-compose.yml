@@ -67,7 +67,7 @@ services:
     environment:
       - BACKEND_URL=http://executor-service:6969
       - APP_URL=http://frontend-service:3000
-      - MATCHMAKING_WSS_URL=ws://executor-service:6969
+      - MATCHMAKING_WSS_URL=wss://matchmake.codearena.pro
       - BATTLE_WSS_URL=ws://express-server:6767
     depends_on:
       - frontend-service
