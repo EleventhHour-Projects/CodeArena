@@ -270,13 +270,33 @@ func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
 		return nil, err
 	}
 
-	// Send 40 (Open packet)
-	conn.WriteMessage(websocket.TextMessage, []byte("40"))
+	// 1. Wait for packet 0 (Open)
+	_, p0, err := conn.ReadMessage()
+	if err != nil || !strings.HasPrefix(string(p0), "0") {
+		conn.Close()
+		return nil, fmt.Errorf("did not receive open packet: %v", err)
+	}
 
-	// Send JOIN_BATTLE event
+	// 2. Send 40 (Namespace connect)
+	if err := conn.WriteMessage(websocket.TextMessage, []byte("40")); err != nil {
+		conn.Close()
+		return nil, err
+	}
+
+	// 3. Wait for packet 40 (Namespace connected ack)
+	_, p40, err := conn.ReadMessage()
+	if err != nil || !strings.HasPrefix(string(p40), "40") {
+		conn.Close()
+		return nil, fmt.Errorf("did not receive namespace connect ack: %v", err)
+	}
+
+	// 4. Send JOIN_BATTLE event
 	joinMsg := fmt.Sprintf(`42["JOIN_BATTLE",{"battleId":"%s","userId":"%s"}]`, battleID, botID)
-	conn.WriteMessage(websocket.TextMessage, []byte(joinMsg))
-	log.Printf("[BATTLE] Joined battle %s as %s\n", battleID, botID)
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(joinMsg)); err != nil {
+		conn.Close()
+		return nil, err
+	}
+	log.Printf("[BATTLE] Joined battle %s as %s successfully\n", battleID, botID)
 
 	return conn, nil
 }
