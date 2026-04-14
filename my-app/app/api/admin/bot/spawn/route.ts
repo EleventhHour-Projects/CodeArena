@@ -5,7 +5,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { bot_id, user_id, difficulty } = body;
 
-    const res = await fetch('http://localhost:8000/api/spawn', {
+    const botServiceUrl = process.env.BOT_SERVICE_URL || 'http://localhost:8000';
+    const res = await fetch(`${botServiceUrl}/api/spawn`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
