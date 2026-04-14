@@ -51,6 +51,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/code-arena?authSource=admin&replicaSet=rs0
+      - BOT_SERVICE_URL=http://bot-service:8000
     depends_on:
       - redis
       - express-server
