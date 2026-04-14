@@ -162,6 +162,13 @@ func (p *BotProgress) CalculateSolveTimes() {
 		p.SolveTimes[i] = time.Duration(minutes) * time.Minute
 	}
 
+	// Make SolveTimes cumulative and log the schedule
+	log.Printf("Bot %s generated solve intervals: %v\n", p.BotID, p.SolveTimes)
+	for i := 1; i < len(p.SolveTimes); i++ {
+		p.SolveTimes[i] += p.SolveTimes[i-1]
+	}
+	log.Printf("Bot %s final cumulative solve schedule: %v\n", p.BotID, p.SolveTimes)
+
 	// 25% chance to surrender after 30 mins
 	if rand.Intn(100) < 25 {
 		st := 30 * time.Minute
@@ -434,8 +441,9 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 			if p.CurrentProblem < len(p.Problems) {
 				targetTime := p.SolveTimes[p.CurrentProblem]
 				if elapsed >= targetTime {
-					log.Printf("Bot %s solving problem %d (Index %d) at %v\n", p.BotID, p.Problems[p.CurrentProblem].ID, p.CurrentProblem, elapsed)
-					solveProblem(p, p.CurrentProblem)
+					log.Printf("Bot %s solving problem %d (Index %d) at %v (Scheduled: %v)\n", p.BotID, p.Problems[p.CurrentProblem].ID, p.CurrentProblem, elapsed, targetTime)
+					// solveProblem is now async to avoid blocking the main simulation loop
+					go solveProblem(p, p.CurrentProblem)
 					p.CurrentProblem++
 				}
 			} else {
@@ -551,7 +559,7 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 		"%s/wss/matchmaking?token=%s&username=%s",
 		base,
 		url.QueryEscape(token),
-		url.QueryEscape("dhananjay"),
+		url.QueryEscape("codearenaBOT"),
 	)
 
 	log.Printf("[MATCHMAKING] Connecting to pool: %s\n", base)
