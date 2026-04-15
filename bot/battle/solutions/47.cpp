@@ -2,6 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
@@ -10,10 +12,14 @@ int main() {
     cin.tie(0);
     int n, m;
     if (!(cin >> n >> m)) return 0;
+    string line;
+    getline(cin, line); // consume rest of first line
     map<int, int> freq;
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < m; j++) {
-            int x; cin >> x;
+        getline(cin, line);
+        istringstream iss(line);
+        int x;
+        while (iss >> x) {
             freq[x]++;
         }
     }

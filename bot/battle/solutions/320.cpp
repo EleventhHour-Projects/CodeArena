@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 using namespace std;
 
@@ -20,6 +21,9 @@ int main() {
             buckets[gs[i]].clear();
         }
     }
+    sort(result.begin(), result.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a.size() < b.size();
+    });
     for (auto& grp : result) {
         for (int j = 0; j < (int)grp.size(); j++) {
             if (j) cout << ' ';
