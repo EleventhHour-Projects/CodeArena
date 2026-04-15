@@ -379,7 +379,10 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 							return // defer will call p.Cancel()
 
 						case payload.Type == "DRAW_REQUEST" && payload.UserId != p.BotID:
-							handleDrawRequest(p)
+							if handleDrawRequest(p) {
+								log.Printf("Bot %s accepted draw — self-cancelling\n", p.BotID)
+								return
+							}
 						}
 					}
 				}
@@ -390,7 +393,7 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 	}
 }
 
-func handleDrawRequest(p *BotProgress) {
+func handleDrawRequest(p *BotProgress) bool {
 	p.DrawsReceived++
 	log.Printf("Bot %s received draw request #%d\n", p.BotID, p.DrawsReceived)
 
@@ -406,6 +409,8 @@ func handleDrawRequest(p *BotProgress) {
 
 	response := fmt.Sprintf(`42["event",{"type":"DRAW_RESPONSE","battleId":"%s","userId":"%s","data":{"accepted":%v}}]`, p.BattleID, p.BotID, accepted)
 	p.Socket.WriteMessage(websocket.TextMessage, []byte(response))
+	
+	return accepted
 }
 
 func fetchBattleMetadata(battleID string) (*BattleMetadata, error) {

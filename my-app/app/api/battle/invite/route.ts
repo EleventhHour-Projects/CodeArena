@@ -67,6 +67,17 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const botIds = (process.env.BOT_POOL || "69de72c58961bbd5a5c37278")
+            .split(",")
+            .map(id => id.trim());
+            
+        if (botIds.includes(opponentUser._id.toString())) {
+            return NextResponse.json(
+                { success: false, message: "You cannot invite a bot to a private arena" },
+                { status: 400 }
+            );
+        }
+
         // Check if either user is already in a battle
         if (curUser.currentBattleId !== null) {
             return NextResponse.json(

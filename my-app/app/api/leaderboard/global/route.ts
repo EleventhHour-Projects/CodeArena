@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { UserModel } from "@/lib/models/User";
 import dbConnect from "@/lib/dbConnect";
+import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,14 @@ export async function GET() {
     await dbConnect();
 
     try {
+        const botIds = (process.env.BOT_POOL || "69de72c58961bbd5a5c37278")
+            .split(",")
+            .map(id => id.trim())
+            .filter(id => mongoose.Types.ObjectId.isValid(id))
+            .map(id => new mongoose.Types.ObjectId(id));
+
         const leaderboard = await UserModel.aggregate([
-            { $match: { battlesPlayed: { $gte: 1 } } },
+            { $match: { battlesPlayed: { $gte: 1 }, _id: { $nin: botIds } } },
             {
                 $addFields: {
                     totalSolved: {

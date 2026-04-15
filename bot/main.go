@@ -106,6 +106,11 @@ var (
 	activeBots     = make(map[string]map[int]*BattleInstance)
 	nextInstanceID int
 	mu             sync.Mutex
+
+	// AutoSpawn State
+	autoSpawnEasyBot     bool
+	autoSpawnMu          sync.Mutex
+	easyMatchmakingSince time.Time
 )
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -132,21 +137,9 @@ type PoolEntry struct {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
-func spawnHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req SpawnRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
+func spawnBotInternal(req SpawnRequest) (map[string]interface{}, error) {
 	if req.Difficulty == "" {
-		http.Error(w, "difficulty is required", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("difficulty is required")
 	}
 
 	mu.Lock()
@@ -196,15 +189,36 @@ func spawnHandler(w http.ResponseWriter, r *http.Request) {
 			instanceID, req.BotID, remaining)
 	}()
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	return map[string]interface{}{
 		"message":        "Bot spawning initiated",
 		"bot_id":         req.BotID,
 		"instance_id":    instanceID,
 		"active_battles": activeBattleCount,
 		"status":         "success",
-	})
+	}, nil
+}
+
+func spawnHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req SpawnRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	res, err := spawnBotInternal(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(res)
 }
 
 func stopHandler(w http.ResponseWriter, r *http.Request) {
@@ -361,6 +375,105 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func autoSpawnHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		autoSpawnMu.Lock()
+		active := autoSpawnEasyBot
+		autoSpawnMu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"auto_spawn_easy": active,
+		})
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req struct {
+			AutoSpawnEasy bool `json:"auto_spawn_easy"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		autoSpawnMu.Lock()
+		autoSpawnEasyBot = req.AutoSpawnEasy
+		if !autoSpawnEasyBot {
+			easyMatchmakingSince = time.Time{}
+		}
+		autoSpawnMu.Unlock()
+		
+		log.Printf("[CONFIG] AutoSpawnEasyBot updated to: %v\n", req.AutoSpawnEasy)
+		
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"auto_spawn_easy": req.AutoSpawnEasy,
+			"message": "Config updated successfully",
+		})
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func autoSpawnWorker() {
+	ticker := time.NewTicker(10 * time.Second)
+	backendURL := os.Getenv("BACKEND_URL")
+	if backendURL == "" {
+		backendURL = "http://executor-service:6969"
+	}
+	
+	for range ticker.C {
+		autoSpawnMu.Lock()
+		active := autoSpawnEasyBot
+		autoSpawnMu.Unlock()
+
+		if !active {
+			easyMatchmakingSince = time.Time{}
+			continue
+		}
+
+		resp, err := http.Get(backendURL + "/api/poolsize")
+		if err != nil {
+			log.Printf("[AUTO-SPAWN] ERROR: Could not fetch pool size: %v\n", err)
+			continue
+		}
+		
+		var size struct {
+			Easy   int `json:"easy"`
+			Medium int `json:"medium"`
+			Hard   int `json:"hard"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&size); err != nil {
+			resp.Body.Close()
+			log.Printf("[AUTO-SPAWN] ERROR: Could not decode pool size: %v\n", err)
+			continue
+		}
+		resp.Body.Close()
+
+		if size.Easy == 1 {
+			if easyMatchmakingSince.IsZero() {
+				easyMatchmakingSince = time.Now()
+				log.Printf("[AUTO-SPAWN] 1 player detected in Easy Matchmaking. Waiting 30s to spawn bot...\n")
+			} else if time.Since(easyMatchmakingSince) >= 30*time.Second {
+				log.Printf("[AUTO-SPAWN] Triggering Auto-Spawn for Easy arena...\n")
+				_, err := spawnBotInternal(SpawnRequest{
+					Difficulty: "easy",
+				})
+				if err != nil {
+					log.Printf("[AUTO-SPAWN] ERROR: Failed to auto-spawn bot: %v\n", err)
+				}
+				// Give some buffer so the bot actually registers before we trigger another
+				easyMatchmakingSince = time.Now().Add(10 * time.Second)
+			}
+		} else {
+			if !easyMatchmakingSince.IsZero() {
+				log.Printf("[AUTO-SPAWN] Easy Matchmaking queue changed (%d). Timer cancelled.\n", size.Easy)
+			}
+			easyMatchmakingSince = time.Time{}
+		}
+	}
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 func main() {
@@ -374,6 +487,9 @@ func main() {
 	http.HandleFunc("/api/status", statusHandler)
 	http.HandleFunc("/api/pool", poolHandler)
 	http.HandleFunc("/api/logs", logsHandler)
+	http.HandleFunc("/api/auto-spawn", autoSpawnHandler)
+
+	go autoSpawnWorker()
 
 	fmt.Printf("Bot Service listening on port %s...\n", port)
 	fmt.Printf("Bot pool: %d account(s) → %v\n", len(botPool), botPool)

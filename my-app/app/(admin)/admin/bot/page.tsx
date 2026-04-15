@@ -63,6 +63,7 @@ const DIFF_STYLE: Record<string, string> = {
 
 export default function BotManagementPage() {
   const [difficulty, setDifficulty] = useState("medium");
+  const [autoSpawnEasy, setAutoSpawnEasy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [botLogs, setBotLogs] = useState<string[]>([]);
   const [showLogs, setShowLogs] = useState(true);
@@ -78,6 +79,13 @@ export default function BotManagementPage() {
     try {
       const r = await fetch("/api/admin/bot/logs");
       if (r.ok) setBotLogs((await r.json()).logs ?? []);
+    } catch {}
+  };
+
+  const fetchAutoSpawn = async () => {
+    try {
+      const r = await fetch("/api/admin/bot/auto-spawn");
+      if (r.ok) setAutoSpawnEasy((await r.json()).auto_spawn_easy ?? false);
     } catch {}
   };
 
@@ -98,7 +106,7 @@ export default function BotManagementPage() {
     } catch {}
   };
 
-  const refresh = () => { fetchStatus(); fetchPool(); };
+  const refresh = () => { fetchStatus(); fetchPool(); fetchAutoSpawn(); };
 
   // ── Effects ───────────────────────────────────────────────────────────────
 
@@ -137,6 +145,28 @@ export default function BotManagementPage() {
       } else toast.error(d.error || "Failed to spawn bot");
     } catch { toast.error("Error spawning bot"); }
     finally { setLoading(false); }
+  };
+
+  const handleToggleAutoSpawn = async () => {
+    const newState = !autoSpawnEasy;
+    setAutoSpawnEasy(newState); // optimistic update
+    try {
+      const r = await fetch("/api/admin/bot/auto-spawn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auto_spawn_easy: newState }),
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        toast.error(d.error || "Failed to update configuration");
+        setAutoSpawnEasy(!newState); // revert
+      } else {
+        toast.success(newState ? "Auto-Spawn enabled for Easy matchmaking" : "Auto-Spawn disabled");
+      }
+    } catch {
+      toast.error("Error updating configuration");
+      setAutoSpawnEasy(!newState);
+    }
   };
 
   const handleStopAll = async () => {
@@ -248,6 +278,35 @@ export default function BotManagementPage() {
                     <CircleStop className="h-4 w-4 mr-2" />
                     {loading ? "Processing..." : "Stop All Battles"}
                   </Button>
+                </div>
+
+                <div className="pt-4 border-t border-border/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        Auto-Spawn bot
+                      </label>
+                      <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">
+                        Trigger an easy bot if queue equals 1 for 30s.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleAutoSpawn}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                        autoSpawnEasy ? "bg-emerald-500" : "bg-zinc-800"
+                      }`}
+                      role="switch"
+                      aria-checked={autoSpawnEasy}
+                    >
+                      <span className="sr-only">Use setting</span>
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute left-0 inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          autoSpawnEasy ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -2,6 +2,8 @@ package utils
 
 import (
 	"sync"
+	"os"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -44,12 +46,25 @@ func (o *OnlineUsers) Remove(userID string) {
 	}
 }
 
+func isBotUser(id string) bool {
+	botPoolEnv := os.Getenv("BOT_POOL")
+	if botPoolEnv == "" {
+		botPoolEnv = "69de72c58961bbd5a5c37278" // fallback default bot
+	}
+	for _, b := range strings.Split(botPoolEnv, ",") {
+		if strings.TrimSpace(b) == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (o *OnlineUsers) IsOnline(userID []string) []string {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	onlineUsers := []string{}
 	for _, id := range userID {
-		if o.User[id] > 0 {
+		if o.User[id] > 0 || isBotUser(id) {
 			onlineUsers = append(onlineUsers, id)
 		}
 	}
@@ -72,7 +87,7 @@ func (o *OnlineUsers) GetOnlineFriendStatuses(friends []User) []FriendStatus {
 	onlineFriends := []FriendStatus{}
 	for _, f := range friends {
 		idHex := f.ID.Hex()
-		if o.User[idHex] > 0 {
+		if o.User[idHex] > 0 || isBotUser(idHex) {
 			bid := ""
 			if !f.CurrentBattleID.IsZero() {
 				bid = f.CurrentBattleID.Hex()
