@@ -453,8 +453,8 @@ func autoSpawnWorker() {
 		if size.Easy == 1 {
 			if easyMatchmakingSince.IsZero() {
 				easyMatchmakingSince = time.Now()
-				log.Printf("[AUTO-SPAWN] 1 player detected in Easy Matchmaking. Waiting 30s to spawn bot...\n")
-			} else if time.Since(easyMatchmakingSince) >= 30*time.Second {
+				log.Printf("[AUTO-SPAWN] 1 player detected in Easy Matchmaking. Waiting 20s to spawn bot...\n")
+			} else if time.Since(easyMatchmakingSince) >= 20*time.Second {
 				log.Printf("[AUTO-SPAWN] Triggering Auto-Spawn for Easy arena...\n")
 				_, err := spawnBotInternal(SpawnRequest{
 					Difficulty: "easy",
