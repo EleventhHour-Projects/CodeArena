@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Bell, Clock, Swords } from "lucide-react";
 import { useStatus } from "@/app/providers/StatusProvider";
+import { playBattleJoinSound } from "@/lib/utils";
 
 interface Invitation {
   _id: string;
@@ -102,6 +103,7 @@ export const ActivityDashboard = () => {
       if (data.success) {
         toast.success(`Invitation ${action}ed`);
         if (action === "accept" && data.battleId) {
+          playBattleJoinSound();
           router.push(`/battle/${data.battleId}`);
         } else {
           setInvitations((prev) => prev.filter((inv) => inv._id !== inviteId));
