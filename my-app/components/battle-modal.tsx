@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { Loader2, User, Trophy, Play, XCircle, Swords, Zap, Shield, Target } from "lucide-react";
+import { playBattleJoinSound } from "@/lib/utils";
 
 interface BattleModalProps {
   open: boolean;
@@ -127,6 +128,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         
         if (data.success) {
           if (data.status === "Accepted" && data.battleId) {
+            playBattleJoinSound();
             router.push(`/battle/${data.battleId}`);
             onOpenChange(false);
             return true;
@@ -241,6 +243,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
           setStatus("found");
         } else if (msg.action === "battle_begin") {
           setStatus("starting");
+          playBattleJoinSound();
           router.push(`/battle/${msg.battleId}`);
           onOpenChange(false);
         } else if (msg.action === "match_rejected") {
