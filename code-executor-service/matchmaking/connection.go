@@ -72,8 +72,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Difficulty:      difficulty,
 		CurrentBattleID: user.CurrentBattleID,
 	})
-	timeout := 10 * time.Minute
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	// Keep-alive: send pings every 30s so reverse proxies don't kill the
+	// idle connection. Reset the 5-minute read deadline on every pong.
+	const pongWait = 5 * time.Minute
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+	pingTicker := time.NewTicker(30 * time.Second)
+	defer pingTicker.Stop()
+	go func() {
+		for range pingTicker.C {
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}()
+
 	for {
 		var msg struct {
 			Action string `json:"action"`
