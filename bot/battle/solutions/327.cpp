@@ -10,7 +10,7 @@ int main() {
     if (!(cin >> n >> m)) return 0;
     vector<vector<int>> adj(n, vector<int>(n));
     for (int i = 0; i < n; i++)
-        for (int j = 0; j < m; j++)
+        for (int j = 0; j < n; j++)
             cin >> adj[i][j];
     vector<bool> visited(n, false);
     int provinces = 0;
