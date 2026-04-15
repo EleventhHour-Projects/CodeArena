@@ -69,11 +69,11 @@ type BotProgress struct {
 	DrawsReceived  int
 	SolvedCount    int
 	CurrentProblem int
-	IsPlayer1      bool              // Detected from battle metadata
+	IsPlayer1      bool // Detected from battle metadata
 	Socket         *websocket.Conn
 	// Cancel is called by the socket handler when the battle ends on the server
 	// side, ensuring the simulation loop stops and the instance self-cleans.
-	Cancel         context.CancelFunc
+	Cancel context.CancelFunc
 }
 
 type Problem struct {
@@ -409,7 +409,7 @@ func handleDrawRequest(p *BotProgress) bool {
 
 	response := fmt.Sprintf(`42["event",{"type":"DRAW_RESPONSE","battleId":"%s","userId":"%s","data":{"accepted":%v}}]`, p.BattleID, p.BotID, accepted)
 	p.Socket.WriteMessage(websocket.TextMessage, []byte(response))
-	
+
 	return accepted
 }
 
@@ -473,7 +473,12 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 
 		case <-checkInterval.C:
 			elapsed := time.Since(p.StartTime)
-
+			// 1. Check if battle ended externally (e.g., opponent solved all problems)
+			meta, err := fetchBattleMetadata(p.BattleID)
+			if err == nil && meta.Battle.Status == "Completed" {
+				log.Printf("Bot %s detected battle %s is completed via API. Stopping simulation.\n", p.BotID, p.BattleID)
+				return
+			}
 			// Check for surrender
 			if p.SurrenderTime != nil && elapsed >= *p.SurrenderTime {
 				log.Printf("Bot %s surrendering at %v\n", p.BotID, elapsed)
