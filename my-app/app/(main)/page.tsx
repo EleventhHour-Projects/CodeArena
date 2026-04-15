@@ -11,6 +11,7 @@ import { ActivityDashboard } from "@/components/activity-dashboard";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { FriendsList } from "@/components/friends-list";
 import { useMounted } from "@/hooks/use-mounted";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 function HomeContent() {
   const router = useRouter();
@@ -55,9 +56,11 @@ function HomeContent() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background overflow-hidden text-foreground font-sans transition-colors duration-300">
+    <div className="flex h-full w-full bg-background overflow-hidden text-foreground font-sans transition-colors duration-300">
       {/* ─── LEFT PANEL (Main) ─── */}
-      <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-border/40 w-full transition-colors">
+      <div className="flex-1 flex flex-col relative w-full h-full min-w-0">
+        <AnnouncementBanner />
+        <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-border/40 w-full transition-colors">
         {/* Toggle Button for Desktop */}
         <button
           onClick={() => setIsRightPanelOpen((prev) => !prev)}
@@ -178,7 +181,8 @@ function HomeContent() {
             <FriendsList />
           </motion.div>
         </div>
-      </main>
+        </main>
+      </div>
 
       {/* ─── RIGHT PANEL (Collapsible) ─── */}
       <AnimatePresence initial={false}>

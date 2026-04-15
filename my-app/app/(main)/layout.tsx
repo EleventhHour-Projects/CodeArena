@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import Providers from "./providers";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
