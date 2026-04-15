@@ -645,13 +645,18 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 			log.Println("Sent: accept")
 		}
 
-		// 🎯 Check for battle start
-		if action, ok := resp["action"].(string); ok && action == "battle_begin" {
-			if battleID, ok := resp["battleId"].(string); ok {
-				log.Println("Battle started:", battleID)
-				return battleID, nil
+		// 🎯 Check for battle start or rejection
+		if action, ok := resp["action"].(string); ok {
+			if action == "battle_begin" {
+				if battleID, ok := resp["battleId"].(string); ok {
+					log.Println("Battle started:", battleID)
+					return battleID, nil
+				}
+				return "", fmt.Errorf("battle_begin received but battleId missing")
+			} else if action == "match_rejected" {
+				log.Println("Match rejected by opponent. Bot self-terminating.")
+				return "", fmt.Errorf("match rejected by opponent")
 			}
-			return "", fmt.Errorf("battle_begin received but battleId missing")
 		}
 	}
 }
