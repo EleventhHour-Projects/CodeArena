@@ -45,7 +45,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
 
   // Arena Mode State
   const [searchTime, setSearchTime] = useState(0);
-  const [arenaOpponent, setArenaOpponent] = useState<{ username: string; rating: number } | null>(null);
+  const [arenaOpponent, setArenaOpponent] = useState<{ username: string; rating: number; image?: string | null } | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const [poolSize, setPoolSize] = useState<number>(0);
 
@@ -193,6 +193,17 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   }, [status, difficulty]);
 
   // Arena: Search
+  const fetchOpponentPhoto = async (username: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`/api/users/public/${encodeURIComponent(username)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data?.success) return null;
+      return data.image ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   const startArenaSearch = async () => {
     if (!session?.user) {
       toast.error("Login to play.");
@@ -216,10 +227,17 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
-      socket.onmessage = (event) => {
+      socket.onmessage = async (event) => {
         const msg = JSON.parse(event.data);
         if (msg.user && msg.rating !== undefined) {
-          setArenaOpponent({ username: msg.user, rating: msg.rating });
+          const imageFromWs = msg.image ?? msg.avatar ?? msg.profilePhoto ?? null;
+          const imageFromDb = imageFromWs ? null : await fetchOpponentPhoto(msg.user);
+
+          setArenaOpponent({
+            username: msg.user,
+            rating: msg.rating,
+            image: imageFromWs ?? imageFromDb,
+          });
           setStatus("found");
         } else if (msg.action === "battle_begin") {
           setStatus("starting");
@@ -428,8 +446,16 @@ export const BattleModal: React.FC<BattleModalProps> = ({
             <div className="space-y-6 pt-2">
               <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
-                    <User className="w-5 h-5 text-zinc-500" />
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">
+                    {arenaOpponent.image ? (
+                      <img
+                        src={arenaOpponent.image}
+                        alt={`${arenaOpponent.username} profile`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-zinc-500" />
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-bold">{arenaOpponent.username}</p>

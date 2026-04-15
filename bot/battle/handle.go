@@ -69,8 +69,11 @@ type BotProgress struct {
 	DrawsReceived  int
 	SolvedCount    int
 	CurrentProblem int
-	IsPlayer1      bool // Detected from battle metadata
+	IsPlayer1      bool              // Detected from battle metadata
 	Socket         *websocket.Conn
+	// Cancel is called by the socket handler when the battle ends on the server
+	// side, ensuring the simulation loop stops and the instance self-cleans.
+	Cancel         context.CancelFunc
 }
 
 type Problem struct {
@@ -200,6 +203,11 @@ func SpawnBot(ctx context.Context, botid, userID, difficulty string) {
 func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	log.Printf("Bot %s starting battle simulation for %s\n", botID, battleID)
 
+	// Create a battle-scoped context. The socket handler can cancel it when
+	// the battle ends on the server side, stopping the simulation loop cleanly.
+	battleCtx, battleCancel := context.WithCancel(ctx)
+	defer battleCancel()
+
 	// 1. Fetch Battle Metadata
 	metadata, err := fetchBattleMetadata(battleID)
 	if err != nil {
@@ -224,6 +232,7 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 		Difficulty: difficulty,
 		StartTime:  time.Now(),
 		Problems:   make([]Problem, len(problems.Problems)),
+		Cancel:     battleCancel, // allows socket handler to self-terminate
 	}
 
 	for i, p := range problems.Problems {
@@ -247,13 +256,14 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	conn, err := connectToBattleSocket(botID, battleID)
 	if err != nil {
 		log.Printf("Error connecting to battle socket: %v\n", err)
-		// Fallback to simulation without socket if connection fails
+		// Fallback: simulation runs without socket; will finish when problems solved.
 	} else {
 		progress.Socket = conn
-		go handleSocketMessages(ctx, progress)
+		go handleSocketMessages(battleCtx, progress)
 	}
 
-	runSimulationLoop(ctx, progress)
+	runSimulationLoop(battleCtx, progress)
+	log.Printf("Bot %s battle %s ended — self-cancelling\n", botID, battleID)
 }
 
 func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
@@ -308,9 +318,28 @@ func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
 	return conn, nil
 }
 
+// battleEndEvents is the set of Socket.IO event types that signal the battle
+// is definitively over. When any of these arrive the bot self-cancels.
+var battleEndEvents = map[string]bool{
+	"BATTLE_ENDED":    true,
+	"GAME_OVER":       true,
+	"PLAYER_WON":      true,
+	"BATTLE_COMPLETE": true,
+	"BATTLE_RESULT":   true,
+}
+
 func handleSocketMessages(ctx context.Context, p *BotProgress) {
 	conn := p.Socket
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		// When this goroutine exits for ANY reason (socket closed by server,
+		// battle-end event, or external ctx cancel), ensure the simulation
+		// loop is also stopped so the instance self-cleans from main.go.
+		if p.Cancel != nil {
+			p.Cancel()
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -319,13 +348,13 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 		default:
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Printf("Battle Socket closed: %v\n", err)
-				return
+				// Socket closed — most likely the server ended the battle.
+				log.Printf("Bot %s battle socket closed (battle ended): %v\n", p.BotID, err)
+				return // defer will call p.Cancel()
 			}
 
 			msgStr := string(message)
 			if strings.HasPrefix(msgStr, "42") {
-				// Event received
 				var event []json.RawMessage
 				if err := json.Unmarshal([]byte(msgStr[2:]), &event); err == nil && len(event) >= 2 {
 					var eventName string
@@ -338,13 +367,23 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 						}
 						json.Unmarshal(event[1], &payload)
 
-						if payload.Type == "DRAW_REQUEST" && payload.UserId != p.BotID {
+						switch {
+						case battleEndEvents[payload.Type]:
+							// Server explicitly signalled battle is over.
+							log.Printf("Bot %s received battle-end event %q — self-cancelling\n", p.BotID, payload.Type)
+							return // defer will call p.Cancel()
+
+						case payload.Type == "USER_SURRENDER" && payload.UserId != p.BotID:
+							// Opponent surrendered — battle is won, no point continuing.
+							log.Printf("Bot %s: opponent surrendered — self-cancelling\n", p.BotID)
+							return // defer will call p.Cancel()
+
+						case payload.Type == "DRAW_REQUEST" && payload.UserId != p.BotID:
 							handleDrawRequest(p)
 						}
 					}
 				}
 			} else if msgStr == "2" {
-				// Ping
 				conn.WriteMessage(websocket.TextMessage, []byte("3")) // Pong
 			}
 		}
