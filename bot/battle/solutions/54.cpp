@@ -51,7 +51,7 @@ ll solveLinear(const vector<int>& a, int k) {
             }
         }
         if (cur[n] != NEG_INF) {
-            if (cur[n] <= best && j > 1) break;
+            if (cur[n] < best && j > 1) break;
             best = max(best, cur[n]);
         }
         swap(prev, cur);
