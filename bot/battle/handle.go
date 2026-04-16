@@ -59,6 +59,7 @@ type ProblemDetails struct {
 }
 
 type BotProgress struct {
+	InstanceID          int
 	BattleID            string
 	BotID               string
 	Difficulty          string
@@ -74,9 +75,20 @@ type BotProgress struct {
 	CurrentProblem      int
 	IsPlayer1           bool // Detected from battle metadata
 	Socket              *websocket.Conn
+	// Logger is a callback provided by the caller to record instance-specific logs.
+	Logger func(instanceID int, message string)
 	// Cancel is called by the socket handler when the battle ends on the server
 	// side, ensuring the simulation loop stops and the instance self-cleans.
 	Cancel context.CancelFunc
+}
+
+func (p *BotProgress) Log(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if p.Logger != nil {
+		p.Logger(p.InstanceID, msg)
+	} else {
+		log.Printf("[INST#%d] %s", p.InstanceID, msg)
+	}
 }
 
 type Problem struct {
@@ -205,29 +217,39 @@ func (p *BotProgress) CalculateSolveTimes() {
 	}
 }
 
-func SpawnBot(ctx context.Context, botid, userID, difficulty string) {
+func SpawnBot(ctx context.Context, instanceID int, botid, userID, difficulty string, onMetadata func(oppID, oppName string), logger func(int, string)) {
 	client := http.Client{}
 	token, err := GetMatchmakingToken(client, botid, difficulty)
 	if err != nil {
-		log.Println("Error getting matchmaking token:", err)
+		if logger != nil {
+			logger(instanceID, fmt.Sprintf("Error getting matchmaking token: %v", err))
+		}
 		return
 	}
 
-	log.Printf("Bot %s received matchmaking token: %s\n", botid, token)
-	battleID, err := JoinMatchMakingWebSocket(token, botid)
+	if logger != nil {
+		logger(instanceID, fmt.Sprintf("Received matchmaking token: %s", token))
+	}
+	battleID, opponentName, err := JoinMatchMakingWebSocket(token, botid)
 	if err != nil {
-		log.Printf("Bot %s error joining matchmaking websocket: %v\n", botid, err)
+		if logger != nil {
+			logger(instanceID, fmt.Sprintf("Error joining matchmaking websocket: %v", err))
+		}
 		return
 	}
 
-	log.Printf("Bot %s joined battle with ID: %s\n", botid, battleID)
+	if logger != nil {
+		logger(instanceID, fmt.Sprintf("Joined battle with ID: %s", battleID))
+	}
 
 	// Start Battle Simulation
-	handleBattle(ctx, botid, battleID, difficulty)
+	handleBattle(ctx, instanceID, botid, battleID, opponentName, difficulty, onMetadata, logger)
 }
 
-func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
-	log.Printf("Bot %s starting battle simulation for %s\n", botID, battleID)
+func handleBattle(ctx context.Context, instanceID int, botID, battleID, opponentName, difficulty string, onMetadata func(oppID, oppName string), logger func(int, string)) {
+	if logger != nil {
+		logger(instanceID, fmt.Sprintf("Starting battle simulation for %s", battleID))
+	}
 
 	// Create a battle-scoped context. The socket handler can cancel it when
 	// the battle ends on the server side, stopping the simulation loop cleanly.
@@ -237,7 +259,7 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	// 1. Fetch Battle Metadata
 	metadata, err := fetchBattleMetadata(battleID)
 	if err != nil {
-		log.Printf("Error fetching metadata: %v\n", err)
+		log.Printf("[INST#%d] Error fetching metadata: %v\n", instanceID, err)
 		return
 	}
 
@@ -248,17 +270,19 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	}
 	problems, err := fetchProblemDetails(probIDs)
 	if err != nil {
-		log.Printf("Error fetching problems: %v\n", err)
+		log.Printf("[INST#%d] Error fetching problems: %v\n", instanceID, err)
 		return
 	}
 
 	progress := &BotProgress{
+		InstanceID: instanceID,
 		BattleID:   battleID,
 		BotID:      botID,
 		Difficulty: difficulty,
 		StartTime:  time.Now(),
 		Problems:   make([]Problem, len(problems.Problems)),
-		Cancel:     battleCancel, // allows socket handler to self-terminate
+		Logger:     logger,
+		Cancel:     battleCancel,
 	}
 
 	var durationSeconds int
@@ -284,18 +308,22 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	progress.TotalDuration = time.Duration(durationSeconds) * time.Second
 
 	progress.CalculateSolveTimes()
-	log.Printf("Bot %s solve schedule: %v\n", botID, progress.SolveTimes)
+	progress.Log("Solve schedule: %v\n", progress.SolveTimes)
 
-	// 2.5 Determine Role
+	// 2.5 Determine Role (Simple detection since battleID and IDs are available)
 	if metadata.Battle.Player1 == botID {
 		progress.IsPlayer1 = true
 	}
-	log.Printf("Bot %s detected role: Player 1 = %v\n", botID, progress.IsPlayer1)
+
+	if onMetadata != nil {
+		onMetadata("", opponentName) // We only have Name from matchmaking now
+	}
+	progress.Log("Detected role: Player 1 = %v | Playing against: %s\n", progress.IsPlayer1, opponentName)
 
 	// 3. Connect to Battle WebSocket (Socket.IO)
 	conn, err := connectToBattleSocket(botID, battleID)
 	if err != nil {
-		log.Printf("Error connecting to battle socket: %v\n", err)
+		progress.Log("Error connecting to battle socket: %v\n", err)
 		// Fallback: simulation runs without socket; will finish when problems solved.
 	} else {
 		progress.Socket = conn
@@ -303,7 +331,7 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 	}
 
 	runSimulationLoop(battleCtx, progress)
-	log.Printf("Bot %s battle %s ended — self-cancelling\n", botID, battleID)
+	progress.Log("Battle ended — self-cancelling\n")
 }
 
 func connectToBattleSocket(botID, battleID string) (*websocket.Conn, error) {
@@ -383,13 +411,13 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("Bot %s socket handler stopping via context\n", p.BotID)
+			p.Log("Socket handler stopping via context\n")
 			return
 		default:
 			_, message, err := conn.ReadMessage()
 			if err != nil {
 				// Socket closed — most likely the server ended the battle.
-				log.Printf("Bot %s battle socket closed (battle ended): %v\n", p.BotID, err)
+				p.Log("Battle socket closed (battle ended): %v\n", err)
 				return // defer will call p.Cancel()
 			}
 
@@ -435,7 +463,7 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 
 func handleDrawRequest(p *BotProgress) bool {
 	p.DrawsReceived++
-	log.Printf("Bot %s received draw request #%d\n", p.BotID, p.DrawsReceived)
+	p.Log("Received draw request #%d\n", p.DrawsReceived)
 
 	acceptProb := 0
 	if p.DrawsReceived == 1 {
@@ -445,7 +473,7 @@ func handleDrawRequest(p *BotProgress) bool {
 	}
 
 	accepted := rand.Intn(100) < acceptProb
-	log.Printf("Bot %s draw decision: accepted=%v (prob=%d%%)\n", p.BotID, accepted, acceptProb)
+	p.Log("Draw decision: accepted=%v (prob=%d%%)\n", accepted, acceptProb)
 
 	response := fmt.Sprintf(`42["event",{"type":"DRAW_RESPONSE","battleId":"%s","userId":"%s","data":{"accepted":%v}}]`, p.BattleID, p.BotID, accepted)
 	p.Socket.WriteMessage(websocket.TextMessage, []byte(response))
@@ -516,19 +544,19 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 			// 1. Check if battle ended externally (e.g., opponent solved all problems)
 			meta, err := fetchBattleMetadata(p.BattleID)
 			if err == nil && meta.Battle.Status == "Completed" {
-				log.Printf("Bot %s detected battle %s is completed via API. Stopping simulation.\n", p.BotID, p.BattleID)
+				p.Log("Detected battle completed via API. Stopping simulation.\n")
 				return
 			}
 			// Check for surrender
 			if p.SurrenderTime != nil && elapsed >= *p.SurrenderTime {
-				log.Printf("Bot %s surrendering at %v\n", p.BotID, elapsed)
+				p.Log("Surrendering at %v\n", elapsed)
 				surrender(p)
 				return
 			}
 
 			// Check if timer is over
 			if elapsed >= p.TotalDuration {
-				log.Printf("Bot %s: timer over at %v. Calling complete API for battle %s\n", p.BotID, elapsed, p.BattleID)
+				p.Log("Timer over at %v. Calling complete API\n", elapsed)
 				callCompleteAPI(p)
 				if p.Cancel != nil {
 					p.Cancel()
@@ -548,13 +576,13 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 			if p.CurrentProblem < len(p.Problems) {
 				targetTime := p.SolveTimes[p.CurrentProblem]
 				if elapsed >= targetTime {
-					log.Printf("Bot %s solving problem %d (Index %d) at %v (Scheduled: %v)\n", p.BotID, p.Problems[p.CurrentProblem].ID, p.CurrentProblem, elapsed, targetTime)
+					p.Log("Solving problem %d (Index %d) at %v (Scheduled: %v)\n", p.Problems[p.CurrentProblem].ID, p.CurrentProblem, elapsed, targetTime)
 					// solveProblem is now async to avoid blocking the main simulation loop
 					go solveProblem(p, p.CurrentProblem)
 					p.CurrentProblem++
 				}
 			} else {
-				log.Printf("Bot %s has solved all problems. Finishing battle.\n", p.BotID)
+				p.Log("All problems solved. Finishing battle.\n")
 				callCompleteAPI(p)
 				if p.Cancel != nil {
 					p.Cancel()
@@ -718,22 +746,22 @@ func callCompleteAPI(p *BotProgress) {
 	jsonPayload, _ := json.Marshal(payload)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		log.Printf("Bot %s error calling complete API: %v\n", p.BotID, err)
+		p.Log("Error calling complete API: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
-	log.Printf("Bot %s successfully called complete API for battle %s\n", p.BotID, p.BattleID)
+	p.Log("Successfully called complete API for battle %s\n", p.BattleID)
 }
 
 func surrender(p *BotProgress) {
-	log.Printf("Bot %s surrendering battle %s\n", p.BotID, p.BattleID)
+	p.Log("Surrendering battle %s\n", p.BattleID)
 	if p.Socket != nil {
 		msg := fmt.Sprintf(`42["event",{"type":"USER_SURRENDER","battleId":"%s","userId":"%s"}]`, p.BattleID, p.BotID)
 		p.Socket.WriteMessage(websocket.TextMessage, []byte(msg))
 	}
 }
 
-func JoinMatchMakingWebSocket(token, botID string) (string, error) {
+func JoinMatchMakingWebSocket(token, botID string) (string, string, error) {
 	// Construct the URL using the environment variable
 	base := strings.TrimRight(MATCHMAKING_WSS_URL, "/")
 	wsURL := fmt.Sprintf(
@@ -746,16 +774,17 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 	log.Printf("[MATCHMAKING] Connecting to pool: %s\n", base)
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("websocket connection error: %v", err)
+		return "", "", fmt.Errorf("websocket connection error: %v", err)
 	}
 	defer conn.Close()
 
 	log.Println("Connected to matchmaking")
 
+	var opponentName string
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			return "", fmt.Errorf("read error: %v", err)
+			return "", "", fmt.Errorf("read error: %v", err)
 		}
 
 		log.Println("Received:", string(message))
@@ -767,12 +796,13 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 			continue
 		}
 
-		if _, hasUser := resp["user"]; hasUser {
+		if u, ok := resp["user"].(string); ok {
+			opponentName = u
 			err = conn.WriteJSON(map[string]string{
 				"action": "accept",
 			})
 			if err != nil {
-				return "", fmt.Errorf("write error: %v", err)
+				return "", "", fmt.Errorf("write error: %v", err)
 			}
 			log.Println("Sent: accept")
 		}
@@ -782,12 +812,12 @@ func JoinMatchMakingWebSocket(token, botID string) (string, error) {
 			if action == "battle_begin" {
 				if battleID, ok := resp["battleId"].(string); ok {
 					log.Println("Battle started:", battleID)
-					return battleID, nil
+					return battleID, opponentName, nil
 				}
-				return "", fmt.Errorf("battle_begin received but battleId missing")
+				return "", "", fmt.Errorf("battle_begin received but battleId missing")
 			} else if action == "match_rejected" {
 				log.Println("Match rejected by opponent. Bot self-terminating.")
-				return "", fmt.Errorf("match rejected by opponent")
+				return "", "", fmt.Errorf("match rejected by opponent")
 			}
 		}
 	}

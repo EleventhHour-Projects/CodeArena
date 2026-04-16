@@ -15,31 +15,67 @@ import (
 
 // ─── Log Buffer ───────────────────────────────────────────────────────────────
 
+type LogEntry struct {
+	InstanceID int    `json:"instance_id"`
+	Message    string `json:"message"`
+	Timestamp  string `json:"timestamp"`
+}
+
 type LogBuffer struct {
-	lines []string
-	max   int
-	mu    sync.Mutex
+	entries []LogEntry
+	max     int
+	mu      sync.Mutex
 }
 
 func (lb *LogBuffer) Write(p []byte) (n int, err error) {
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
-	lb.lines = append(lb.lines, string(p))
-	if len(lb.lines) > lb.max {
-		lb.lines = lb.lines[1:]
+	entry := LogEntry{
+		InstanceID: -1, // System log
+		Message:    string(p),
+		Timestamp:  time.Now().Format(time.Kitchen),
+	}
+	lb.entries = append(lb.entries, entry)
+	if len(lb.entries) > lb.max {
+		lb.entries = lb.entries[1:]
 	}
 	return os.Stdout.Write(p)
 }
 
-func (lb *LogBuffer) GetLogs() []string {
+func (lb *LogBuffer) AddEntry(instanceID int, message string) {
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
-	res := make([]string, len(lb.lines))
-	copy(res, lb.lines)
-	return res
+	entry := LogEntry{
+		InstanceID: instanceID,
+		Message:    message,
+		Timestamp:  time.Now().Format(time.Kitchen),
+	}
+	lb.entries = append(lb.entries, entry)
+	if len(lb.entries) > lb.max {
+		lb.entries = lb.entries[1:]
+	}
 }
 
-var globalLogBuffer = &LogBuffer{max: 200}
+func (lb *LogBuffer) GetLogs(instanceID int) []LogEntry {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+
+	if instanceID == -2 { // All logs
+		res := make([]LogEntry, len(lb.entries))
+		copy(res, lb.entries)
+		return res
+	}
+
+	filtered := []LogEntry{}
+	for _, e := range lb.entries {
+		if e.InstanceID == instanceID {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
+}
+
+var globalLogBuffer = &LogBuffer{max: 1000}
 
 // ─── Bot Pool ─────────────────────────────────────────────────────────────────
 
@@ -94,11 +130,13 @@ func selectBotFromPool() string {
 
 // BattleInstance holds the cancel func and metadata for one active battle.
 type BattleInstance struct {
-	Cancel     context.CancelFunc
-	InstanceID int
-	BotID      string
-	Difficulty string
-	StartedAt  time.Time
+	Cancel       context.CancelFunc
+	InstanceID   int
+	BotID        string
+	Difficulty   string
+	StartedAt    time.Time
+	OpponentID   string
+	OpponentName string
 }
 
 var (
@@ -127,6 +165,8 @@ type InstanceInfo struct {
 	Difficulty     string  `json:"difficulty"`
 	StartedAt      string  `json:"started_at"`
 	ElapsedSeconds float64 `json:"elapsed_seconds"`
+	OpponentID     string  `json:"opponent_id,omitempty"`
+	OpponentName   string  `json:"opponent_name,omitempty"`
 }
 
 type PoolEntry struct {
@@ -173,7 +213,14 @@ func spawnBotInternal(req SpawnRequest) (map[string]interface{}, error) {
 
 	// Each battle runs in its own goroutine. Previous battles are not affected.
 	go func() {
-		battle.SpawnBot(ctx, req.BotID, req.UserID, req.Difficulty)
+		battle.SpawnBot(ctx, instanceID, req.BotID, req.UserID, req.Difficulty, func(oppID, oppName string) {
+			mu.Lock()
+			if activeBots[req.BotID] != nil && activeBots[req.BotID][instanceID] != nil {
+				activeBots[req.BotID][instanceID].OpponentID = oppID
+				activeBots[req.BotID][instanceID].OpponentName = oppName
+			}
+			mu.Unlock()
+		}, globalLogBuffer.AddEntry)
 		// Self-cleanup
 		mu.Lock()
 		remaining := 0
@@ -334,6 +381,8 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 				Difficulty:     inst.Difficulty,
 				StartedAt:      inst.StartedAt.UTC().Format(time.RFC3339),
 				ElapsedSeconds: time.Since(inst.StartedAt).Seconds(),
+				OpponentID:     inst.OpponentID,
+				OpponentName:   inst.OpponentName,
 			})
 			total++
 		}
@@ -368,7 +417,14 @@ func poolHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logsHandler(w http.ResponseWriter, r *http.Request) {
-	logs := globalLogBuffer.GetLogs()
+	instanceIDStr := r.URL.Query().Get("instance_id")
+	targetID := -2 // Default to ALL
+
+	if instanceIDStr != "" {
+		fmt.Sscanf(instanceIDStr, "%d", &targetID)
+	}
+
+	logs := globalLogBuffer.GetLogs(targetID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"logs": logs,
@@ -401,13 +457,13 @@ func autoSpawnHandler(w http.ResponseWriter, r *http.Request) {
 			easyMatchmakingSince = time.Time{}
 		}
 		autoSpawnMu.Unlock()
-		
+
 		log.Printf("[CONFIG] AutoSpawnEasyBot updated to: %v\n", req.AutoSpawnEasy)
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"auto_spawn_easy": req.AutoSpawnEasy,
-			"message": "Config updated successfully",
+			"message":         "Config updated successfully",
 		})
 		return
 	}
@@ -421,7 +477,7 @@ func autoSpawnWorker() {
 	if backendURL == "" {
 		backendURL = "http://executor-service:6969"
 	}
-	
+
 	for range ticker.C {
 		autoSpawnMu.Lock()
 		active := autoSpawnEasyBot
@@ -437,7 +493,7 @@ func autoSpawnWorker() {
 			log.Printf("[AUTO-SPAWN] ERROR: Could not fetch pool size: %v\n", err)
 			continue
 		}
-		
+
 		var size struct {
 			Easy   int `json:"easy"`
 			Medium int `json:"medium"`

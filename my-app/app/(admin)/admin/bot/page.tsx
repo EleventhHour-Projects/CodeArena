@@ -27,6 +27,14 @@ interface BattleInstance {
   difficulty: string;
   started_at: string;
   elapsed_seconds: number;
+  opponent_id?: string;
+  opponent_name?: string;
+}
+
+interface LogEntry {
+  instance_id: number;
+  message: string;
+  timestamp: string;
 }
 
 interface BotStatus {
@@ -65,8 +73,9 @@ export default function BotManagementPage() {
   const [difficulty, setDifficulty] = useState("medium");
   const [autoSpawnEasy, setAutoSpawnEasy] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [botLogs, setBotLogs] = useState<string[]>([]);
+  const [botLogs, setBotLogs] = useState<LogEntry[]>([]);
   const [showLogs, setShowLogs] = useState(true);
+  const [selectedInstance, setSelectedInstance] = useState<number | null>(null); // null = All/System
   const [status, setStatus] = useState<BotStatus>({ total_active_battles: 0, instances: [] });
   const [pool, setPool] = useState<PoolStatus>({ pool: [], total_bots: 0 });
   const [, setTick] = useState(0);
@@ -77,7 +86,10 @@ export default function BotManagementPage() {
 
   const fetchLogs = async () => {
     try {
-      const r = await fetch("/api/admin/bot/logs");
+      const url = selectedInstance !== null 
+        ? `/api/admin/bot/logs?instance_id=${selectedInstance}`
+        : "/api/admin/bot/logs";
+      const r = await fetch(url);
       if (r.ok) setBotLogs((await r.json()).logs ?? []);
     } catch {}
   };
@@ -438,20 +450,31 @@ export default function BotManagementPage() {
                               </span>
                             </div>
 
-                            {/* Elapsed */}
+                            {/* Opponent */}
                             <div className="flex items-center gap-2">
-                              <Clock className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-                              <span className="text-[11px] font-mono tabular-nums text-zinc-300">
-                                {fmtElapsed(liveElapsed)}
+                              <Swords className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+                              <span className="text-[11px] font-bold text-zinc-300">
+                                {inst.opponent_name ? `vs ${inst.opponent_name}` : "Waiting for opponent..."}
                               </span>
                             </div>
 
-                            {/* Cancel */}
-                            <button onClick={() => handleStopInstance(inst)} disabled={isCancelling}
-                              className="mt-1 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                              <CircleStop className="h-3 w-3" />
-                              {isCancelling ? "Cancelling…" : "Cancel Battle"}
-                            </button>
+                            {/* Actions */}
+                            <div className="flex gap-2 mt-1">
+                              <button onClick={() => setSelectedInstance(inst.instance_id)}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                                  selectedInstance === inst.instance_id
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                                }`}>
+                                <Activity className="h-3 w-3" />
+                                Console
+                              </button>
+                              <button onClick={() => handleStopInstance(inst)} disabled={isCancelling}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                <CircleStop className="h-3 w-3" />
+                                {isCancelling ? "Stop" : "Stop"}
+                              </button>
+                            </div>
                           </motion.div>
                         );
                       })}
@@ -467,13 +490,17 @@ export default function BotManagementPage() {
               <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Activity className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Bot Console</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400">
+                    {selectedInstance !== null ? `Instance #${selectedInstance} Console` : "Global Bot Console"}
+                  </h3>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Connected</span>
-                  </div>
+                  {selectedInstance !== null && (
+                    <Button onClick={() => setSelectedInstance(null)} variant="outline" size="sm"
+                      className="h-8 text-[10px] font-bold border-zinc-700 hover:bg-zinc-900">
+                      View All Logs
+                    </Button>
+                  )}
                   <Button onClick={() => setShowLogs((v) => !v)} variant="ghost" size="sm"
                     className="h-8 text-[10px] font-bold hover:bg-zinc-900">
                     {showLogs ? "Pause Stream" : "Resume Stream"}
@@ -483,11 +510,18 @@ export default function BotManagementPage() {
 
               <div className="flex-1 p-5 font-mono text-[12px] leading-relaxed overflow-hidden">
                 <div className="h-[320px] overflow-y-auto space-y-0.5 scroll-smooth pr-2">
-                  {botLogs.length > 0 ? botLogs.map((log, i) => (
+                  {botLogs.length > 0 ? botLogs.map((entry, i) => (
                     <div key={i} className="flex gap-4 group hover:bg-zinc-900/50 rounded-lg px-2 py-0.5 transition-colors">
-                      <span className="opacity-20 select-none w-8 text-right shrink-0">{i + 1}</span>
+                      <span className="opacity-20 select-none w-16 text-[10px] shrink-0 font-mono">{entry.timestamp}</span>
+                      {selectedInstance === null && (
+                        <span className={`w-12 text-center shrink-0 text-[10px] font-bold rounded px-1 ${
+                          entry.instance_id === -1 ? "text-zinc-500 bg-zinc-800" : "text-primary bg-primary/10"
+                        }`}>
+                          {entry.instance_id === -1 ? "SYS" : `#${entry.instance_id}`}
+                        </span>
+                      )}
                       <span className="text-zinc-400 group-hover:text-zinc-200 transition-colors break-all">
-                        {log.replace(/\n$/, "")}
+                        {entry.message.replace(/\n$/, "")}
                       </span>
                     </div>
                   )) : (
