@@ -65,6 +65,7 @@ type BotProgress struct {
 	Problems       []Problem
 	SolveTimes     []time.Duration
 	SurrenderTime  *time.Duration
+	TotalDuration  time.Duration
 	StartTime      time.Time
 	DrawsReceived  int
 	SolvedCount    int
@@ -235,13 +236,27 @@ func handleBattle(ctx context.Context, botID, battleID, difficulty string) {
 		Cancel:     battleCancel, // allows socket handler to self-terminate
 	}
 
+	var durationSeconds int
 	for i, p := range problems.Problems {
 		progress.Problems[i] = Problem{
 			ID:         p.ID,
 			Difficulty: p.Difficulty,
 			Solution:   GetSolutionCode(p.ID),
 		}
+		diff := strings.ToLower(p.Difficulty)
+		if diff == "easy" {
+			durationSeconds += 10 * 60
+		} else if diff == "hard" {
+			durationSeconds += 35 * 60
+		} else {
+			durationSeconds += 15 * 60
+		}
 	}
+
+	if durationSeconds == 0 {
+		durationSeconds = 5400
+	}
+	progress.TotalDuration = time.Duration(durationSeconds) * time.Second
 
 	progress.CalculateSolveTimes()
 	log.Printf("Bot %s solve schedule: %v\n", botID, progress.SolveTimes)
@@ -486,6 +501,16 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 				return
 			}
 
+			// Check if timer is over
+			if elapsed >= p.TotalDuration {
+				log.Printf("Bot %s: timer over at %v. Calling complete API for battle %s\n", p.BotID, elapsed, p.BattleID)
+				callCompleteAPI(p)
+				if p.Cancel != nil {
+					p.Cancel()
+				}
+				return
+			}
+
 			// Check for next problem solving
 			if p.CurrentProblem < len(p.Problems) {
 				targetTime := p.SolveTimes[p.CurrentProblem]
@@ -497,6 +522,10 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 				}
 			} else {
 				log.Printf("Bot %s has solved all problems. Finishing battle.\n", p.BotID)
+				callCompleteAPI(p)
+				if p.Cancel != nil {
+					p.Cancel()
+				}
 				return // Battle finished
 			}
 		}
@@ -591,6 +620,22 @@ func pollStatus(execID string) {
 			return
 		}
 	}
+}
+
+func callCompleteAPI(p *BotProgress) {
+	url := fmt.Sprintf("%s/api/battle/complete", APP_URL)
+	payload := map[string]interface{}{
+		"battleId": p.BattleID,
+	}
+
+	jsonPayload, _ := json.Marshal(payload)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Printf("Bot %s error calling complete API: %v\n", p.BotID, err)
+		return
+	}
+	defer resp.Body.Close()
+	log.Printf("Bot %s successfully called complete API for battle %s\n", p.BotID, p.BattleID)
 }
 
 func surrender(p *BotProgress) {
