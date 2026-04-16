@@ -59,19 +59,21 @@ type ProblemDetails struct {
 }
 
 type BotProgress struct {
-	BattleID       string
-	BotID          string
-	Difficulty     string
-	Problems       []Problem
-	SolveTimes     []time.Duration
-	SurrenderTime  *time.Duration
-	TotalDuration  time.Duration
-	StartTime      time.Time
-	DrawsReceived  int
-	SolvedCount    int
-	CurrentProblem int
-	IsPlayer1      bool // Detected from battle metadata
-	Socket         *websocket.Conn
+	BattleID            string
+	BotID               string
+	Difficulty          string
+	Problems            []Problem
+	SolveTimes          []time.Duration
+	WrongAttemptTimes   []time.Duration
+	CurrentWrongAttempt int
+	SurrenderTime       *time.Duration
+	TotalDuration       time.Duration
+	StartTime           time.Time
+	DrawsReceived       int
+	SolvedCount         int
+	CurrentProblem      int
+	IsPlayer1           bool // Detected from battle metadata
+	Socket              *websocket.Conn
 	// Cancel is called by the socket handler when the battle ends on the server
 	// side, ensuring the simulation loop stops and the instance self-cleans.
 	Cancel context.CancelFunc
@@ -172,6 +174,29 @@ func (p *BotProgress) CalculateSolveTimes() {
 		p.SolveTimes[i] += p.SolveTimes[i-1]
 	}
 	log.Printf("Bot %s final cumulative solve schedule: %v\n", p.BotID, p.SolveTimes)
+
+	// --- NEW: Generate Random Wrong Executions (4-10 times) ---
+	wrongCount := rand.Intn(7) + 4 // 4 to 10
+	p.WrongAttemptTimes = make([]time.Duration, wrongCount)
+	totalSec := int(p.TotalDuration.Seconds())
+	if totalSec <= 0 {
+		totalSec = 1800 // Fallback 30 mins
+	}
+
+	for i := 0; i < wrongCount; i++ {
+		// Random time between 1 min and TotalDuration - 1 min
+		sec := rand.Intn(totalSec-120) + 60
+		p.WrongAttemptTimes[i] = time.Duration(sec) * time.Second
+	}
+	// Sort them
+	for i := 0; i < len(p.WrongAttemptTimes); i++ {
+		for j := i + 1; j < len(p.WrongAttemptTimes); j++ {
+			if p.WrongAttemptTimes[i] > p.WrongAttemptTimes[j] {
+				p.WrongAttemptTimes[i], p.WrongAttemptTimes[j] = p.WrongAttemptTimes[j], p.WrongAttemptTimes[i]
+			}
+		}
+	}
+	log.Printf("Bot %s scheduled %d wrong executions at: %v\n", p.BotID, wrongCount, p.WrongAttemptTimes)
 
 	// 25% chance to surrender after 30 mins
 	if rand.Intn(100) < 25 {
@@ -511,6 +536,14 @@ func runSimulationLoop(ctx context.Context, p *BotProgress) {
 				return
 			}
 
+			// --- NEW: Check for wrong executions ---
+			if p.CurrentWrongAttempt < len(p.WrongAttemptTimes) {
+				if elapsed >= p.WrongAttemptTimes[p.CurrentWrongAttempt] {
+					go runWrongExecution(p)
+					p.CurrentWrongAttempt++
+				}
+			}
+
 			// Check for next problem solving
 			if p.CurrentProblem < len(p.Problems) {
 				targetTime := p.SolveTimes[p.CurrentProblem]
@@ -597,6 +630,60 @@ func solveProblem(p *BotProgress, index int) {
 
 	if execResp.Success {
 		// Poll for status
+		pollStatus(execResp.ExecutionCode.ID)
+	}
+}
+
+func GetWrongCode(problemID int) string {
+	boilerplate := []string{
+		"#include <iostream>\nusing namespace std;\nint main() {\n    // Draft for Problem %d\n    int n;\n    // cin >> n;\n    cout << \"Solving...\" << endl;\n    return 0;\n}",
+		"#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> v = {1, 2, 3};\n    // Problem %d logic here\n    for(int x : v) cout << x << \" \";\n    return 0;\n}",
+		"#include <iostream>\nint solve() {\n    return 42;\n}\nint main() {\n    std::cout << solve() << std::endl;\n    return 0;\n}",
+	}
+	idx := rand.Intn(len(boilerplate))
+	return fmt.Sprintf(boilerplate[idx], problemID)
+}
+
+func runWrongExecution(p *BotProgress) {
+	currentIdx := p.CurrentProblem
+	if currentIdx >= len(p.Problems) {
+		currentIdx = len(p.Problems) - 1
+	}
+	if currentIdx < 0 {
+		return
+	}
+
+	prob := p.Problems[currentIdx]
+	url := fmt.Sprintf("%s/api/battle/exec-code", APP_URL)
+	payload := map[string]interface{}{
+		"code":       GetWrongCode(prob.ID),
+		"language":   "cpp",
+		"userId":     p.BotID,
+		"battleId":   p.BattleID,
+		"difficulty": strings.ToLower(prob.Difficulty),
+		"problemId":  prob.ID,
+		"type":       "Run",
+	}
+
+	log.Printf("Bot %s performing wrong execution (Run) for problem %d\n", p.BotID, prob.ID)
+
+	jsonPayload, _ := json.Marshal(payload)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Printf("Error during wrong execution: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var execResp struct {
+		Success       bool `json:"success"`
+		ExecutionCode struct {
+			ID string `json:"_id"`
+		} `json:"executionCode"`
+	}
+	json.NewDecoder(resp.Body).Decode(&execResp)
+
+	if execResp.Success {
 		pollStatus(execResp.ExecutionCode.ID)
 	}
 }
