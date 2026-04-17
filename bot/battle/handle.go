@@ -152,17 +152,17 @@ func (p *BotProgress) CalculateSolveTimes() {
 
 		switch prob.Difficulty {
 		case "Easy":
-			if r < 30 {
+			if r < 79 {
 				minutes = rand.Intn(6) + 5 // 5-10
-			} else if r < 60 {
+			} else if r < 91 {
 				minutes = rand.Intn(5) + 11 // 11-15
 			} else {
 				minutes = rand.Intn(5) + 16 // 16-20
 			}
 		case "Medium":
-			if r < 30 {
+			if r < 52 {
 				minutes = rand.Intn(6) + 10 // 10-15
-			} else if r < 60 {
+			} else if r < 78 {
 				minutes = rand.Intn(5) + 16 // 16-20
 			} else {
 				minutes = rand.Intn(5) + 21 // 21-25
@@ -467,9 +467,9 @@ func handleDrawRequest(p *BotProgress) bool {
 
 	acceptProb := 0
 	if p.DrawsReceived == 1 {
-		acceptProb = 75
+		acceptProb = 42
 	} else if p.DrawsReceived >= 2 {
-		acceptProb = 90
+		acceptProb = 69
 	}
 
 	accepted := rand.Intn(100) < acceptProb
