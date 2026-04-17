@@ -153,24 +153,24 @@ func (p *BotProgress) CalculateSolveTimes() {
 		switch prob.Difficulty {
 		case "Easy":
 			if r < 79 {
-				minutes = rand.Intn(6) + 5 // 5-10
+				minutes = rand.Intn(6) + 2 // 2-7
 			} else if r < 91 {
-				minutes = rand.Intn(5) + 11 // 11-15
+				minutes = rand.Intn(5) + 8 // 8-12
 			} else {
-				minutes = rand.Intn(5) + 16 // 16-20
+				minutes = rand.Intn(5) + 13 // 13-17
 			}
 		case "Medium":
-			if r < 52 {
-				minutes = rand.Intn(6) + 10 // 10-15
+			if r < 62 {
+				minutes = rand.Intn(6) + 8 // 8-13
 			} else if r < 78 {
-				minutes = rand.Intn(5) + 16 // 16-20
+				minutes = rand.Intn(5) + 15 // 15-20
 			} else {
 				minutes = rand.Intn(5) + 21 // 21-25
 			}
 		case "Hard":
-			if r < 50 {
+			if r < 58 {
 				minutes = rand.Intn(6) + 15 // 15-20
-			} else if r < 75 {
+			} else if r < 79 {
 				minutes = rand.Intn(11) + 20 // 20-30
 			} else {
 				// 25% chance to take 30-40 mins
@@ -464,10 +464,10 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 func handleDrawRequest(p *BotProgress) bool {
 	p.DrawsReceived++
 	p.Log("Received draw request #%d\n", p.DrawsReceived)
-
+	time.Sleep(2*time.Second + time.Duration(rand.Intn(3))*time.Second) // Simulate thinking time
 	acceptProb := 0
 	if p.DrawsReceived == 1 {
-		acceptProb = 42
+		acceptProb = 32
 	} else if p.DrawsReceived >= 2 {
 		acceptProb = 69
 	}
