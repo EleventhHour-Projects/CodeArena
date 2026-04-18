@@ -53,6 +53,44 @@ interface PoolStatus {
   total_bots: number;
 }
 
+interface TimeRange {
+  min: number;
+  max: number;
+}
+
+interface SolveDiffConfig {
+  p1_chance: number;
+  p2_chance: number;
+  range_1: TimeRange;
+  range_2: TimeRange;
+  range_3: TimeRange;
+}
+
+interface BehaviorConfig {
+  solve_times: {
+    easy: SolveDiffConfig;
+    medium: SolveDiffConfig;
+    hard: SolveDiffConfig;
+  };
+  wrong_execs: {
+    min_count: number;
+    max_count: number;
+  };
+  draw_acceptance: {
+    first_request_chance: number;
+    repeat_request_chance: number;
+  };
+  surrender: {
+    chance: number;
+    delay_minutes: number;
+  };
+  base_durations: {
+    easy_minutes: number;
+    medium_minutes: number;
+    hard_minutes: number;
+  };
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtElapsed(seconds: number) {
@@ -78,6 +116,9 @@ export default function BotManagementPage() {
   const [selectedInstance, setSelectedInstance] = useState<number | null>(null); // null = All/System
   const [status, setStatus] = useState<BotStatus>({ total_active_battles: 0, instances: [] });
   const [pool, setPool] = useState<PoolStatus>({ pool: [], total_bots: 0 });
+  const [config, setConfig] = useState<BehaviorConfig | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [activeConfigTab, setActiveConfigTab] = useState("solving");
   const [, setTick] = useState(0);
   const cancellingRef = useRef<Set<number>>(new Set());
   const [cancelling, setCancelling] = useState<Set<number>>(new Set());
@@ -118,6 +159,13 @@ export default function BotManagementPage() {
     } catch {}
   };
 
+  const fetchConfig = async () => {
+    try {
+      const r = await fetch("/api/admin/bot/config");
+      if (r.ok) setConfig(await r.json());
+    } catch {}
+  };
+
   const refresh = () => { fetchStatus(); fetchPool(); fetchAutoSpawn(); };
 
   // ── Effects ───────────────────────────────────────────────────────────────
@@ -131,6 +179,7 @@ export default function BotManagementPage() {
 
   useEffect(() => {
     refresh();
+    fetchConfig();
     const id = setInterval(refresh, 3000);
     return () => clearInterval(id);
   }, []);
@@ -209,6 +258,31 @@ export default function BotManagementPage() {
       cancellingRef.current.delete(inst.instance_id);
       setCancelling(new Set(cancellingRef.current));
     }
+  };
+
+  const handleSaveConfig = async () => {
+    if (!config) return;
+    setSavingConfig(true);
+    try {
+      const r = await fetch("/api/admin/bot/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+      if (r.ok) toast.success("Bot behavioral configuration updated");
+      else toast.error("Failed to update configuration");
+    } catch { toast.error("Error connecting to bot service"); }
+    finally { setSavingConfig(false); }
+  };
+
+  const updateConfig = (path: string, val: any) => {
+    if (!config) return;
+    const next = { ...config };
+    const parts = path.split(".");
+    let curr: any = next;
+    for (let i = 0; i < parts.length - 1; i++) curr = curr[parts[i]];
+    curr[parts[parts.length - 1]] = val;
+    setConfig(next);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -376,6 +450,183 @@ export default function BotManagementPage() {
                 <code className="bg-zinc-800 px-1 py-0.5 rounded text-zinc-300">BOT_POOL</code>{" "}
                 env var (comma-separated user IDs) to enable more simultaneous battles.
               </p>
+            </motion.div>
+
+            {/* Behavioral Configuration (Stats) */}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
+              className="bg-card border border-border rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Zap className="h-24 w-24 text-primary" />
+              </div>
+
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary"><Zap className="h-5 w-5" /></div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest">Behavior Specs</h3>
+                </div>
+                <Button onClick={handleSaveConfig} disabled={savingConfig || !config} size="sm" 
+                  className="h-8 rounded-full px-4 text-[10px] font-bold uppercase tracking-wider">
+                  {savingConfig ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+
+              {!config ? (
+                <div className="flex flex-col items-center justify-center py-10 opacity-40 italic">
+                  <Clock className="h-8 w-8 animate-spin mb-2" />
+                  <p className="text-[10px] tracking-widest uppercase font-bold">Connecting Engine...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Tabs */}
+                  <div className="flex border-b border-border/50">
+                    {(["solving", "interaction", "noise"] as const).map((t) => (
+                      <button key={t} onClick={() => setActiveConfigTab(t)}
+                        className={`flex-1 pb-3 text-[10px] font-bold uppercase tracking-widest transition-all relative ${
+                          activeConfigTab === t ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                        }`}>
+                        {t}
+                        {activeConfigTab === t && (
+                          <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Solving Tab */}
+                  {activeConfigTab === "solving" && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                      {(["easy", "medium", "hard"] as const).map((diff) => {
+                        const d = config.solve_times[diff];
+                        return (
+                          <div key={diff} className="space-y-4 p-4 rounded-2xl bg-muted/20 border border-border/40">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{diff} Arena</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Base Duration</span>
+                                <input type="number" 
+                                  value={config.base_durations[`${diff}_minutes` as keyof typeof config.base_durations]} 
+                                  onChange={(e) => updateConfig(`base_durations.${diff}_minutes`, parseInt(e.target.value))}
+                                  className="w-12 bg-transparent text-[10px] font-bold text-center border-b border-white/10 focus:border-primary outline-none" />
+                                <span className="text-[9px] text-zinc-500">m</span>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter text-zinc-500">
+                                <span>Timing Thresholds (Prob %)</span>
+                                <span className="text-zinc-400">{d.p1_chance}% · {d.p2_chance}%</span>
+                              </div>
+                              <input type="range" min="0" max="100" value={d.p1_chance} 
+                                onChange={(e) => updateConfig(`solve_times.${diff}.p1_chance`, parseInt(e.target.value))}
+                                className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" />
+                              
+                              <div className="grid grid-cols-3 gap-2 mt-4">
+                                {[1, 2, 3].map((r) => {
+                                  const range = d[`range_${r}` as keyof typeof d] as TimeRange;
+                                  return (
+                                    <div key={r} className="flex flex-col gap-1">
+                                      <label className="text-[9px] text-zinc-500 font-bold uppercase">R{r} (mins)</label>
+                                      <div className="flex items-center gap-1">
+                                        <input type="number" value={range.min} 
+                                          onChange={(e) => updateConfig(`solve_times.${diff}.range_${r}.min`, parseInt(e.target.value))}
+                                          className="w-full bg-zinc-900/50 rounded-lg p-1 text-[10px] text-center border border-white/5" />
+                                        <span className="text-[9px] text-zinc-600">-</span>
+                                        <input type="number" value={range.max} 
+                                          onChange={(e) => updateConfig(`solve_times.${diff}.range_${r}.max`, parseInt(e.target.value))}
+                                          className="w-full bg-zinc-900/50 rounded-lg p-1 text-[10px] text-center border border-white/5" />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+
+                  {/* Interaction Tab */}
+                  {activeConfigTab === "interaction" && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Draw Acceptance Chance</label>
+                        <div className="space-y-6">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-[10px] font-bold">
+                              <span className="text-zinc-400">First Request</span>
+                              <span className="text-primary">{config.draw_acceptance.first_request_chance}%</span>
+                            </div>
+                            <input type="range" min="0" max="100" value={config.draw_acceptance.first_request_chance} 
+                              onChange={(e) => updateConfig(`draw_acceptance.first_request_chance`, parseInt(e.target.value))}
+                              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-[10px] font-bold">
+                              <span className="text-zinc-400">Repeat Requests</span>
+                              <span className="text-primary">{config.draw_acceptance.repeat_request_chance}%</span>
+                            </div>
+                            <input type="range" min="0" max="100" value={config.draw_acceptance.repeat_request_chance} 
+                              onChange={(e) => updateConfig(`draw_acceptance.repeat_request_chance`, parseInt(e.target.value))}
+                              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-border/40">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Surrender Behavior</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Probability</span>
+                            <div className="flex items-center gap-2">
+                              <input type="number" value={config.surrender.chance} 
+                                onChange={(e) => updateConfig(`surrender.chance`, parseInt(e.target.value))}
+                                className="w-full bg-zinc-800 rounded-xl p-3 text-sm font-bold border border-white/5" />
+                              <span className="text-xs font-bold text-zinc-600">%</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Delay (min)</span>
+                            <input type="number" value={config.surrender.delay_minutes} 
+                              onChange={(e) => updateConfig(`surrender.delay_minutes`, parseInt(e.target.value))}
+                              className="w-full bg-zinc-800 rounded-xl p-3 text-sm font-bold border border-white/5" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Noise Tab */}
+                  {activeConfigTab === "noise" && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                      <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/10 space-y-4">
+                        <div className="flex items-center gap-2 text-amber-500">
+                          <Zap className="h-4 w-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Random Executions</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Controls how many "Run Code" actions (noise) the bot performs per battle to look human.
+                        </p>
+                        
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-zinc-500 uppercase">Min Noise</label>
+                            <input type="number" value={config.wrong_execs.min_count} 
+                              onChange={(e) => updateConfig(`wrong_execs.min_count`, parseInt(e.target.value))}
+                              className="w-full bg-zinc-900/50 rounded-xl p-3 text-sm font-bold border border-white/5" />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-zinc-500 uppercase">Max Noise</label>
+                            <input type="number" value={config.wrong_execs.max_count} 
+                              onChange={(e) => updateConfig(`wrong_execs.max_count`, parseInt(e.target.value))}
+                              className="w-full bg-zinc-900/50 rounded-xl p-3 text-sm font-bold border border-white/5" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </motion.div>
 
             {/* Info */}

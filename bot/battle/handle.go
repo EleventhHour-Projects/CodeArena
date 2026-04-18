@@ -142,7 +142,18 @@ func GetSolutionCode(problemID int) string {
 	return string(data)
 }
 
+func randFromRange(tr TimeRange) int {
+	if tr.Max <= tr.Min {
+		return tr.Min
+	}
+	return rand.Intn(tr.Max-tr.Min+1) + tr.Min
+}
+
 func (p *BotProgress) CalculateSolveTimes() {
+	ConfigMu.RLock()
+	conf := CurrentConfig
+	ConfigMu.RUnlock()
+
 	rand.Seed(time.Now().UnixNano())
 	p.SolveTimes = make([]time.Duration, len(p.Problems))
 
@@ -150,45 +161,38 @@ func (p *BotProgress) CalculateSolveTimes() {
 		var minutes int
 		r := rand.Intn(100)
 
+		var diff SolveDiffConfig
 		switch prob.Difficulty {
 		case "Easy":
-			if r < 79 {
-				minutes = rand.Intn(6) + 2 // 2-7
-			} else if r < 91 {
-				minutes = rand.Intn(5) + 8 // 8-12
-			} else {
-				minutes = rand.Intn(5) + 13 // 13-17
-			}
-		case "Medium":
-			if r < 62 {
-				minutes = rand.Intn(6) + 8 // 8-13
-			} else if r < 78 {
-				minutes = rand.Intn(5) + 15 // 15-20
-			} else {
-				minutes = rand.Intn(5) + 21 // 21-25
-			}
+			diff = conf.SolveTimes.Easy
 		case "Hard":
-			if r < 58 {
-				minutes = rand.Intn(6) + 15 // 15-20
-			} else if r < 79 {
-				minutes = rand.Intn(11) + 20 // 20-30
-			} else {
-				// 25% chance to take 30-40 mins
-				minutes = rand.Intn(11) + 30
-			}
+			diff = conf.SolveTimes.Hard
+		case "Medium":
+			fallthrough
+		default:
+			diff = conf.SolveTimes.Medium
 		}
+
+		if r < diff.P1Chance {
+			minutes = randFromRange(diff.Range1)
+		} else if r < diff.P2Chance {
+			minutes = randFromRange(diff.Range2)
+		} else {
+			minutes = randFromRange(diff.Range3)
+		}
+
 		p.SolveTimes[i] = time.Duration(minutes) * time.Minute
 	}
 
 	// Make SolveTimes cumulative and log the schedule
-	log.Printf("Bot %s generated solve intervals: %v\n", p.BotID, p.SolveTimes)
+	p.Log("Generated solve intervals: %v\n", p.SolveTimes)
 	for i := 1; i < len(p.SolveTimes); i++ {
 		p.SolveTimes[i] += p.SolveTimes[i-1]
 	}
-	log.Printf("Bot %s final cumulative solve schedule: %v\n", p.BotID, p.SolveTimes)
+	p.Log("Final cumulative solve schedule: %v\n", p.SolveTimes)
 
-	// --- NEW: Generate Random Wrong Executions (4-10 times) ---
-	wrongCount := rand.Intn(7) + 4 // 4 to 10
+	// --- NEW: Generate Random Wrong Executions ---
+	wrongCount := randFromRange(TimeRange{conf.WrongExecs.MinCount, conf.WrongExecs.MaxCount})
 	p.WrongAttemptTimes = make([]time.Duration, wrongCount)
 	totalSec := int(p.TotalDuration.Seconds())
 	if totalSec <= 0 {
@@ -208,11 +212,11 @@ func (p *BotProgress) CalculateSolveTimes() {
 			}
 		}
 	}
-	log.Printf("Bot %s scheduled %d wrong executions at: %v\n", p.BotID, wrongCount, p.WrongAttemptTimes)
+	p.Log("Scheduled %d wrong executions at: %v\n", wrongCount, p.WrongAttemptTimes)
 
-	// 25% chance to surrender after 30 mins
-	if rand.Intn(100) < 25 {
-		st := 30 * time.Minute
+	// Surrender Check
+	if rand.Intn(100) < conf.Surrender.Chance {
+		st := time.Duration(conf.Surrender.DelayMinutes) * time.Minute
 		p.SurrenderTime = &st
 	}
 }
@@ -285,6 +289,10 @@ func handleBattle(ctx context.Context, instanceID int, botID, battleID, opponent
 		Cancel:     battleCancel,
 	}
 
+	ConfigMu.RLock()
+	baseDur := CurrentConfig.BaseDurations
+	ConfigMu.RUnlock()
+
 	var durationSeconds int
 	for i, p := range problems.Problems {
 		progress.Problems[i] = Problem{
@@ -294,11 +302,11 @@ func handleBattle(ctx context.Context, instanceID int, botID, battleID, opponent
 		}
 		diff := strings.ToLower(p.Difficulty)
 		if diff == "easy" {
-			durationSeconds += 10 * 60
+			durationSeconds += baseDur.Easy * 60
 		} else if diff == "hard" {
-			durationSeconds += 35 * 60
+			durationSeconds += baseDur.Hard * 60
 		} else {
-			durationSeconds += 15 * 60
+			durationSeconds += baseDur.Medium * 60
 		}
 	}
 
@@ -462,14 +470,18 @@ func handleSocketMessages(ctx context.Context, p *BotProgress) {
 }
 
 func handleDrawRequest(p *BotProgress) bool {
+	ConfigMu.RLock()
+	conf := CurrentConfig.DrawAcceptance
+	ConfigMu.RUnlock()
+
 	p.DrawsReceived++
 	p.Log("Received draw request #%d\n", p.DrawsReceived)
 	time.Sleep(2*time.Second + time.Duration(rand.Intn(3))*time.Second) // Simulate thinking time
 	acceptProb := 0
 	if p.DrawsReceived == 1 {
-		acceptProb = 32
+		acceptProb = conf.FirstRequestChance
 	} else if p.DrawsReceived >= 2 {
-		acceptProb = 69
+		acceptProb = conf.RepeatRequestChance
 	}
 
 	accepted := rand.Intn(100) < acceptProb
