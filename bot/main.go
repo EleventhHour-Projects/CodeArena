@@ -471,6 +471,35 @@ func autoSpawnHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
+func configHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		battle.ConfigMu.RLock()
+		defer battle.ConfigMu.RUnlock()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(battle.CurrentConfig)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var newConfig battle.BehaviorConfig
+		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		battle.ConfigMu.Lock()
+		battle.CurrentConfig = newConfig
+		battle.ConfigMu.Unlock()
+
+		log.Println("[CONFIG] Behavioral configuration updated (In-Memory Only).")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"message": "Configuration updated successfully"})
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
 func autoSpawnWorker() {
 	ticker := time.NewTicker(10 * time.Second)
 	backendURL := os.Getenv("BACKEND_URL")
@@ -544,6 +573,7 @@ func main() {
 	http.HandleFunc("/api/pool", poolHandler)
 	http.HandleFunc("/api/logs", logsHandler)
 	http.HandleFunc("/api/auto-spawn", autoSpawnHandler)
+	http.HandleFunc("/api/config", configHandler)
 
 	go autoSpawnWorker()
 
