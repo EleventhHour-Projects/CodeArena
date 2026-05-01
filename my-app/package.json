@@ -16,7 +16,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.1",
     "jose": "^6.2.2",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.14.0",
     "monaco-editor": "^0.55.1",
     "mongoose": "^9.2.3",
     "motion": "^12.36.0",
