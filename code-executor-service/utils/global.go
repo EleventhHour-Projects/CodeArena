@@ -157,7 +157,7 @@ type Submission struct {
 var WorkerPoolData = &WorkerPool{
 	activeWorkerCount: 0,
 	mu:                sync.Mutex{},
-	channel:           make(chan CodeConfig, 100),
+	channel:           make(chan CodeConfig, 10000),
 	auto:              true,
 	muauto:            sync.Mutex{},
 	scalingMu:         sync.Mutex{},

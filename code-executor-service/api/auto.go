@@ -57,7 +57,7 @@ func Auto() {
 		finalCount := utils.TaskInfo.GetTotalTasksSubmitted()
 		tasksInPeriod := finalCount - initalCount
 
-		target := 1
+		target := 4 // Default minimum workers
 		switch {
 		case tasksInPeriod >= 1000:
 			target = 40
