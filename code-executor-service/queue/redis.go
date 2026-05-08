@@ -94,6 +94,7 @@ func ListenForTasks(ctx context.Context) {
 				fmt.Println(utils.Red+"Error fetching problem constraints:"+utils.Reset, err)
 				continue
 			}
+			utils.TaskInfo.IncrementSubmitted()
 			utils.WorkerPoolData.AddTask(utils.CodeConfig{
 				TaskID:    task,
 				Code:      data.Code,

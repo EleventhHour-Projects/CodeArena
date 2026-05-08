@@ -47,14 +47,14 @@ func Auto() {
 			continue
 		}
 
-		initalCount := utils.TaskInfo.GetTotalTasks()
+		initalCount := utils.TaskInfo.GetTotalTasksSubmitted()
 		time.Sleep(time.Second * 10)
 
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
 
-		finalCount := utils.TaskInfo.GetTotalTasks()
+		finalCount := utils.TaskInfo.GetTotalTasksSubmitted()
 		tasksInPeriod := finalCount - initalCount
 
 		target := 1
