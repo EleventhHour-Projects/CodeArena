@@ -208,9 +208,10 @@ var FlagUsage = func() {
 // TaskProcessingInfo is a struct that keeps track of the total number of tasks processed and the total time taken for processing those tasks, providing a way to monitor and analyze the performance of the code execution service
 // TotalTaskDone is an integer that counts the total number of tasks that have been processed, TotalTime is a time.Duration that accumulates the total time taken for processing tasks, and mu is a mutex to ensure thread-safe access to these fields when updating and retrieving performance metrics
 type TaskProcessingInfo struct {
-	TotalTaskDone int
-	TotalTime     time.Duration
-	mu            sync.Mutex
+	TotalTaskDone      int
+	TotalTime          time.Duration
+	TotalTaskSubmitted int
+	mu                 sync.Mutex
 }
 
 // IncrementTime increments the total time taken for processing tasks by the given duration in a thread-safe manner, allowing for accurate tracking of the time spent on processing code execution tasks
@@ -246,8 +247,22 @@ func (t *TaskProcessingInfo) GetTotalTasks() int {
 	return t.TotalTaskDone
 }
 
+// IncrementSubmitted increments the total number of tasks submitted in a thread-safe manner
+func (t *TaskProcessingInfo) IncrementSubmitted() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.TotalTaskSubmitted++
+}
+
+// GetTotalTasksSubmitted returns the total number of tasks submitted in a thread-safe manner
+func (t *TaskProcessingInfo) GetTotalTasksSubmitted() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.TotalTaskSubmitted
+}
+
 // Global variable to keep track of task processing information, allowing for monitoring and analysis of the performance of the code execution service by tracking the total number of tasks processed and the total time taken for processing those tasks in a thread-safe manner
-var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, mu: sync.Mutex{}}
+var TaskInfo = &TaskProcessingInfo{TotalTaskDone: 0, TotalTime: 0, TotalTaskSubmitted: 0, mu: sync.Mutex{}}
 
 // For Info API
 var StartTime time.Time
