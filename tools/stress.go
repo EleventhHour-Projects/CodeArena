@@ -152,14 +152,18 @@ func main() {
 					// 1. Add record to DB
 					_, err := execCol.InsertOne(ctx, doc)
 					if err != nil {
-						atomic.AddUint64(&errorCount, 1)
+						if atomic.AddUint64(&errorCount, 1) <= 10 {
+							log.Printf("MongoDB Error: %v", err)
+						}
 						continue
 					}
 
 					// 2. Send ID to Redis queue
 					err = rdb.LPush(ctx, "tasks", execID.Hex()).Err()
 					if err != nil {
-						atomic.AddUint64(&errorCount, 1)
+						if atomic.AddUint64(&errorCount, 1) <= 10 {
+							log.Printf("Redis Error: %v", err)
+						}
 						// Optional: cleanup DB record?
 						continue
 					}
