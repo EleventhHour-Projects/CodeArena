@@ -84,7 +84,7 @@ func AutoClean() {
 			continue
 		}
 		intital, _ := docker.GetWorkerDetails()
-		time.Sleep(time.Minute * 1)
+		time.Sleep(time.Minute * 10)
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
