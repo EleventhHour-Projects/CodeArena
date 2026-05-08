@@ -73,19 +73,11 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Initialize MongoDB
-	opts := options.Client().
-		ApplyURI(*mongoURI).
-		SetMaxPoolSize(uint64(*numGoroutines))
-
-	mongoClient, err := mongo.Connect(opts)
+	mongoClient, err := mongo.Connect(options.Client().ApplyURI(*mongoURI))
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
 	defer mongoClient.Disconnect(context.Background())
-
-	if err := mongoClient.Ping(context.Background(), nil); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
-	}
 
 	execCol := mongoClient.Database("code-arena").Collection("executionCodes")
 
@@ -122,6 +114,8 @@ func main() {
 			for time.Now().Before(endTime) {
 				select {
 				case <-ticker.C:
+					ctx := context.Background()
+
 					// Prepare dummy record
 					execID := bson.NewObjectID()
 					userID := bson.NewObjectID()
@@ -155,29 +149,24 @@ func main() {
 						CreatedAt: time.Now(),
 					}
 
-					// Use a timeout for operations
-					opCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
 					// 1. Add record to DB
-					_, err := execCol.InsertOne(opCtx, doc)
+					_, err := execCol.InsertOne(ctx, doc)
 					if err != nil {
 						if atomic.AddUint64(&errorCount, 1) <= 10 {
 							log.Printf("MongoDB Error: %v", err)
 						}
-						cancel()
 						continue
 					}
 
 					// 2. Send ID to Redis queue
-					err = rdb.LPush(opCtx, "tasks", execID.Hex()).Err()
+					err = rdb.LPush(ctx, "tasks", execID.Hex()).Err()
 					if err != nil {
 						if atomic.AddUint64(&errorCount, 1) <= 10 {
 							log.Printf("Redis Error: %v", err)
 						}
-						cancel()
+						// Optional: cleanup DB record?
 						continue
 					}
-					cancel()
 
 					atomic.AddUint64(&successCount, 1)
 				}
