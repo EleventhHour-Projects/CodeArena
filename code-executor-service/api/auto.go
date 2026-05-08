@@ -58,13 +58,29 @@ func Auto() {
 		tasksInPeriod := finalCount - initalCount
 
 		target := 1
-		if tasksInPeriod > 180 {
+		switch {
+		case tasksInPeriod >= 1000:
+			target = 40
+		case tasksInPeriod >= 900:
+			target = 35
+		case tasksInPeriod >= 800:
+			target = 30
+		case tasksInPeriod >= 600:
+			target = 28
+		case tasksInPeriod >= 500:
+			target = 25
+		case tasksInPeriod >= 400:
+			target = 22
+		case tasksInPeriod >= 300:
+			target = 20
+		case tasksInPeriod >= 200:
+			target = 15
+		case tasksInPeriod >= 100:
 			target = 10
-		} else if tasksInPeriod > 0 {
-			target = (tasksInPeriod / 20) + 1
-			if target > 10 {
-				target = 10
-			}
+		case tasksInPeriod >= 50:
+			target = 8
+		case tasksInPeriod >= 20:
+			target = 6
 		}
 
 		if target <= 4 {
@@ -84,16 +100,12 @@ func AutoClean() {
 			continue
 		}
 		intital, _ := docker.GetWorkerDetails()
-		initalTaskCount := utils.TaskInfo.GetTotalTasksSubmitted()
+
 		time.Sleep(time.Minute * 10)
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
 		final, _ := docker.GetWorkerDetails()
-		finalTaskCount := utils.TaskInfo.GetTotalTasksSubmitted()
-		if finalTaskCount-initalTaskCount > 900 {
-			continue
-		}
 
 		for _, workerf := range final {
 			for _, workeri := range intital {
