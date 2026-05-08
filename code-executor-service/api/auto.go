@@ -84,11 +84,16 @@ func AutoClean() {
 			continue
 		}
 		intital, _ := docker.GetWorkerDetails()
+		initalTaskCount := utils.TaskInfo.GetTotalTasksSubmitted()
 		time.Sleep(time.Minute * 10)
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
 		final, _ := docker.GetWorkerDetails()
+		finalTaskCount := utils.TaskInfo.GetTotalTasksSubmitted()
+		if finalTaskCount-initalTaskCount > 900 {
+			continue
+		}
 
 		for _, workerf := range final {
 			for _, workeri := range intital {
