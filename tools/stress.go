@@ -1,32 +1,51 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"flag"
 	"fmt"
-	"io"
+	"log"
 	"math/rand"
-	"net/http"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type TestCase struct {
-	Input  string `json:"input"`
-	Output string `json:"output"`
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
-type SubmissionPayload struct {
-	Code       string     `json:"code"`
-	Language   string     `json:"language"`
-	UserID     string     `json:"userId"`
-	BattleID   string     `json:"battleId"`
-	Difficulty string     `json:"difficulty"`
-	ProblemID  int        `json:"problemId"`
-	Type       string     `json:"type"`
-	Testcases  []TestCase `json:"testcases,omitempty"`
+type TestCase struct {
+	Input  string `json:"input" bson:"input"`
+	Output string `json:"output" bson:"output"`
+}
+
+type Problem struct {
+	Difficulty string `json:"difficulty" bson:"difficulty"`
+	ID         int    `json:"id" bson:"id"`
+}
+
+type ExecutionCode struct {
+	ID        bson.ObjectID `bson:"_id"`
+	Code      string        `bson:"code"`
+	Type      string        `bson:"type"`
+	Language  string        `bson:"language"`
+	UserID    bson.ObjectID `bson:"userId"`
+	Status    *string       `bson:"status,omitempty"`
+	BattleID  bson.ObjectID `bson:"battleId"`
+	Problem   Problem       `bson:"problem"`
+	Testcases []TestCase    `bson:"testcases,omitempty"`
+	CreatedAt time.Time     `bson:"createdAt,omitzero"`
 }
 
 func getRandomCode() string {
@@ -40,22 +59,38 @@ func getRandomCode() string {
 	return fmt.Sprintf(snippets[idx], rand.Intn(1000), rand.Intn(1000))
 }
 
-func generateObjectID() string {
-	chars := "0123456789abcdef"
-	b := make([]byte, 24)
-	for i := range b {
-		b[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(b)
-}
-
 func main() {
-	numGoroutines := flag.Int("g", 10000, "Number of goroutines")
+	// Load .env if present
+	_ = godotenv.Load()
+
+	numGoroutines := flag.Int("g", 1000, "Number of goroutines")
 	duration := flag.Duration("d", 10*time.Minute, "Duration of the test")
-	targetURL := flag.String("url", "http://localhost:3000/api/battle/exec-code", "Target URL for submissions")
+	mongoURI := flag.String("mongo", getEnv("MONGODB", "mongodb://admin:password123@localhost:27017"), "MongoDB URI")
+	redisAddr := flag.String("redis", getEnv("REDISURL", "localhost:6379"), "Redis address")
+	redisPass := flag.String("redis-pass", getEnv("REDISPASS", "SecureRedisPwd_48c9052"), "Redis password")
 	flag.Parse()
 
 	rand.Seed(time.Now().UnixNano())
+
+	// Initialize MongoDB
+	mongoClient, err := mongo.Connect(options.Client().ApplyURI(*mongoURI))
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	defer mongoClient.Disconnect(context.Background())
+
+	execCol := mongoClient.Database("code-arena").Collection("executionCodes")
+
+	// Initialize Redis
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     *redisAddr,
+		Password: *redisPass,
+	})
+	defer rdb.Close()
+
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
 
 	var (
 		successCount uint64
@@ -63,68 +98,73 @@ func main() {
 		wg           sync.WaitGroup
 	)
 
-	fmt.Printf("Starting stress test with %d goroutines for %v...\n", *numGoroutines, *duration)
-	fmt.Printf("Target URL: %s\n", *targetURL)
+	fmt.Printf("Starting direct DB+Redis stress test with %d goroutines for %v...\n", *numGoroutines, *duration)
 
 	startTime := time.Now()
 	endTime := startTime.Add(*duration)
-
-	// Configure client for high concurrency
-	transport := &http.Transport{
-		MaxIdleConns:        *numGoroutines,
-		MaxIdleConnsPerHost: *numGoroutines,
-		IdleConnTimeout:     90 * time.Second,
-	}
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   10 * time.Second,
-	}
-
-	payloadTemplate := SubmissionPayload{
-		Language:   "cpp",
-		UserID:     generateObjectID(),
-		BattleID:   generateObjectID(),
-		Difficulty: "medium",
-		ProblemID:  101,
-		Type:       "Run",
-	}
 
 	for i := 0; i < *numGoroutines; i++ {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
 
-			// Ticker for 1 request per second
 			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 
 			for time.Now().Before(endTime) {
 				select {
 				case <-ticker.C:
-					payload := payloadTemplate
-					payload.Code = getRandomCode()
-					payload.UserID = generateObjectID()
-					payload.ProblemID = 100 + rand.Intn(50)
-					if payload.Type == "Run" {
-						payload.Testcases = []TestCase{{Input: "1 2", Output: "3"}}
-					}
-					jsonPayload, _ := json.Marshal(payload)
+					ctx := context.Background()
 
-					resp, err := client.Post(*targetURL, "application/json", bytes.NewBuffer(jsonPayload))
+					// Prepare dummy record
+					execID := bson.NewObjectID()
+					userID := bson.NewObjectID()
+					battleID := bson.NewObjectID()
+
+					problemID := 100 + rand.Intn(50)
+					submissionType := "Run"
+					if rand.Intn(2) == 0 {
+						submissionType = "Submit"
+					}
+
+					testcases := []TestCase{}
+					if submissionType == "Run" {
+						testcases = []TestCase{{Input: "1 2", Output: "3"}}
+					}
+
+					status := "Pending"
+					doc := ExecutionCode{
+						ID:       execID,
+						Code:     getRandomCode(),
+						Type:     submissionType,
+						Language: "cpp",
+						UserID:   userID,
+						Status:   &status,
+						BattleID: battleID,
+						Problem: Problem{
+							Difficulty: "medium",
+							ID:         problemID,
+						},
+						Testcases: testcases,
+						CreatedAt: time.Now(),
+					}
+
+					// 1. Add record to DB
+					_, err := execCol.InsertOne(ctx, doc)
 					if err != nil {
 						atomic.AddUint64(&errorCount, 1)
 						continue
 					}
 
-					// Drain and close body to reuse connection
-					io.Copy(io.Discard, resp.Body)
-					resp.Body.Close()
-
-					if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-						atomic.AddUint64(&successCount, 1)
-					} else {
+					// 2. Send ID to Redis queue
+					err = rdb.LPush(ctx, "tasks", execID.Hex()).Err()
+					if err != nil {
 						atomic.AddUint64(&errorCount, 1)
+						// Optional: cleanup DB record?
+						continue
 					}
+
+					atomic.AddUint64(&successCount, 1)
 				}
 			}
 		}(i)
