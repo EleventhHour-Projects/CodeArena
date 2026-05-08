@@ -41,50 +41,42 @@ func KeepXWorkers(n int) {
 // Auto continuously monitors the workload of the code execution service and automatically adjusts
 // the number of active worker goroutines based on the number of tasks processed in a given time period.
 func Auto() {
+	const (
+		minWorkers     = 4
+		maxWorkers     = 100
+		tasksPerWorker = 10 // 1 container per 10 tasks
+		checkInterval  = 10 * time.Second
+		disabledSleep  = 1 * time.Minute
+	)
+
 	for {
 		if !utils.WorkerPoolData.GetAuto() {
-			time.Sleep(time.Minute * 1)
+			time.Sleep(disabledSleep)
 			continue
 		}
 
-		initalCount := utils.TaskInfo.GetTotalTasksSubmitted()
-		time.Sleep(time.Second * 10)
+		initialCount := utils.TaskInfo.GetTotalTasksSubmitted()
+
+		time.Sleep(checkInterval)
 
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
 
 		finalCount := utils.TaskInfo.GetTotalTasksSubmitted()
-		tasksInPeriod := finalCount - initalCount
+		tasksInPeriod := finalCount - initialCount
 
-		target := 4 // Default minimum workers
-		switch {
-		case tasksInPeriod >= 1000:
-			target = 40
-		case tasksInPeriod >= 900:
-			target = 35
-		case tasksInPeriod >= 800:
-			target = 30
-		case tasksInPeriod >= 600:
-			target = 28
-		case tasksInPeriod >= 500:
-			target = 25
-		case tasksInPeriod >= 400:
-			target = 22
-		case tasksInPeriod >= 300:
-			target = 20
-		case tasksInPeriod >= 200:
-			target = 15
-		case tasksInPeriod >= 100:
-			target = 10
-		case tasksInPeriod >= 50:
-			target = 8
-		case tasksInPeriod >= 20:
-			target = 6
+		// 1 worker per 10 tasks
+		target := tasksInPeriod / tasksPerWorker
+
+		// Minimum workers
+		if target < minWorkers {
+			target = minWorkers
 		}
 
-		if target <= 4 {
-			target = 4
+		// Maximum workers
+		if target > maxWorkers {
+			target = maxWorkers
 		}
 
 		KeepXWorkers(target)
