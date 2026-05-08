@@ -114,7 +114,7 @@ func main() {
 			for time.Now().Before(endTime) {
 				select {
 				case <-ticker.C:
-					ctx := context.Background()
+					ctx := context.TODO()
 
 					// Prepare dummy record
 					execID := bson.NewObjectID()
