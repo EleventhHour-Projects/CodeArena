@@ -37,8 +37,7 @@ import (
 	"github.com/moby/moby/client"
 )
 
-// checkImage checks if the required Docker image (gcc:13) is available locally, ensuring that the worker containers can use it for executing code tasks
-// If the image is not found, it returns an error, prompting the main function to pull the image from the registry
+// checkImage checks if the configured Docker image is available locally, ensuring that the worker containers can use it for executing code tasks.
 func checkImage() error {
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
@@ -52,9 +51,10 @@ func checkImage() error {
 		return err
 	}
 	found := false
+	targetImage := utils.ExecutionImage()
 	for _, img := range imgs.Items {
 		for _, tag := range img.RepoTags {
-			if tag == "gcc:13" {
+			if tag == targetImage {
 				found = true
 				break
 			}
@@ -66,7 +66,7 @@ func checkImage() error {
 	if found == true {
 		return nil
 	}
-	return fmt.Errorf("no gcc:13 found")
+	return fmt.Errorf("no %s found", targetImage)
 }
 
 // loadEnv loads environment variables from a .env file if it exists, allowing the application to use configuration values defined in the file for connecting to services like MongoDB and Redis
@@ -164,8 +164,8 @@ func main() {
 	if !*apiOnly {
 		err := checkImage()
 		if err != nil {
-			// Pulling gcc image (for c++)
-			installImage("gcc:13")
+			// Pull the configured execution image so the worker pool can start.
+			installImage(utils.ExecutionImage())
 		}
 	}
 

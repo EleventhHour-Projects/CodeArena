@@ -13,6 +13,50 @@ import (
 	"github.com/moby/moby/client"
 )
 
+// LanguageRuntime describes how a source file should be written, built, and executed inside the worker container.
+type LanguageRuntime struct {
+	SourceFile string
+	CompileCmd []string
+	RunCmd     []string
+}
+
+// RuntimeForLanguage resolves the execution plan for a supported language.
+func RuntimeForLanguage(language string) (LanguageRuntime, bool) {
+	switch strings.ToLower(strings.TrimSpace(language)) {
+	case "c", "gcc":
+		return LanguageRuntime{
+			SourceFile: "/tmp/main.c",
+			CompileCmd: []string{"gcc", "/tmp/main.c", "-o", "/tmp/main"},
+			RunCmd:     []string{"timeout", "1s", "/tmp/main"},
+		}, true
+	case "cpp", "c++", "cc", "cxx":
+		return LanguageRuntime{
+			SourceFile: "/tmp/main.cpp",
+			CompileCmd: []string{"g++", "/tmp/main.cpp", "-o", "/tmp/main"},
+			RunCmd:     []string{"timeout", "1s", "/tmp/main"},
+		}, true
+	case "python", "py":
+		return LanguageRuntime{
+			SourceFile: "/tmp/main.py",
+			RunCmd:     []string{"timeout", "1s", "python3", "/tmp/main.py"},
+		}, true
+	case "java":
+		return LanguageRuntime{
+			SourceFile: "/tmp/Main.java",
+			CompileCmd: []string{"javac", "/tmp/Main.java"},
+			RunCmd:     []string{"timeout", "1s", "java", "-cp", "/tmp", "Main"},
+		}, true
+	case "go", "golang":
+		return LanguageRuntime{
+			SourceFile: "/tmp/main.go",
+			CompileCmd: []string{"go", "build", "-o", "/tmp/main", "/tmp/main.go"},
+			RunCmd:     []string{"timeout", "1s", "/tmp/main"},
+		}, true
+	default:
+		return LanguageRuntime{}, false
+	}
+}
+
 func execCommand(ctx context.Context, cli *client.Client, containerID string, cmd []string, input string) (string, string, error) {
 
 	execResp, err := cli.ExecCreate(ctx, containerID, client.ExecCreateOptions{
@@ -57,34 +101,38 @@ func normalizeOutput(s string) string {
 
 func RunTask(ctx context.Context, cli *client.Client, containerID string, task *utils.CodeConfig) error {
 	var failedInfo FailedInfo
+	runtime, ok := RuntimeForLanguage(task.Language)
+	if !ok {
+		return fmt.Errorf("unsupported language %q", task.Language)
+	}
 
 	// Initial cleanup to ensure a fresh environment for the current task
-	cleanupCmd := []string{"rm", "-f", "/tmp/main.cpp", "/tmp/a.out"}
+	cleanupCmd := []string{"sh", "-c", "rm -f /tmp/main.c /tmp/main.cpp /tmp/Main.java /tmp/main.py /tmp/main.go /tmp/main /tmp/a.out"}
 	execCommand(ctx, cli, containerID, cleanupCmd, "")
 
-	writeCmd := []string{"sh", "-c", "cat > /tmp/main.cpp"}
+	writeCmd := []string{"sh", "-c", fmt.Sprintf("cat > %s", runtime.SourceFile)}
 
 	_, _, err := execCommand(ctx, cli, containerID, writeCmd, task.Code)
 	if err != nil {
 		return err
 	}
 
-	compileCmd := []string{"g++", "/tmp/main.cpp", "-o", "/tmp/a.out"}
-
-	_, compErr, err := execCommand(ctx, cli, containerID, compileCmd, "")
-	if err != nil {
-		return err
-	}
-
-	// Check for compilation errors
-	if strings.Contains(compErr, "error:") {
-		failedInfo = FailedInfo{
-			isFailed:     true,
-			ErrorMessage: "Compilation Error",
-			ActualOutput: compErr,
+	if len(runtime.CompileCmd) > 0 {
+		_, compErr, err := execCommand(ctx, cli, containerID, runtime.CompileCmd, "")
+		if err != nil {
+			return err
 		}
-		SaveSubmissionResult(task, 0, 0, &failedInfo)
-		return nil
+
+		// Check for compilation errors
+		if strings.Contains(compErr, "error:") {
+			failedInfo = FailedInfo{
+				isFailed:     true,
+				ErrorMessage: "Compilation Error",
+				ActualOutput: compErr,
+			}
+			SaveSubmissionResult(task, 0, 0, &failedInfo)
+			return nil
+		}
 	}
 
 	var totalTime time.Duration
@@ -93,11 +141,9 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 
 		ectx, cancel := context.WithTimeout(ctx, time.Second*2) // Relax timeout slightly for overhead
 
-		runCmd := []string{"timeout", "1s", "/tmp/a.out"}
-
 		start := time.Now()
 
-		output, runStderr, err := execCommand(ectx, cli, containerID, runCmd, input+"\n")
+		output, runStderr, err := execCommand(ectx, cli, containerID, runtime.RunCmd, input+"\n")
 
 		elapsed := time.Since(start)
 		totalTime += elapsed
@@ -188,7 +234,7 @@ func worker(ctx context.Context) {
 	defer apiClient.Close()
 	PidL := int64(64)
 	t := true
-	imageName := "gcc:13"
+	imageName := utils.ExecutionImage()
 	resp, err := apiClient.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Image: imageName,
 		Name:  containerName,

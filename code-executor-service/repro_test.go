@@ -1,6 +1,7 @@
 package main
 
 import (
+	"executor-service/utils"
 	"testing"
 )
 
@@ -18,35 +19,35 @@ func TestCheckImageLogic(t *testing.T) {
 		{
 			name: "Tag found",
 			images: []ImageSummaryMock{
-				{RepoTags: []string{"gcc:13"}},
+				{RepoTags: []string{utils.ExecutionImage()}},
 			},
-			target:   "gcc:13",
+			target:   utils.ExecutionImage(),
 			expected: true,
 		},
 		{
 			name: "Tag found in multi-tag image",
 			images: []ImageSummaryMock{
-				{RepoTags: []string{"other:latest", "gcc:13"}},
+				{RepoTags: []string{"other:latest", utils.ExecutionImage()}},
 			},
-			target:   "gcc:13",
+			target:   utils.ExecutionImage(),
 			expected: true,
 		},
 		{
 			name: "Tag found in later image",
 			images: []ImageSummaryMock{
 				{RepoTags: []string{"alpine:latest"}},
-				{RepoTags: []string{"gcc:13"}},
+				{RepoTags: []string{utils.ExecutionImage()}},
 			},
-			target:   "gcc:13",
+			target:   utils.ExecutionImage(),
 			expected: true,
 		},
 		{
 			name: "Dangling image (empty RepoTags) - NO PANIC",
 			images: []ImageSummaryMock{
 				{RepoTags: []string{}},
-				{RepoTags: []string{"gcc:13"}},
+				{RepoTags: []string{utils.ExecutionImage()}},
 			},
-			target:   "gcc:13",
+			target:   utils.ExecutionImage(),
 			expected: true,
 		},
 		{
@@ -55,7 +56,7 @@ func TestCheckImageLogic(t *testing.T) {
 				{RepoTags: []string{}},
 				{RepoTags: nil},
 			},
-			target:   "gcc:13",
+			target:   utils.ExecutionImage(),
 			expected: false,
 		},
 	}

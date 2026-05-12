@@ -14,10 +14,9 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
-
-	"os"
 
 	"github.com/google/go-github/v84/github"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -31,7 +30,18 @@ const (
 	// This constant allows for easy configuration of the worker pool size based on the needs of the application and available resources, enabling efficient processing of code execution tasks while managing system resources effectively
 	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
 	WORKER_POOL_SIZE = 4
+	// DefaultExecutionImage is the Docker image used by the executor workers when EXECUTION_IMAGE is not set.
+	DefaultExecutionImage = "gcc:13"
 )
+
+// ExecutionImage returns the Docker image used for code execution workers.
+// It can be overridden via the EXECUTION_IMAGE environment variable.
+func ExecutionImage() string {
+	if image := os.Getenv("EXECUTION_IMAGE"); image != "" {
+		return image
+	}
+	return DefaultExecutionImage
+}
 
 // Global variables for configuration and shared data
 var REDIS_ADDR string
