@@ -31,7 +31,7 @@ const (
 	// The value of WORKER_POOL_SIZE can be adjusted to increase or decrease the number of concurrent workers, allowing for scalability and optimization of the code execution service based on the expected workload and performance requirements
 	WORKER_POOL_SIZE = 4
 	// DefaultExecutionImage is the Docker image used by the executor workers when EXECUTION_IMAGE is not set.
-	DefaultExecutionImage = "gcc:13"
+	DefaultExecutionImage = "multi-lang-runner:latest"
 )
 
 // ExecutionImage returns the Docker image used for code execution workers.
