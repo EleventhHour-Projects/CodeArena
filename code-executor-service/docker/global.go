@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"encoding/json"
+	"executor-service/utils"
 	"fmt"
 	"strings"
 	"sync"
@@ -89,7 +90,7 @@ func GetWorkerDetails() ([]WorkerDetail, error) {
 	var targetInfos map[string]WorkerDetail = make(map[string]WorkerDetail)
 
 	for _, container := range containers.Items {
-		if container.Image == "gcc:13" {
+		if container.Image == utils.ExecutionImage() {
 			name := ""
 			if len(container.Names) > 0 {
 				name = container.Names[0]

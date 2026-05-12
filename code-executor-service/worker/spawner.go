@@ -22,9 +22,7 @@ func SpawnWorkerFailed(ctx context.Context) {
 	go worker(ctx)
 }
 
-// KillAllContainers is a function that stops and removes all Docker containers that are using the "gcc:13" image, which is used for code execution in the worker pool.
-// This function is useful for cleaning up any running containers that may be left over after code execution tasks have completed or if there are any issues with the containers.
-// It uses the Docker client to list all containers, filter them by the "gcc:13" image, and then stop and remove each matching container. This helps ensure that there are no lingering containers consuming resources after code execution tasks have finished.
+// KillAllContainers stops and removes all worker containers that use the configured execution image.
 func KillAllContainers(ctx context.Context) error {
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
@@ -40,7 +38,7 @@ func KillAllContainers(ctx context.Context) error {
 	}
 
 	for _, container := range containers.Items {
-		if container.Image != "gcc:13" {
+		if container.Image != utils.ExecutionImage() {
 			continue
 		}
 		_, err := apiClient.ContainerStop(ctx, container.ID, client.ContainerStopOptions{})
