@@ -33,6 +33,14 @@ const playSuccessSound = () => {
   setTimeout(() => playTone(800, "sine", 0.3), 100);
 };
 
+const BOILERPLATES: Record<string, string> = {
+  cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}`,
+  c: `#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    // Write your code here\n    return 0;\n}`,
+  python: `# Write your code here\n`,
+  java: `import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`,
+  go: `package main\n\nimport (\n    "fmt"\n)\n\nfunc main() {\n    // Write your code here\n}`,
+};
+
 interface PageProps {
   params: Promise<{
     battleID: string;
@@ -199,38 +207,49 @@ export default function BattlePage({ params }: PageProps) {
   const [battleStats, setBattleStats] = useState<any>(null);
   
   const [code, setCode] = useState<string>("// Loading code...");
+  const [language, setLanguage] = useState("cpp");
   const [executionResult, setExecutionResult] = useState<any>(null);
   const lastProblemIdRef = useRef<number | null>(null);
+  const lastLanguageRef = useRef<string>("cpp");
 
   // Keep refs in sync with state for recording capture
   useEffect(() => { codeRef.current = code; }, [code]);
   useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
 
-  // Persistence: Restore code on problem change
+  // Persistence: Restore code on problem or language change
   useEffect(() => {
     if (battleID && problem?.id) {
-       // Only restore if the problem ID actually changed to avoid cycles
-       if (lastProblemIdRef.current !== problem.id) {
-         const saved = localStorage.getItem(`code_${battleID}_${problem.id}`);
+       // Restore code if problem or language changed to avoid cycles
+       if (lastProblemIdRef.current !== problem.id || lastLanguageRef.current !== language) {
+         let saved = localStorage.getItem(`code_${battleID}_${problem.id}_${language}`);
+         if (!saved && language === 'cpp') {
+           // Fallback to legacy key for C++ compatibility
+           saved = localStorage.getItem(`code_${battleID}_${problem.id}`);
+         }
          if (saved) {
            setCode(saved);
          } else {
-           setCode("#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Write your code here\n    return 0;\n}");
+           setCode(BOILERPLATES[language] || BOILERPLATES.cpp);
          }
          lastProblemIdRef.current = problem.id;
+         lastLanguageRef.current = language;
        }
     }
-  }, [battleID, problem?.id]);
+  }, [battleID, problem?.id, language]);
 
   // Persistence: Save code on change
   useEffect(() => {
     if (battleID && problem?.id && code && code !== "// Loading code...") {
-      // Only save if the code matches the currently active problem ID ref
-      if (lastProblemIdRef.current === problem.id) {
-        localStorage.setItem(`code_${battleID}_${problem.id}`, code);
+      // Only save if the code matches the currently active problem ID ref and language ref
+      if (lastProblemIdRef.current === problem.id && lastLanguageRef.current === language) {
+        localStorage.setItem(`code_${battleID}_${problem.id}_${language}`, code);
+        if (language === 'cpp') {
+          // Sync to legacy key for backward compatibility
+          localStorage.setItem(`code_${battleID}_${problem.id}`, code);
+        }
       }
     }
-  }, [code, battleID, problem?.id]);
+  }, [code, battleID, problem?.id, language]);
 
   useEffect(() => {
     async function fetchBattle() {
@@ -460,7 +479,6 @@ export default function BattlePage({ params }: PageProps) {
 
   const [activeTestCaseId, setActiveTestCaseId] = useState(1);
   const [panelTab, setPanelTab] = useState("testcases"); // testcases, result
-  const [language, setLanguage] = useState("cpp");
   const [activeTab, setActiveTab] = useState("description"); // description, submissions
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionType, setExecutionType] = useState<"Run" | "Submit" | null>(null);
@@ -1308,12 +1326,10 @@ export default function BattlePage({ params }: PageProps) {
                     style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23a1a1aa\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em' }}
                   >
                     <option value="cpp">C++ (GCC 11)</option>
-                    <option value="python" disabled className="text-zinc-600">Python 3.10</option>
-                    <option value="java" disabled className="text-zinc-600">Java 17</option>
-                    <option value="javascript" disabled className="text-zinc-600">JavaScript (Node.js)</option>
-                    <option value="typescript" disabled className="text-zinc-600">TypeScript</option>
-                    <option value="go" disabled className="text-zinc-600">Go 1.19</option>
-                    <option value="rust" disabled className="text-zinc-600">Rust 1.66</option>
+                    <option value="c">C (GCC 11)</option>
+                    <option value="python">Python 3.10</option>
+                    <option value="java">Java 17</option>
+                    <option value="go">Go 1.19</option>
                   </select>
                 </div>
 

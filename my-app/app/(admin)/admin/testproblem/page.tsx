@@ -36,6 +36,14 @@ interface Problem {
   verified?: boolean;
 }
 
+const BOILERPLATES: Record<string, string> = {
+  cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Test your solution here\n    return 0;\n}`,
+  c: `#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    // Test your solution here\n    return 0;\n}`,
+  python: `# Test your solution here\n`,
+  java: `import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Test your solution here\n    }\n}`,
+  go: `package main\n\nimport (\n    "fmt"\n)\n\nfunc main() {\n    // Test your solution here\n}`,
+};
+
 export default function AdminTestProblem() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [filteredProblems, setFilteredProblems] = useState<Problem[]>([]);
@@ -47,6 +55,27 @@ export default function AdminTestProblem() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('description');
+
+  const lastProblemIdRef = useRef<number | null>(null);
+  const lastLanguageRef = useRef<string>("cpp");
+
+  useEffect(() => {
+    if (selectedProblem?.id) {
+      if (lastProblemIdRef.current !== selectedProblem.id || lastLanguageRef.current !== language) {
+        let saved = localStorage.getItem(`admin_code_${selectedProblem.id}_${language}`);
+        if (!saved && language === 'cpp') {
+          saved = localStorage.getItem(`admin_code_${selectedProblem.id}`);
+        }
+        if (saved) {
+          setCode(saved);
+        } else {
+          setCode(BOILERPLATES[language] || BOILERPLATES.cpp);
+        }
+        lastProblemIdRef.current = selectedProblem.id;
+        lastLanguageRef.current = language;
+      }
+    }
+  }, [selectedProblem?.id, language]);
 
   useEffect(() => {
     fetchProblems();
@@ -83,20 +112,16 @@ export default function AdminTestProblem() {
 
   const handleSelectProblem = (problem: Problem) => {
     setSelectedProblem(problem);
-    // Restore code if saved or set default
-    const saved = localStorage.getItem(`admin_code_${problem.id}`);
-    if (saved) {
-      setCode(saved);
-    } else {
-      setCode("#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Test your solution here\n    return 0;\n}");
-    }
     setResult(null);
   };
 
   const handleCodeChange = (value: string | undefined) => {
-    if (value && selectedProblem) {
+    if (value !== undefined && selectedProblem) {
       setCode(value);
-      localStorage.setItem(`admin_code_${selectedProblem.id}`, value);
+      localStorage.setItem(`admin_code_${selectedProblem.id}_${language}`, value);
+      if (language === 'cpp') {
+        localStorage.setItem(`admin_code_${selectedProblem.id}`, value);
+      }
     }
   };
 
@@ -294,8 +319,10 @@ export default function AdminTestProblem() {
                   className="bg-zinc-900 border border-white/10 rounded-md text-xs px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white cursor-pointer"
                 >
                   <option value="cpp">C++ (GCC 13)</option>
+                  <option value="c">C (GCC 11)</option>
                   <option value="python">Python 3</option>
-                  <option value="javascript">JavaScript (Node)</option>
+                  <option value="java">Java 17</option>
+                  <option value="go">Go 1.19</option>
                 </select>
                 <Button 
                   onClick={handleRun} 
@@ -311,7 +338,7 @@ export default function AdminTestProblem() {
                 </Button>
               </div>
             </div>
-
+ 
             {/* Content Area */}
             <div className="flex-1 flex min-h-0">
               {/* Left Side - Editor & Results */}
@@ -321,7 +348,7 @@ export default function AdminTestProblem() {
                     height="100%"
                     defaultLanguage="cpp"
                     theme="vs-dark"
-                    language={language === 'cpp' ? 'cpp' : language === 'python' ? 'python' : 'javascript'}
+                    language={language}
                     value={code}
                     onChange={handleCodeChange}
                     options={{
