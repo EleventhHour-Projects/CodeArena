@@ -67,6 +67,16 @@ const eventBadge = (event: string) => {
   return colors[event] || 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30';
 };
 
+function detectLanguage(code: string | null): string {
+  if (!code) return "cpp";
+  if (code.includes("#include <stdio.h>") || code.includes("#include <stdlib.h>")) return "c";
+  if (code.includes("#include")) return "cpp";
+  if (code.startsWith("package main") || code.includes('import (\n    "fmt"')) return "go";
+  if (code.includes("class Main") || code.includes("public class")) return "java";
+  if (code.includes("def ") || code.includes("print(") || code.includes("# ")) return "python";
+  return "cpp"; // default fallback
+}
+
 // ─── Page ───
 export default function ReplaysPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -511,7 +521,7 @@ function ReplayViewer({
               <div className="flex-1 bg-[#09090b]">
                 <Editor
                   height="100%"
-                  language="cpp"
+                  language={detectLanguage(p1State.code)}
                   theme="vs-dark"
                   value={p1State.code}
                   options={{
@@ -554,7 +564,7 @@ function ReplayViewer({
               <div className="flex-1 bg-[#09090b]">
                 <Editor
                   height="100%"
-                  language="cpp"
+                  language={detectLanguage(p2State.code)}
                   theme="vs-dark"
                   value={p2State.code}
                   options={{
