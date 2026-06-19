@@ -11,7 +11,7 @@ require (
 	github.com/nottechdm/notnet v1.0.3
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/shirou/gopsutil/v3 v3.24.5
-	go.mongodb.org/mongo-driver/v2 v2.5.1
+	go.mongodb.org/mongo-driver/v2 v2.7.0
 	golang.org/x/oauth2 v0.36.0
 )
 
@@ -47,8 +47,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
