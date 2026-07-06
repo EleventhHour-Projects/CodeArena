@@ -18,7 +18,7 @@ import (
 
 // API URLs - Configuration via environment variables
 var (
-	BACKEND_URL         = getEnv("BACKEND_URL", "http://34.126.214.18:6969")
+	BACKEND_URL         = getEnv("BACKEND_URL", "http://34.131.239.188:6969")
 	APP_URL             = getEnv("APP_URL", "http://localhost:3000")
 	MATCHMAKING_WSS_URL = getEnv("MATCHMAKING_WSS_URL", "wss://matchmake.codearena.pro")
 	BATTLE_WSS_URL      = getEnv("BATTLE_WSS_URL", "wss://wss.codearena.pro")

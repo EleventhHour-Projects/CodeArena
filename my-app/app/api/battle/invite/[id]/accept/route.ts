@@ -163,7 +163,7 @@ export async function POST(
 
         // Notify Go backend to remove from SSE store immediately
         try {
-            await fetch("http://34.126.214.18:6969/api/invites/delete", {
+            await fetch("http://34.131.239.188:6969/api/invites/delete", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

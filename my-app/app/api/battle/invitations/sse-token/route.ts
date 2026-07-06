@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         if (!me) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 
         // Fetch SSE Token from executor service for invites
-        const tokenRes = await fetch("http://34.126.214.18:6969/api/invites/sse-token", {
+        const tokenRes = await fetch("http://34.131.239.188:6969/api/invites/sse-token", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
