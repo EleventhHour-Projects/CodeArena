@@ -32,7 +32,7 @@ EXPOSE 8000
 
 # Set default environment variables (can be overridden at runtime)
 ENV PORT=8000
-ENV BACKEND_URL=http://34.126.214.18:6969
+ENV BACKEND_URL=http://34.131.239.188:6969
 ENV APP_URL=http://localhost:3000
 ENV SOCKET_BASE_URL=wss://wss.codearena.pro
 
