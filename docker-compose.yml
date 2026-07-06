@@ -81,7 +81,7 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
 
   mongodb:
-    image: mongo:latest
+    image: mongo:8.0
     user: root
     ports:
       - "27017:27017"
@@ -101,7 +101,7 @@ services:
         exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --keyFile /etc/mongodb.key
 
   mongodb-setup:
-    image: mongo:latest
+    image: mongo:8.0
     depends_on:
       - mongodb
     restart: "no"
