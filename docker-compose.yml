@@ -30,12 +30,9 @@ services:
     environment:
       - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/?authSource=admin&replicaSet=rs0
       - WSSIP=http://express-server:6767/internal/event
     depends_on:
       - redis
-      - mongodb
-
   frontend-service:
     build:
       context: ./my-app
@@ -50,13 +47,11 @@ services:
       - REDIS_ADDR=redis:6379
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/code-arena?authSource=admin&replicaSet=rs0
       - BOT_SERVICE_URL=http://bot-service:8000
     depends_on:
       - redis
       - express-server
       - executor-service
-      - mongodb
 
   bot-service:
     build:
@@ -79,49 +74,3 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
     command: redis-server --requirepass ${REDIS_PASSWORD}
-
-  mongodb:
-    image: mongo:latest
-    user: root
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-      - ./mongodb.key:/tmp/mongodb.key:ro
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    entrypoint:
-      - bash
-      - -c
-      - |
-        cp /tmp/mongodb.key /etc/mongodb.key
-        chmod 400 /etc/mongodb.key
-        chown mongodb:mongodb /etc/mongodb.key
-        exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --keyFile /etc/mongodb.key
-
-  mongodb-setup:
-    image: mongo:latest
-    depends_on:
-      - mongodb
-    restart: "no"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    entrypoint: |
-      bash -c "
-      echo 'Waiting for mongodb...'
-      until mongosh --host mongodb --eval 'db.adminCommand({ping: 1})' &>/dev/null; do
-        sleep 1
-      done
-      echo 'Checking replica set status...'
-      if mongosh --host mongodb -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'rs.status()' &>/dev/null; then
-        echo 'Replica set already initialized.'
-      else
-        echo 'Initiating replica set...'
-        mongosh --host mongodb -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongodb:27017\"}]})'
-      fi
-      "
-
-volumes:
-  mongodb_data:
