@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const res = await fetch('http://34.126.214.18:6969/api/internal/spawn', {
+    const res = await fetch('http://34.131.239.188:6969/api/internal/spawn', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

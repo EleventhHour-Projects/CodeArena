@@ -7,7 +7,7 @@ export async function GET() {
     await dbConnect();
     
     // 1. Fetch online user IDs from the executor service
-    const res = await fetch('http://34.126.214.18:6969/api/internal/online-users', {
+    const res = await fetch('http://34.131.239.188:6969/api/internal/online-users', {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
