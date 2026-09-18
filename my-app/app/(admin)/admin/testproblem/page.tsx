@@ -126,12 +126,14 @@ export default function AdminTestProblem() {
   };
 
   const pollStatus = async (execId: string) => {
-    const interval = setInterval(async () => {
+    let attempts = 0;
+    const maxAttempts = 100;
+    const check = async () => {
+      attempts++;
       try {
         const res = await fetch(`/api/submission-status/${execId}`);
         const data = await res.json();
-        if (data.status !== 'PENDING') {
-          clearInterval(interval);
+        if (data.status && data.status !== 'PENDING') {
           setResult(data);
           setIsExecuting(false);
           if (data.status === 'Accepted') {
@@ -139,13 +141,21 @@ export default function AdminTestProblem() {
           } else {
             toast.error(`Execution failed: ${data.status}`);
           }
+          return;
         }
+        if (attempts >= maxAttempts) {
+          setIsExecuting(false);
+          toast.error('Execution timed out');
+          return;
+        }
+        const delay = attempts <= 10 ? 80 : 200;
+        setTimeout(check, delay);
       } catch (error) {
-        clearInterval(interval);
         setIsExecuting(false);
         toast.error('Error polling status');
       }
-    }, 1500);
+    };
+    setTimeout(check, 50);
   };
 
   const handleRun = async () => {
