@@ -38,7 +38,7 @@ type WSS struct {
 }
 
 // WSServer is a global variable that holds an instance of the WSS struct, providing a centralized point of access for WebSocket communication throughout the application, allowing for efficient handling of events related to code execution and submission outcomes in a thread-safe manner.
-var WSServer = &WSS{channel: make(chan WSSPayload), mu: sync.Mutex{}}
+var WSServer = &WSS{channel: make(chan WSSPayload, 10000), mu: sync.Mutex{}}
 
 // Add adds a new payload to the WebSocket channel in a thread-safe manner, allowing for efficient communication of events related to code execution and submission outcomes between different components of the code execution service.
 func (w *WSS) Add(payload WSSPayload) {
