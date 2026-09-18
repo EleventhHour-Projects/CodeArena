@@ -529,13 +529,19 @@ export default function BattlePage({ params }: PageProps) {
   }, [battleID, session, battleDetails, currentQuestion]);
 
   const pollSubmissionStatus = async (execId: string, type: "Run" | "Submit", toastId: string | number) => {
-    const pollInterval = setInterval(async () => {
+    let attempts = 0;
+    const maxAttempts = 100;
+    let isFinished = false;
+
+    const check = async () => {
+      if (isFinished) return;
+      attempts++;
       try {
         const res = await fetch(`/api/submission-status/${execId}`);
         const data = await res.json();
         
-        if (data.status !== "PENDING") {
-           clearInterval(pollInterval);
+        if (data.status && data.status !== "PENDING") {
+           isFinished = true;
            setIsExecuting(false);
            // Record result event
            const myPKey = isMePlayer1 ? 'player1' : 'player2';
@@ -556,13 +562,28 @@ export default function BattlePage({ params }: PageProps) {
            } else {
                toast.info(`Run Completed: ${data.status}`, { id: toastId });
            }
+           return;
         }
+
+        if (attempts >= maxAttempts) {
+          isFinished = true;
+          setIsExecuting(false);
+          toast.error("Execution timed out", { id: toastId });
+          return;
+        }
+
+        // Ultra-fast adaptive polling: initial 10 checks at 80ms, then 200ms
+        const delay = attempts <= 10 ? 80 : 200;
+        setTimeout(check, delay);
       } catch (e) {
-         clearInterval(pollInterval);
+         isFinished = true;
          setIsExecuting(false);
          toast.error("Error checking submission status", { id: toastId });
       }
-    }, 1500);
+    };
+
+    // First check after 50ms to instantly capture 30ms worker completion
+    setTimeout(check, 50);
   };
 
   const handleExecute = async (type: "Run" | "Submit") => {

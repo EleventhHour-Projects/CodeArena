@@ -61,12 +61,8 @@ export async function GET(
             }
 
             // No record found means execution is in progress or not persisted yet
-            const pendingResponse = { success: true, status: "PENDING" };
-            
-            // Short cache TTL (e.g., 2 seconds) for PENDING state to prevent DB hammering on high-frequency polling
-            await redisClient.setEx(cacheKey, 2, JSON.stringify(pendingResponse));
-
-            return NextResponse.json(pendingResponse, { status: 200 });
+            // Return PENDING without caching in Redis so subsequent polls immediately see completed status
+            return NextResponse.json({ success: true, status: "PENDING" }, { status: 200 });
         }
 
         // 4. Record found, prepare full details response
