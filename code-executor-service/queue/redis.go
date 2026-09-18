@@ -49,7 +49,53 @@ func (r *RedisQueue) Pop(ctx context.Context, key string) (string, error) {
 	return result[1], nil
 }
 
-// ListenForTasks continuously listens for tasks on the "tasks" queue and adds them to the worker pool
+// processTask resolves the task metadata and problem test cases asynchronously before dispatching to the worker pool
+func processTask(ctx context.Context, task string) {
+	data, err := database.MongoDB.GetExecutionCodeData(task)
+	if err != nil {
+		fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
+		return
+	}
+
+	testCases := make(map[string]string)
+	if len(data.Testcases) > 0 {
+		for _, tc := range data.Testcases {
+			testCases[tc.Input] = tc.Output
+		}
+	} else {
+		all := (data.Type == "Submit")
+		var err error
+		testCases, err = database.GetProblemTestCases(data.Problem.ID, all)
+		if err != nil {
+			fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
+			return
+		}
+	}
+
+	maxTime, maxMemory, err := database.GetProblemConstraints(data.Problem.ID)
+	if err != nil {
+		fmt.Println(utils.Red+"Error fetching problem constraints:"+utils.Reset, err)
+		return
+	}
+
+	utils.TaskInfo.IncrementSubmitted()
+	utils.WorkerPoolData.AddTask(utils.CodeConfig{
+		TaskID:    task,
+		Code:      data.Code,
+		Language:  data.Language,
+		TestCases: testCases,
+		UserID:    data.UserID,
+		BattleID:  data.BattleID,
+		Problem:   data.Problem,
+		Constraints: &utils.CodeConfigConstraints{
+			MaxTime:   maxTime,
+			MaxMemory: maxMemory,
+		},
+		Type: data.Type,
+	})
+}
+
+// ListenForTasks continuously listens for tasks on the "tasks" queue and dispatches them to the worker pool
 func ListenForTasks(ctx context.Context) {
 	for {
 		select {
@@ -61,54 +107,13 @@ func ListenForTasks(ctx context.Context) {
 				if err == redis.Nil {
 					continue
 				}
+				if ctx.Err() != nil {
+					return
+				}
 				fmt.Println(utils.Red+"Error popping task:"+utils.Reset, err)
 				continue
 			}
-			fmt.Println("Received task:", task)
-			data, err := database.MongoDB.GetExecutionCodeData(task)
-			if err != nil {
-				fmt.Println(utils.Red+"Error getting execution code data:"+utils.Reset, err)
-				continue
-			}
-			// fmt.Println(data)
-			testCases := make(map[string]string)
-			if len(data.Testcases) > 0 {
-				fmt.Println("Using custom testcases from database")
-				for _, tc := range data.Testcases {
-					testCases[tc.Input] = tc.Output
-				}
-			} else {
-				all := false
-				if data.Type == "Submit" {
-					all = true
-				}
-				var err error
-				testCases, err = database.GetProblemTestCases(data.Problem.ID, all)
-				if err != nil {
-					fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
-					continue
-				}
-			}
-			maxTime, maxMemory, err := database.GetProblemConstraints(data.Problem.ID)
-			if err != nil {
-				fmt.Println(utils.Red+"Error fetching problem constraints:"+utils.Reset, err)
-				continue
-			}
-			utils.TaskInfo.IncrementSubmitted()
-			utils.WorkerPoolData.AddTask(utils.CodeConfig{
-				TaskID:    task,
-				Code:      data.Code,
-				Language:  data.Language,
-				TestCases: testCases,
-				UserID:    data.UserID,
-				BattleID:  data.BattleID,
-				Problem:   data.Problem,
-				Constraints: &utils.CodeConfigConstraints{
-					MaxTime:   maxTime,
-					MaxMemory: maxMemory,
-				},
-				Type: data.Type,
-			})
+			go processTask(ctx, task)
 		}
 	}
 }

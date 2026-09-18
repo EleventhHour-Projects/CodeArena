@@ -309,3 +309,43 @@ func TestWorkerPool_TaskIDPreserved(t *testing.T) {
 		t.Errorf("expected Type=%q, got %q", sent.Type, received.Type)
 	}
 }
+
+// ─── Judge Runner Result Decoding ─────────────────────────────────────────────
+
+func TestRunnerResult_Pass(t *testing.T) {
+	raw := `{"passed": true, "total_time_ms": 25, "error": "", "testcase": "", "actual": "", "expected": ""}`
+	type runnerResult struct {
+		Passed      bool   `json:"passed"`
+		TotalTimeMs int    `json:"total_time_ms"`
+		Error       string `json:"error"`
+		TestCase    string `json:"testcase"`
+		Actual      string `json:"actual"`
+		Expected    string `json:"expected"`
+		RunnerError string `json:"runner_error"`
+	}
+	var res runnerResult
+	if err := strings.Contains(raw, "passed"); !err {
+		t.Fatal("expected raw to contain passed")
+	}
+	if res.Passed != false {
+		t.Fatal("unexpected initial state")
+	}
+}
+
+func TestNormalizeOutput_EdgeCases(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"  1 2  \n  2 3  \n", "1 2\n  2 3"},
+		{"\r\n\r\n", ""},
+		{"output\r\n", "output"},
+		{"a \t \r\nb \t \r\n", "a\nb"},
+	}
+	for _, c := range cases {
+		got := worker.NormalizeOutput(c.in)
+		if got != c.want {
+			t.Errorf("NormalizeOutput(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+

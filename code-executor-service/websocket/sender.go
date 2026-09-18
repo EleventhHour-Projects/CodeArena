@@ -10,15 +10,23 @@ import (
 	"time"
 )
 
-// sendToWSS sends a payload to the WebSocket server by making an HTTP POST request to the specified WebSocket endpoint, allowing for communication of events related to code execution and submission outcomes from the code execution service to the WebSocket server for real-time updates and notifications
-// The function constructs the HTTP request with the appropriate headers and payload, and handles the response to ensure successful communication with the WebSocket server, providing error handling for any issues that may arise during the request process.
-func sendToWSS(payload utils.WSSPayload) error {
+var wssClient = &http.Client{
+	Timeout: 5 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
+
+// sendToWSS sends a payload to the WebSocket server by making an HTTP POST request to the specified WebSocket endpoint.
+func sendToWSS(ctx context.Context, payload utils.WSSPayload) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, utils.WSSIP, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, utils.WSSIP, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -26,11 +34,7 @@ func sendToWSS(payload utils.WSSPayload) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-internal-key", utils.INTERNAL_KEY)
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := wssClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -43,8 +47,7 @@ func sendToWSS(payload utils.WSSPayload) error {
 	return nil
 }
 
-// ListForEvents continuously listens for incoming payloads from the WebSocket channel and sends them to the WebSocket server using the sendToWSS function, allowing for real-time communication of events related to code execution and submission outcomes from the code execution service to the WebSocket server
-// The function runs in a loop, checking for cancellation of the context to gracefully exit when needed, and handles any errors that may occur during the sending of events to the WebSocket server, ensuring robust communication between the code execution service and the WebSocket server for real-time updates and notifications.
+// ListForEvents continuously listens for incoming payloads from the WebSocket channel and sends them to the WebSocket server.
 func ListForEvents(ctx context.Context) {
 	for {
 		select {
@@ -52,8 +55,7 @@ func ListForEvents(ctx context.Context) {
 			return
 		default:
 			payload := utils.WSServer.Get()
-			err := sendToWSS(payload)
-			if err != nil {
+			if err := sendToWSS(ctx, payload); err != nil {
 				fmt.Println("Error sending event to TS server:", err)
 			}
 		}

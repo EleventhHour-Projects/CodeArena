@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -53,27 +54,53 @@ type ProblemJSON struct {
 	} `json:"testcases"`
 }
 
-// GetProblemTestCases is a function that fetches the test cases for a given problem ID
+var (
+	problemCacheMu sync.RWMutex
+	problemCache   = make(map[int]ProblemJSON)
+)
+
+func findQuestionsDir(sub string) string {
+	candidates := []string{
+		filepath.Join("..", sub),
+		filepath.Join("..", "..", sub),
+		filepath.Join(".", sub),
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return filepath.Join("..", sub)
+}
+
+// GetProblemTestCases is a function that fetches the test cases for a given problem ID, using an in-memory cache
 func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
-	// Let's assume the executable is run from the `code-executor-service` directory
-	// so the `questions` directory is at `../questions/testcase`
-	p := strconv.Itoa(problemID)
-	questionsDir := filepath.Join("..", "questions/testcase")
-	filePath := filepath.Join(questionsDir, p+".json")
+	problemCacheMu.RLock()
+	problem, found := problemCache[problemID]
+	problemCacheMu.RUnlock()
 
-	fileBytes, err := os.ReadFile(filePath)
-	if err != nil {
-		fmt.Printf("Error reading problem file: %s, %v\n", filePath, err)
-		return nil, fmt.Errorf("could not read problem file for ID %s", p)
+	if !found {
+		p := strconv.Itoa(problemID)
+		questionsDir := findQuestionsDir(filepath.Join("questions", "testcase"))
+		filePath := filepath.Join(questionsDir, p+".json")
+
+		fileBytes, err := os.ReadFile(filePath)
+		if err != nil {
+			fmt.Printf("Error reading problem file: %s, %v\n", filePath, err)
+			return nil, fmt.Errorf("could not read problem file for ID %s", p)
+		}
+
+		if err := json.Unmarshal(fileBytes, &problem); err != nil {
+			fmt.Printf("Error unmarshalling problem JSON: %v\n", err)
+			return nil, fmt.Errorf("invalid json in problem file for ID %s", p)
+		}
+
+		problemCacheMu.Lock()
+		problemCache[problemID] = problem
+		problemCacheMu.Unlock()
 	}
 
-	var problem ProblemJSON
-	if err := json.Unmarshal(fileBytes, &problem); err != nil {
-		fmt.Printf("Error unmarshalling problem JSON: %v\n", err)
-		return nil, fmt.Errorf("invalid json in problem file for ID %s", p)
-	}
-
-	testCases := make(map[string]string)
+	testCases := make(map[string]string, len(problem.Testcases.Run)+len(problem.Testcases.Submit))
 
 	for _, tc := range problem.Testcases.Run {
 		testCases[tc.Input] = tc.Output
@@ -90,19 +117,15 @@ func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
 
 // GetProblemConstraints is a function that fetches the constraints for a given problem ID, such as maximum execution time and memory limit
 func GetProblemConstraints(problemID int) (int, int, error) {
-	// Fetch constraints from ./.../problems/{problemID}/constraints.txt
-	// For the sake of this example, we'll return hardcoded constraints
+	// Default constraints: 1000ms max execution time, 256MB memory limit
 	maxTime := 1000  // in milliseconds
 	maxMemory := 256 // in megabytes
-	// Parse the constraints from the file and return the values
 	return maxTime, maxMemory, nil
 }
 
-// UpdateExecutionCodeStatus is a function that updates the status of an submission document in the MongoDB collection
+// UpdateExecutionCodeStatus is a function that updates the status of a submission document in the MongoDB collection
 // It takes the ID of the execution code document and the new status as parameters, and updates the document in the database accordingly
 func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result, task utils.CodeConfig, pass bool) (*bson.ObjectID, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	var passString string
 	if pass {
 		passString = "Accepted"
@@ -218,7 +241,7 @@ func (m *MongoDBClient) fetchRandomProblems(level string, count int) ([]utils.Ba
 		return []utils.BattleProblem{}, nil
 	}
 
-	questionsDir := filepath.Join("..", "questions", level)
+	questionsDir := findQuestionsDir(filepath.Join("questions", level))
 	files, err := os.ReadDir(questionsDir)
 	if err != nil {
 		fmt.Printf("Error reading questions dir %s: %v\n", questionsDir, err)
