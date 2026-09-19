@@ -3,6 +3,38 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import {
+  FileCode2,
+  ListChecks,
+  ShieldCheck,
+  Settings,
+  Activity,
+  Plus,
+  Trash2,
+  Copy,
+  ChevronLeft,
+  Save,
+  Check,
+  AlertCircle,
+  Clock,
+  Camera,
+  Mic,
+  Maximize2,
+  EyeOff,
+  ClipboardX,
+  Search,
+  BookOpen,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  Star,
+  Users,
+  AlertTriangle,
+  RotateCcw,
+  Loader2,
+  ExternalLink,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TestQuestion {
   problemId: number;
@@ -32,6 +64,33 @@ interface TestForm {
   status: 'draft' | 'active' | 'archived';
 }
 
+interface ProblemItem {
+  id: number;
+  title: string;
+  slug: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  tags: string[];
+  description: string;
+  input_format?: string;
+  output_format?: string;
+  constraints?: string;
+}
+
+interface CandidateAttempt {
+  id: string;
+  candidate: { name: string; email: string; rollNumber?: string; phone?: string };
+  status: 'registered' | 'in_progress' | 'submitted' | 'terminated';
+  startedAt?: string;
+  submittedAt?: string;
+  tabSwitchCount: number;
+  violations: { type: string; timestamp: string; details?: string }[];
+  answers: { problemId: number; score: number; status?: string; language?: string }[];
+  totalScore: number;
+  maxScore: number;
+  feedback?: { rating: number; difficultyRating?: string; comments?: string; submittedAt?: string };
+  createdAt: string;
+}
+
 const DEFAULT_FORM: TestForm = {
   title: '',
   description: '',
@@ -51,12 +110,6 @@ const DEFAULT_FORM: TestForm = {
   status: 'draft',
 };
 
-const DIFF_COLORS: Record<string, string> = {
-  easy: '#4ade80',
-  medium: '#fb923c',
-  hard: '#f87171',
-};
-
 export default function TestFormPage() {
   const router = useRouter();
   const params = useParams();
@@ -66,13 +119,30 @@ export default function TestFormPage() {
   const [form, setForm] = useState<TestForm>(DEFAULT_FORM);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'proctoring' | 'settings'>('basic');
-
-  // New question state
-  const [newQ, setNewQ] = useState<TestQuestion>({ problemId: 0, title: '', difficulty: 'medium', points: 10 });
+  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'proctoring' | 'settings' | 'activity'>('basic');
   const [generatedLink, setGeneratedLink] = useState('');
+
+  // Problem Bank Modal & Picker
+  const [availableProblems, setAvailableProblems] = useState<ProblemItem[]>([]);
+  const [loadingProblems, setLoadingProblems] = useState(false);
+  const [showProblemPicker, setShowProblemPicker] = useState(false);
+  const [problemSearch, setProblemSearch] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  const [selectedProblemPoints, setSelectedProblemPoints] = useState<Record<number, number>>({});
+
+  // Live Activity state
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityData, setActivityData] = useState<{
+    stats: {
+      totalCandidates: number;
+      inProgress: number;
+      submitted: number;
+      terminated: number;
+      averageScore: number;
+      violationsCount: number;
+    };
+    attempts: CandidateAttempt[];
+  } | null>(null);
 
   useEffect(() => {
     if (!isNew) {
@@ -95,15 +165,59 @@ export default function TestFormPage() {
             setGeneratedLink(t.testLink);
           }
           setLoading(false);
+        })
+        .catch(() => {
+          toast.error('Failed to load test details');
+          setLoading(false);
         });
     }
   }, [id, isNew]);
 
+  // Load problem bank
+  const loadProblemBank = async () => {
+    if (availableProblems.length > 0) return;
+    setLoadingProblems(true);
+    try {
+      const res = await fetch('/api/company/problems');
+      const data = await res.json();
+      if (data.problems) {
+        setAvailableProblems(data.problems);
+      }
+    } catch {
+      toast.error('Failed to load problem bank');
+    } finally {
+      setLoadingProblems(false);
+    }
+  };
+
+  // Load live activity
+  const loadLiveActivity = async () => {
+    if (isNew) return;
+    setActivityLoading(true);
+    try {
+      const res = await fetch(`/api/company/tests/${id}/activity`);
+      const data = await res.json();
+      if (data.stats) {
+        setActivityData({ stats: data.stats, attempts: data.attempts });
+      }
+    } catch {
+      toast.error('Failed to load live activity');
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'activity' && !isNew) {
+      loadLiveActivity();
+      const interval = setInterval(loadLiveActivity, 10000); // auto-refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, id, isNew]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
 
     const payload = {
       ...form,
@@ -127,33 +241,53 @@ export default function TestFormPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to save test');
+        toast.error(data.error || 'Failed to save test');
       } else {
-        setSuccess(isNew ? 'Test created successfully!' : 'Test updated successfully!');
+        toast.success(isNew ? 'Assessment created successfully!' : 'Assessment updated successfully!');
         if (isNew && data.test?._id) {
           router.push(`/company/tests/${data.test._id}`);
         }
         setGeneratedLink(data.test?.testLink || generatedLink);
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const addQuestion = () => {
-    if (!newQ.title.trim() || !newQ.problemId) {
-      setError('Please fill in the question title and problem ID');
+  const addProblemFromBank = (prob: ProblemItem) => {
+    if (form.questions.some((q) => q.problemId === prob.id)) {
+      toast.info('Problem is already added to this assessment');
       return;
     }
-    setForm((f) => ({ ...f, questions: [...f.questions, { ...newQ }] }));
-    setNewQ({ problemId: 0, title: '', difficulty: 'medium', points: 10 });
-    setError('');
+    const points = selectedProblemPoints[prob.id] || (prob.difficulty === 'easy' ? 10 : prob.difficulty === 'medium' ? 20 : 30);
+    setForm((f) => ({
+      ...f,
+      questions: [
+        ...f.questions,
+        {
+          problemId: prob.id,
+          title: prob.title,
+          difficulty: prob.difficulty,
+          points,
+        },
+      ],
+    }));
+    toast.success(`Added "${prob.title}" to assessment`);
   };
 
   const removeQuestion = (index: number) => {
     setForm((f) => ({ ...f, questions: f.questions.filter((_, i) => i !== index) }));
+    toast.info('Question removed');
+  };
+
+  const updateQuestionPoints = (index: number, points: number) => {
+    setForm((f) => {
+      const updated = [...f.questions];
+      updated[index].points = points;
+      return { ...f, questions: updated };
+    });
   };
 
   const updateProctoring = (key: keyof ProctoringConfig, value: boolean | number) => {
@@ -163,729 +297,857 @@ export default function TestFormPage() {
   const copyTestLink = () => {
     if (generatedLink) {
       navigator.clipboard.writeText(`${window.location.origin}/test/${generatedLink}`);
+      toast.success('Test link copied to clipboard!');
     }
   };
 
   if (loading) {
     return (
-      <div className="loading-page">
-        <div className="loading-spinner" />
-        <p>Loading test…</p>
+      <div className="flex min-h-[70vh] items-center justify-center text-sm text-zinc-500">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-green-400" />
+          <span>Loading assessment configuration...</span>
+        </div>
       </div>
     );
   }
 
-  const tabs = [
-    { id: 'basic', label: 'Basic Info', icon: '📋' },
-    { id: 'questions', label: `Questions (${form.questions.length})`, icon: '❓' },
-    { id: 'proctoring', label: 'Proctoring', icon: '🔒' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-  ] as const;
+  const filteredBankProblems = availableProblems.filter((p) => {
+    const matchSearch =
+      p.title.toLowerCase().includes(problemSearch.toLowerCase()) ||
+      p.tags.some((t) => t.toLowerCase().includes(problemSearch.toLowerCase()));
+    const matchDiff = difficultyFilter === 'all' || p.difficulty === difficultyFilter;
+    return matchSearch && matchDiff;
+  });
+
+  const totalAssessmentPoints = form.questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
   return (
-    <div className="test-form-page">
-      <div className="page-header">
-        <div className="header-left">
-          <Link href="/company/tests" className="back-link">
-            ← Back to Tests
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+        <div className="space-y-1">
+          <Link
+            href="/company/tests"
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Back to Assessments</span>
           </Link>
-          <h1 className="page-title">{isNew ? 'Create New Test' : 'Edit Test'}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              {isNew ? 'New Assessment' : form.title || 'Edit Assessment'}
+            </h1>
+            <span
+              className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                form.status === 'active'
+                  ? 'border-green-400/20 bg-green-400/10 text-green-300'
+                  : form.status === 'draft'
+                  ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+                  : 'border-white/[0.08] text-zinc-500'
+              }`}
+            >
+              {form.status}
+            </span>
+          </div>
         </div>
 
         {!isNew && generatedLink && (
-          <div className="link-box">
-            <span className="link-label">Test Link:</span>
-            <code className="link-code">/test/{generatedLink.slice(0, 8)}…</code>
-            <button className="copy-link-btn" onClick={copyTestLink}>
-              📋 Copy Link
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={copyTestLink}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.1] transition"
+            >
+              <Copy className="w-3.5 h-3.5 text-green-400" />
+              <span>Copy Public Link</span>
+            </button>
+            <Link
+              href={`/test/${generatedLink}`}
+              target="_blank"
+              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-white/[0.08] transition"
+              title="Preview Landing Page"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-white/[0.08] overflow-x-auto pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveTab('basic')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+            activeTab === 'basic'
+              ? 'border-green-500 text-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <FileCode2 className="w-4 h-4" />
+          <span>Basic Info</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('questions');
+            loadProblemBank();
+          }}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+            activeTab === 'questions'
+              ? 'border-green-500 text-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <ListChecks className="w-4 h-4" />
+          <span>Questions ({form.questions.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('proctoring')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+            activeTab === 'proctoring'
+              ? 'border-green-500 text-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Proctoring</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('settings')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+            activeTab === 'settings'
+              ? 'border-green-500 text-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          <span>Settings</span>
+        </button>
+
+        {!isNew && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('activity')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+              activeTab === 'activity'
+                ? 'border-green-500 text-green-400'
+                : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            <span>Live Activity & Candidates</span>
+          </button>
+        )}
+      </div>
+
+      {/* TAB CONTENT */}
+      {activeTab !== 'activity' ? (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* TAB: Basic Info */}
+          {activeTab === 'basic' && (
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-white">Assessment Details</h2>
+                <p className="text-xs text-zinc-400">Basic metadata shown to candidate before the test begins.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Assessment Title <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g. Senior Backend Engineer Coding Round"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                      Duration (Minutes) <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={5}
+                        max={300}
+                        required
+                        value={form.durationMinutes}
+                        onChange={(e) => setForm({ ...form, durationMinutes: parseInt(e.target.value) || 60 })}
+                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white text-sm focus:outline-none focus:border-green-500/50 transition"
+                      />
+                      <Clock className="absolute right-3.5 top-3 w-4 h-4 text-zinc-600" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                      Status
+                    </label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white text-sm focus:outline-none focus:border-green-500/50 transition"
+                    >
+                      <option value="draft">Draft (Private)</option>
+                      <option value="active">Active (Open to Candidates)</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Short Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Brief description of the assessment scope..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Candidate Instructions
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={form.instructions}
+                    onChange={(e) => setForm({ ...form, instructions: e.target.value })}
+                    placeholder="Provide specific guidelines, permitted languages, and rules for test takers..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition resize-none font-mono text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: Questions */}
+          {activeTab === 'questions' && (
+            <div className="space-y-6">
+              {/* Added Questions List */}
+              <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+                  <div>
+                    <h2 className="text-base font-bold text-white">Assessment Questions</h2>
+                    <p className="text-xs text-zinc-400">
+                      {form.questions.length} problems included · Total Score: {totalAssessmentPoints} pts
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadProblemBank();
+                      setShowProblemPicker(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Browse Question Bank</span>
+                  </button>
+                </div>
+
+                {form.questions.length === 0 ? (
+                  <div className="py-12 text-center space-y-3">
+                    <BookOpen className="w-8 h-8 text-zinc-600 mx-auto" />
+                    <p className="text-sm text-zinc-400 font-semibold">No questions added yet</p>
+                    <p className="text-xs text-zinc-600 max-w-sm mx-auto">
+                      Click the button above to pick algorithmic problems from the CodeArena problem repository.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.06]">
+                    {form.questions.map((q, idx) => (
+                      <div
+                        key={idx}
+                        className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-zinc-900 border border-white/[0.08] text-xs font-mono text-zinc-400">
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-bold text-white">{q.title}</h4>
+                              <span
+                                className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                  q.difficulty === 'easy'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : q.difficulty === 'medium'
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}
+                              >
+                                {q.difficulty}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-zinc-500">Problem ID #{q.problemId}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-400">Points:</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={q.points}
+                              onChange={(e) => updateQuestionPoints(idx, parseInt(e.target.value) || 10)}
+                              className="w-16 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.08] text-xs text-white text-center focus:outline-none focus:border-green-500"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => removeQuestion(idx)}
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                            title="Remove question"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Problem Bank Browser / Picker Modal */}
+              {showProblemPicker && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-[#0c0c0e] border border-white/[0.12] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
+                    {/* Modal Header */}
+                    <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-white">Select Problems from Bank</h3>
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          Browse verified coding challenges to add to your assessment.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowProblemPicker(false)}
+                        className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition"
+                      >
+                        Done
+                      </button>
+                    </div>
+
+                    {/* Filter bar */}
+                    <div className="p-4 border-b border-white/[0.06] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950">
+                      <div className="flex items-center gap-1.5 overflow-x-auto">
+                        {(['all', 'easy', 'medium', 'hard'] as const).map((diff) => (
+                          <button
+                            key={diff}
+                            type="button"
+                            onClick={() => setDifficultyFilter(diff)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition shrink-0 ${
+                              difficultyFilter === diff
+                                ? 'bg-white/[0.12] text-white'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                          >
+                            {diff}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative flex-1 max-w-xs">
+                        <input
+                          type="text"
+                          value={problemSearch}
+                          onChange={(e) => setProblemSearch(e.target.value)}
+                          placeholder="Search problems by name or tag..."
+                          className="w-full pl-9 pr-4 py-1.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+                        />
+                        <Search className="absolute left-3 top-2 w-3.5 h-3.5 text-zinc-500" />
+                      </div>
+                    </div>
+
+                    {/* Problems List */}
+                    <div className="flex-1 overflow-y-auto p-4 divide-y divide-white/[0.06]">
+                      {loadingProblems ? (
+                        <div className="py-16 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                          <span>Loading problems repository...</span>
+                        </div>
+                      ) : filteredBankProblems.length === 0 ? (
+                        <div className="py-16 text-center text-zinc-500 text-xs">
+                          No problems found matching your criteria.
+                        </div>
+                      ) : (
+                        filteredBankProblems.map((prob) => {
+                          const isAlreadyAdded = form.questions.some((q) => q.problemId === prob.id);
+                          return (
+                            <div
+                              key={prob.id}
+                              className="py-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
+                            >
+                              <div className="space-y-1.5 max-w-xl">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-mono text-zinc-500">#{prob.id}</span>
+                                  <h4 className="text-sm font-bold text-white">{prob.title}</h4>
+                                  <span
+                                    className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                      prob.difficulty === 'easy'
+                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                        : prob.difficulty === 'medium'
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                    }`}
+                                  >
+                                    {prob.difficulty}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                                  {prob.description}
+                                </p>
+                                {prob.tags && prob.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {prob.tags.map((t) => (
+                                      <span
+                                        key={t}
+                                        className="text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-white/[0.06] text-zinc-400"
+                                      >
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0">
+                                {isAlreadyAdded ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-bold">
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Added</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => addProblemFromBank(prob)}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-green-500 hover:text-black text-white text-xs font-bold border border-white/[0.1] transition"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Add Problem</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: Proctoring Settings */}
+          {activeTab === 'proctoring' && (
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-white">Anti-Cheat & Proctoring Security</h2>
+                <p className="text-xs text-zinc-400">
+                  Enforce strict browser and hardware checks to maintain exam integrity.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Camera */}
+                <div
+                  className={`p-5 rounded-2xl border transition ${
+                    form.proctoring.requireCamera
+                      ? 'bg-green-500/[0.04] border-green-500/30'
+                      : 'bg-zinc-900/50 border-white/[0.06]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-green-400" />
+                        <h4 className="text-sm font-bold text-white">Webcam Verification</h4>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Candidates must grant camera permission and keep their camera active during the test.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.proctoring.requireCamera}
+                      onChange={(e) => updateProctoring('requireCamera', e.target.checked)}
+                      className="w-5 h-5 rounded accent-green-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Microphone */}
+                <div
+                  className={`p-5 rounded-2xl border transition ${
+                    form.proctoring.requireMic
+                      ? 'bg-green-500/[0.04] border-green-500/30'
+                      : 'bg-zinc-900/50 border-white/[0.06]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Mic className="w-4 h-4 text-green-400" />
+                        <h4 className="text-sm font-bold text-white">Microphone Monitoring</h4>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Enables continuous audio presence check throughout the candidate session.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.proctoring.requireMic}
+                      onChange={(e) => updateProctoring('requireMic', e.target.checked)}
+                      className="w-5 h-5 rounded accent-green-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Fullscreen */}
+                <div
+                  className={`p-5 rounded-2xl border transition ${
+                    form.proctoring.requireFullScreen
+                      ? 'bg-green-500/[0.04] border-green-500/30'
+                      : 'bg-zinc-900/50 border-white/[0.06]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Maximize2 className="w-4 h-4 text-green-400" />
+                        <h4 className="text-sm font-bold text-white">Full Screen Enforcement</h4>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Candidates must take test in full screen. Exiting full screen triggers violation flags.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.proctoring.requireFullScreen}
+                      onChange={(e) => updateProctoring('requireFullScreen', e.target.checked)}
+                      className="w-5 h-5 rounded accent-green-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Copy Paste Block */}
+                <div
+                  className={`p-5 rounded-2xl border transition ${
+                    form.proctoring.disableCopyPaste
+                      ? 'bg-green-500/[0.04] border-green-500/30'
+                      : 'bg-zinc-900/50 border-white/[0.06]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <ClipboardX className="w-4 h-4 text-green-400" />
+                        <h4 className="text-sm font-bold text-white">Block External Copy-Paste</h4>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Prevents pasting code from external sources into the editor environment.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.proctoring.disableCopyPaste}
+                      onChange={(e) => updateProctoring('disableCopyPaste', e.target.checked)}
+                      className="w-5 h-5 rounded accent-green-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Tab Switch Detection */}
+                <div
+                  className={`p-5 rounded-2xl border transition md:col-span-2 ${
+                    form.proctoring.preventTabSwitch
+                      ? 'bg-green-500/[0.04] border-green-500/30'
+                      : 'bg-zinc-900/50 border-white/[0.06]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2">
+                        <EyeOff className="w-4 h-4 text-green-400" />
+                        <h4 className="text-sm font-bold text-white">Tab Switch Detection & Auto-Termination</h4>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Monitors browser focus. When a candidate leaves the test tab, a violation is logged.
+                      </p>
+
+                      {form.proctoring.preventTabSwitch && (
+                        <div className="pt-2 flex items-center gap-3">
+                          <span className="text-xs text-zinc-300 font-semibold">
+                            Max allowed tab switches before auto-termination:
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={10}
+                            value={form.proctoring.maxTabSwitches}
+                            onChange={(e) =>
+                              updateProctoring('maxTabSwitches', parseInt(e.target.value) || 3)
+                            }
+                            className="w-16 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.1] text-xs text-white text-center focus:outline-none focus:border-green-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.proctoring.preventTabSwitch}
+                      onChange={(e) => updateProctoring('preventTabSwitch', e.target.checked)}
+                      className="w-5 h-5 rounded accent-green-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: Settings */}
+          {activeTab === 'settings' && (
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-white">Access Window & Schedule</h2>
+                <p className="text-xs text-zinc-400">Configure when candidates are allowed to access this assessment.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Valid From (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.validFrom}
+                    onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white text-sm focus:outline-none focus:border-green-500/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Valid Until / Expiration (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.validUntil}
+                    onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white text-sm focus:outline-none focus:border-green-500/50 transition"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Save Action Footer */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+            <Link
+              href="/company/tests"
+              className="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving Assessment...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{isNew ? 'Create Assessment' : 'Save Changes'}</span>
+                </>
+              )}
             </button>
           </div>
-        )}
-      </div>
-
-      {/* Alerts */}
-      {success && <div className="alert success">✅ {success}</div>}
-      {error && <div className="alert error">❌ {error}</div>}
-
-      {/* Tabs */}
-      <div className="tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            type="button"
-          >
-            <span>{tab.icon}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <form onSubmit={handleSubmit} className="test-form">
-        {/* Basic Info Tab */}
-        {activeTab === 'basic' && (
-          <div className="form-section">
-            <div className="form-group">
-              <label className="form-label">Test Title <span className="req">*</span></label>
-              <input
-                className="form-input"
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Backend Developer Assessment Q4 2024"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <textarea
-                className="form-textarea"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Brief description of what this test covers..."
-                rows={3}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Instructions for Candidates</label>
-              <textarea
-                className="form-textarea"
-                value={form.instructions}
-                onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                placeholder="Detailed instructions shown to candidates before they start the test. Include rules, expectations, and any important notes..."
-                rows={6}
-              />
-              <span className="form-hint">Markdown is supported. Candidates see this on the test landing page.</span>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Duration (minutes) <span className="req">*</span></label>
-                <input
-                  className="form-input"
-                  type="number"
-                  min={5}
-                  max={480}
-                  value={form.durationMinutes}
-                  onChange={(e) => setForm({ ...form, durationMinutes: parseInt(e.target.value) || 60 })}
-                  required
-                />
+        </form>
+      ) : (
+        /* TAB: Live Activity & Candidates */
+        <div className="space-y-6">
+          {/* Real-time stats bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-[#0c0c0e] border border-white/[0.08]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500">
+                  Total Candidates
+                </span>
+                <Users className="w-4 h-4 text-zinc-500" />
               </div>
+              <p className="text-2xl font-black text-white">
+                {activityData?.stats.totalCandidates || 0}
+              </p>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select
-                  className="form-select"
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active (accessible by link)</option>
-                  <option value="archived">Archived</option>
-                </select>
+            <div className="p-5 rounded-2xl bg-[#0c0c0e] border border-white/[0.08]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-green-400">
+                  In Progress
+                </span>
+                <Activity className="w-4 h-4 text-green-400 animate-pulse" />
               </div>
+              <p className="text-2xl font-black text-green-400">
+                {activityData?.stats.inProgress || 0}
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#0c0c0e] border border-white/[0.08]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-blue-400">
+                  Completed
+                </span>
+                <CheckCircle2 className="w-4 h-4 text-blue-400" />
+              </div>
+              <p className="text-2xl font-black text-white">
+                {activityData?.stats.submitted || 0}
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#0c0c0e] border border-white/[0.08]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-red-400">
+                  Violations / Terminated
+                </span>
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+              </div>
+              <p className="text-2xl font-black text-red-400">
+                {activityData?.stats.violationsCount || 0} / {activityData?.stats.terminated || 0}
+              </p>
             </div>
           </div>
-        )}
 
-        {/* Questions Tab */}
-        {activeTab === 'questions' && (
-          <div className="form-section">
-            <div className="questions-intro">
-              <p>Add coding problems from CodeArena's problem bank. Enter the Problem ID and details.</p>
-            </div>
-
-            {/* Add Question Form */}
-            <div className="add-question-form">
-              <h3 className="sub-section-title">Add Question</h3>
-              <div className="question-form-grid">
-                <div className="form-group">
-                  <label className="form-label">Problem ID</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    min={1}
-                    value={newQ.problemId || ''}
-                    onChange={(e) => setNewQ({ ...newQ, problemId: parseInt(e.target.value) || 0 })}
-                    placeholder="e.g. 101"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Problem Title</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    value={newQ.title}
-                    onChange={(e) => setNewQ({ ...newQ, title: e.target.value })}
-                    placeholder="Two Sum"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Difficulty</label>
-                  <select
-                    className="form-select"
-                    value={newQ.difficulty}
-                    onChange={(e) => setNewQ({ ...newQ, difficulty: e.target.value as any })}
-                  >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Points</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    min={1}
-                    value={newQ.points}
-                    onChange={(e) => setNewQ({ ...newQ, points: parseInt(e.target.value) || 10 })}
-                  />
-                </div>
+          {/* Candidate attempts table */}
+          <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl overflow-hidden">
+            <div className="p-5 border-b border-white/[0.08] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Live Candidate Attempts
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Auto-refreshes every 10 seconds.
+                </p>
               </div>
-
-              <button type="button" className="add-q-btn" onClick={addQuestion}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Add Question
+              <button
+                type="button"
+                onClick={loadLiveActivity}
+                disabled={activityLoading}
+                className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 transition"
+                title="Refresh Live Data"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${activityLoading ? 'animate-spin text-green-400' : ''}`} />
               </button>
             </div>
 
-            {/* Questions List */}
-            {form.questions.length > 0 ? (
-              <div className="questions-list">
-                <div className="questions-list-header">
-                  <span>Question</span>
-                  <span>Difficulty</span>
-                  <span>Points</span>
-                  <span></span>
-                </div>
-                {form.questions.map((q, i) => (
-                  <div key={i} className="question-row">
-                    <div className="q-info">
-                      <span className="q-num">#{q.problemId}</span>
-                      <span className="q-title">{q.title}</span>
+            {activityData?.attempts.length === 0 ? (
+              <div className="py-16 text-center text-zinc-500 text-xs">
+                No candidates have registered for this assessment yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.06]">
+                {activityData?.attempts.map((att) => (
+                  <div key={att.id} className="p-5 space-y-3 hover:bg-white/[0.015] transition">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-white">{att.candidate.name}</h4>
+                          <span
+                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                              att.status === 'in_progress'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                : att.status === 'submitted'
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                : att.status === 'terminated'
+                                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                : 'bg-zinc-800 text-zinc-400'
+                            }`}
+                          >
+                            {att.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          {att.candidate.email} {att.candidate.rollNumber ? `· ID: ${att.candidate.rollNumber}` : ''}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs">
+                        <div className="text-right">
+                          <span className="text-zinc-500 block text-[10px] uppercase font-bold">Score</span>
+                          <span className="text-sm font-black text-white">
+                            {att.totalScore} / {att.maxScore}
+                          </span>
+                        </div>
+
+                        {att.violations.length > 0 && (
+                          <div className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold">
+                            {att.violations.length} Violations
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <span className="q-diff" style={{ color: DIFF_COLORS[q.difficulty] }}>
-                      {q.difficulty}
-                    </span>
-                    <span className="q-points">{q.points} pts</span>
-                    <button type="button" className="remove-q-btn" onClick={() => removeQuestion(i)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
+
+                    {/* Candidate feedback pill */}
+                    {att.feedback && (
+                      <div className="p-3 rounded-xl bg-zinc-900/70 border border-white/[0.06] flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center text-amber-400">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${
+                                  i < (att.feedback?.rating || 0)
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-zinc-700'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          {att.feedback.difficultyRating && (
+                            <span className="text-[10px] uppercase font-bold text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800">
+                              {att.feedback.difficultyRating}
+                            </span>
+                          )}
+                          {att.feedback.comments && (
+                            <span className="text-zinc-300 italic">"{att.feedback.comments}"</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
-                <div className="questions-total">
-                  Total: <strong>{form.questions.reduce((s, q) => s + q.points, 0)} points</strong> across {form.questions.length} questions
-                </div>
-              </div>
-            ) : (
-              <div className="no-questions">
-                <span>❓</span>
-                <p>No questions added yet. Add your first question above.</p>
               </div>
             )}
           </div>
-        )}
-
-        {/* Proctoring Tab */}
-        {activeTab === 'proctoring' && (
-          <div className="form-section">
-            <div className="proctoring-intro">
-              <div className="intro-icon">🔒</div>
-              <div>
-                <h3 className="intro-title">Proctoring Settings</h3>
-                <p className="intro-text">
-                  Configure security measures for your assessment. Candidates must satisfy all enabled requirements before the test begins.
-                </p>
-              </div>
-            </div>
-
-            <div className="proctor-cards">
-              <div className={`proctor-card ${form.proctoring.requireCamera ? 'enabled' : ''}`}>
-                <div className="proctor-card-icon">📷</div>
-                <div className="proctor-card-content">
-                  <h4 className="proctor-card-title">Camera Required</h4>
-                  <p className="proctor-card-desc">Candidate must enable their webcam. Camera feed is monitored during the test.</p>
-                </div>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={form.proctoring.requireCamera}
-                    onChange={(e) => updateProctoring('requireCamera', e.target.checked)}
-                  />
-                  <span className="toggle-slider" />
-                </label>
-              </div>
-
-              <div className={`proctor-card ${form.proctoring.requireMic ? 'enabled' : ''}`}>
-                <div className="proctor-card-icon">🎤</div>
-                <div className="proctor-card-content">
-                  <h4 className="proctor-card-title">Microphone Required</h4>
-                  <p className="proctor-card-desc">Candidate must enable their microphone for audio monitoring.</p>
-                </div>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={form.proctoring.requireMic}
-                    onChange={(e) => updateProctoring('requireMic', e.target.checked)}
-                  />
-                  <span className="toggle-slider" />
-                </label>
-              </div>
-
-              <div className={`proctor-card ${form.proctoring.requireFullScreen ? 'enabled' : ''}`}>
-                <div className="proctor-card-icon">⛶</div>
-                <div className="proctor-card-content">
-                  <h4 className="proctor-card-title">Full Screen Required</h4>
-                  <p className="proctor-card-desc">Candidate must enter full-screen mode. Exiting full screen is flagged as a violation.</p>
-                </div>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={form.proctoring.requireFullScreen}
-                    onChange={(e) => updateProctoring('requireFullScreen', e.target.checked)}
-                  />
-                  <span className="toggle-slider" />
-                </label>
-              </div>
-
-              <div className={`proctor-card ${form.proctoring.preventTabSwitch ? 'enabled' : ''}`}>
-                <div className="proctor-card-icon">🚫</div>
-                <div className="proctor-card-content">
-                  <h4 className="proctor-card-title">Prevent Tab Switching</h4>
-                  <p className="proctor-card-desc">Tab switches are detected and logged. Candidate can be auto-terminated after max violations.</p>
-                  {form.proctoring.preventTabSwitch && (
-                    <div className="sub-setting">
-                      <label className="form-label">Max tab switches before termination</label>
-                      <input
-                        className="form-input small"
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={form.proctoring.maxTabSwitches}
-                        onChange={(e) => updateProctoring('maxTabSwitches', parseInt(e.target.value) || 3)}
-                      />
-                    </div>
-                  )}
-                </div>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={form.proctoring.preventTabSwitch}
-                    onChange={(e) => updateProctoring('preventTabSwitch', e.target.checked)}
-                  />
-                  <span className="toggle-slider" />
-                </label>
-              </div>
-
-              <div className={`proctor-card ${form.proctoring.disableCopyPaste ? 'enabled' : ''}`}>
-                <div className="proctor-card-icon">📋</div>
-                <div className="proctor-card-content">
-                  <h4 className="proctor-card-title">Disable Copy-Paste</h4>
-                  <p className="proctor-card-desc">External copy-paste is disabled. Candidates cannot paste code from outside the editor.</p>
-                </div>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={form.proctoring.disableCopyPaste}
-                    onChange={(e) => updateProctoring('disableCopyPaste', e.target.checked)}
-                  />
-                  <span className="toggle-slider" />
-                </label>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="proctor-summary">
-              <span className="summary-label">Active measures:</span>
-              {Object.entries(form.proctoring)
-                .filter(([k, v]) => typeof v === 'boolean' && v)
-                .map(([k]) => (
-                  <span key={k} className="summary-tag">
-                    {k === 'requireCamera' ? '📷 Camera' :
-                     k === 'requireMic' ? '🎤 Mic' :
-                     k === 'requireFullScreen' ? '⛶ Full Screen' :
-                     k === 'preventTabSwitch' ? '🚫 Tab Watch' :
-                     k === 'disableCopyPaste' ? '📋 No Paste' : k}
-                  </span>
-                ))}
-              {!Object.values(form.proctoring).some((v) => typeof v === 'boolean' && v) && (
-                <span className="summary-none">None — test is fully open</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className="form-section">
-            <h3 className="sub-section-title">Test Validity Window</h3>
-            <p className="settings-desc">
-              Control when candidates can access this test link. Leave empty for no restriction.
-            </p>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Valid From</label>
-                <input
-                  className="form-input"
-                  type="datetime-local"
-                  value={form.validFrom}
-                  onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Valid Until</label>
-                <input
-                  className="form-input"
-                  type="datetime-local"
-                  value={form.validUntil}
-                  onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {!isNew && generatedLink && (
-              <div className="link-preview">
-                <h3 className="sub-section-title">Shareable Test Link</h3>
-                <div className="link-display">
-                  <code className="full-link">
-                    {typeof window !== 'undefined' ? window.location.origin : ''}/test/{generatedLink}
-                  </code>
-                  <button type="button" className="copy-link-btn" onClick={copyTestLink}>
-                    📋 Copy
-                  </button>
-                </div>
-                <p className="link-note">Share this link with candidates. They'll see your company info before starting.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <div className="form-footer">
-          <Link href="/company/tests" className="cancel-btn">Cancel</Link>
-          <button type="submit" className="submit-btn" disabled={saving}>
-            {saving ? (
-              <><span className="btn-spinner" /> Saving…</>
-            ) : (
-              <>{isNew ? '🚀 Create Test' : '💾 Save Changes'}</>
-            )}
-          </button>
         </div>
-      </form>
-
-      <style jsx>{`
-        .test-form-page { padding: 32px; max-width: 900px; }
-
-        .loading-page {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center; height: 60vh; gap: 14px;
-          color: rgba(255,255,255,0.4);
-        }
-
-        .loading-spinner {
-          width: 36px; height: 36px;
-          border: 3px solid rgba(108,99,255,0.2);
-          border-top-color: #22c55e; border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .page-header {
-          display: flex; align-items: flex-start; justify-content: space-between;
-          margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
-        }
-
-        .header-left { display: flex; flex-direction: column; gap: 6px; }
-
-        .back-link {
-          font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none;
-          transition: color 0.15s;
-        }
-
-        .back-link:hover { color: rgba(255,255,255,0.7); }
-
-        .page-title { font-size: 26px; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: -0.5px; }
-
-        .link-box {
-          display: flex; align-items: center; gap: 8px;
-          background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2);
-          border-radius: 10px; padding: 8px 12px;
-        }
-
-        .link-label { font-size: 12px; color: rgba(255,255,255,0.45); }
-        .link-code { font-size: 12px; color: #a09cff; font-family: monospace; }
-
-        .copy-link-btn {
-          background: rgba(108,99,255,0.15); border: none; border-radius: 6px;
-          color: #a09cff; font-size: 12px; padding: 4px 10px; cursor: pointer;
-          transition: all 0.15s;
-        }
-
-        .copy-link-btn:hover { background: rgba(108,99,255,0.25); }
-
-        .alert {
-          padding: 12px 16px; border-radius: 10px; font-size: 13px;
-          font-weight: 500; margin-bottom: 16px;
-        }
-
-        .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #4ade80; }
-        .alert.error { background: rgba(255,77,79,0.1); border: 1px solid rgba(255,77,79,0.25); color: #ff7875; }
-
-        .tabs {
-          display: flex; gap: 2px; margin-bottom: 24px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 12px; padding: 4px; width: fit-content;
-        }
-
-        .tab {
-          display: flex; align-items: center; gap: 6px;
-          padding: 9px 16px; border-radius: 8px;
-          background: transparent; border: none; color: rgba(255,255,255,0.45);
-          font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s;
-        }
-
-        .tab:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
-        .tab.active { background: rgba(108,99,255,0.2); color: #a09cff; }
-
-        .test-form {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px;
-          overflow: hidden;
-        }
-
-        .form-section { padding: 28px; display: flex; flex-direction: column; gap: 20px; }
-
-        .form-group { display: flex; flex-direction: column; gap: 7px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-
-        .form-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); }
-        .req { color: #ff7875; }
-        .form-hint { font-size: 11px; color: rgba(255,255,255,0.3); }
-
-        .form-input, .form-textarea, .form-select {
-          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 10px; padding: 11px 14px; color: #ffffff;
-          font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit;
-          resize: vertical;
-        }
-
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-          border-color: rgba(108,99,255,0.6); background: rgba(108,99,255,0.08);
-          box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-        }
-
-        .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.25); }
-        .form-input.small { max-width: 120px; }
-
-        /* Questions */
-        .questions-intro { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.15); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.55); }
-
-        .add-question-form {
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px;
-        }
-
-        .sub-section-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.65); margin: 0; }
-
-        .question-form-grid { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr; gap: 12px; }
-        @media (max-width: 700px) { .question-form-grid { grid-template-columns: 1fr 1fr; } }
-
-        .add-q-btn {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 9px 18px; background: rgba(108,99,255,0.2);
-          border: 1px solid rgba(108,99,255,0.35); border-radius: 8px;
-          color: #a09cff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; width: fit-content;
-        }
-
-        .add-q-btn:hover { background: rgba(108,99,255,0.3); }
-
-        .questions-list {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 12px; overflow: hidden;
-        }
-
-        .questions-list-header {
-          display: grid; grid-template-columns: 1fr 100px 80px 40px;
-          padding: 10px 16px; background: rgba(255,255,255,0.04);
-          font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.5px;
-        }
-
-        .question-row {
-          display: grid; grid-template-columns: 1fr 100px 80px 40px;
-          padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.05);
-          align-items: center;
-        }
-
-        .q-info { display: flex; align-items: center; gap: 8px; }
-        .q-num { font-size: 12px; color: rgba(255,255,255,0.3); font-family: monospace; }
-        .q-title { font-size: 14px; color: #ffffff; font-weight: 500; }
-        .q-diff { font-size: 12px; font-weight: 600; text-transform: capitalize; }
-        .q-points { font-size: 13px; color: rgba(255,255,255,0.6); }
-
-        .remove-q-btn {
-          width: 28px; height: 28px; border-radius: 6px;
-          background: rgba(255,77,79,0.1); border: none; color: #ff7875;
-          cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s;
-        }
-
-        .remove-q-btn:hover { background: rgba(255,77,79,0.2); }
-
-        .questions-total {
-          padding: 10px 16px; font-size: 12px; color: rgba(255,255,255,0.4);
-          border-top: 1px solid rgba(255,255,255,0.06);
-          background: rgba(255,255,255,0.02);
-        }
-
-        .questions-total strong { color: rgba(255,255,255,0.7); }
-
-        .no-questions {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 32px; gap: 10px; color: rgba(255,255,255,0.35);
-          border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px;
-          font-size: 13px; font-size: 32px;
-        }
-
-        .no-questions span { font-size: 32px; }
-        .no-questions p { margin: 0; font-size: 13px; }
-
-        /* Proctoring */
-        .proctoring-intro {
-          display: flex; gap: 16px; align-items: flex-start;
-          background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.15);
-          border-radius: 14px; padding: 16px 20px;
-        }
-
-        .intro-icon { font-size: 32px; flex-shrink: 0; }
-        .intro-title { font-size: 16px; font-weight: 600; color: #ffffff; margin: 0 0 6px; }
-        .intro-text { font-size: 13px; color: rgba(255,255,255,0.45); margin: 0; line-height: 1.5; }
-
-        .proctor-cards { display: flex; flex-direction: column; gap: 12px; }
-
-        .proctor-card {
-          display: flex; align-items: center; gap: 16px;
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px; padding: 16px 20px; transition: all 0.2s;
-        }
-
-        .proctor-card.enabled {
-          background: rgba(108,99,255,0.08); border-color: rgba(108,99,255,0.25);
-        }
-
-        .proctor-card-icon { font-size: 24px; flex-shrink: 0; }
-        .proctor-card-content { flex: 1; min-width: 0; }
-        .proctor-card-title { font-size: 14px; font-weight: 600; color: #ffffff; margin: 0 0 4px; }
-        .proctor-card-desc { font-size: 12px; color: rgba(255,255,255,0.4); margin: 0; line-height: 1.5; }
-
-        .sub-setting { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-
-        /* Toggle switch */
-        .toggle {
-          position: relative; display: inline-block;
-          width: 44px; height: 24px; flex-shrink: 0; cursor: pointer;
-        }
-
-        .toggle input { opacity: 0; width: 0; height: 0; }
-
-        .toggle-slider {
-          position: absolute; inset: 0; background: rgba(255,255,255,0.12);
-          border-radius: 24px; transition: 0.2s;
-        }
-
-        .toggle-slider::before {
-          content: ''; position: absolute;
-          width: 18px; height: 18px; left: 3px; top: 3px;
-          background: white; border-radius: 50%; transition: 0.2s;
-        }
-
-        .toggle input:checked + .toggle-slider { background: #22c55e; }
-        .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
-
-        .proctor-summary {
-          display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-          padding: 12px 16px; background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
-        }
-
-        .summary-label { font-size: 12px; color: rgba(255,255,255,0.4); font-weight: 600; }
-
-        .summary-tag {
-          padding: 3px 10px; border-radius: 20px;
-          background: rgba(108,99,255,0.15); color: #a09cff;
-          font-size: 12px; font-weight: 500;
-        }
-
-        .summary-none { font-size: 12px; color: rgba(255,255,255,0.3); font-style: italic; }
-
-        /* Settings tab */
-        .settings-desc { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0; }
-
-        .link-preview { display: flex; flex-direction: column; gap: 12px; }
-
-        .link-display {
-          display: flex; align-items: center; gap: 10px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 10px; padding: 12px 16px;
-        }
-
-        .full-link {
-          font-family: monospace; font-size: 13px; color: #a09cff;
-          flex: 1; word-break: break-all;
-        }
-
-        .link-note { font-size: 12px; color: rgba(255,255,255,0.3); margin: 0; }
-
-        /* Footer */
-        .form-footer {
-          display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-          padding: 20px 28px; border-top: 1px solid rgba(255,255,255,0.06);
-          background: rgba(255,255,255,0.02);
-        }
-
-        .cancel-btn {
-          padding: 10px 20px; background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-          color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500;
-          text-decoration: none; transition: all 0.15s;
-        }
-
-        .cancel-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
-
-        .submit-btn {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 10px 24px;
-          background: #22c55e;
-          color: #050505;
-          border: none; border-radius: 10px; color: white;
-          font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-        }
-
-        .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
-        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .btn-spinner {
-          width: 16px; height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white; border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-      `}</style>
+      )}
     </div>
   );
 }

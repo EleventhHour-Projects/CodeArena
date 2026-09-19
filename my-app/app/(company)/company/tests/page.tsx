@@ -2,17 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  FileCode2,
+  Plus,
+  Search,
+  Copy,
+  Clock,
+  ExternalLink,
+  Trash2,
+  Edit,
+  ShieldAlert,
+  SlidersHorizontal,
+  Activity,
+  Layers,
+  CheckCircle2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TestItem {
   _id: string;
   title: string;
+  description: string;
   status: 'draft' | 'active' | 'archived';
   durationMinutes: number;
-  questions: any[];
-  createdAt: string;
   testLink: string;
-  validFrom?: string;
-  validUntil?: string;
+  questions: { problemId: number; title: string; points: number }[];
   proctoring: {
     requireCamera: boolean;
     requireMic: boolean;
@@ -20,359 +34,254 @@ interface TestItem {
     requireFullScreen: boolean;
     disableCopyPaste: boolean;
   };
+  createdAt: string;
 }
 
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
-
-export default function TestsPage() {
+export default function CompanyTestsPage() {
   const [tests, setTests] = useState<TestItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
-  const [copySuccess, setCopySuccess] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTests();
   }, []);
 
   const fetchTests = async () => {
-    setLoading(true);
-    const res = await fetch('/api/company/tests');
-    const data = await res.json();
-    if (data.tests) setTests(data.tests);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/company/tests');
+      const data = await res.json();
+      if (data.tests) setTests(data.tests);
+    } catch {
+      toast.error('Failed to load assessments');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCopyLink = (link: string) => {
-    const url = `${window.location.origin}/test/${link}`;
-    navigator.clipboard.writeText(url);
-    setCopySuccess(link);
-    setTimeout(() => setCopySuccess(null), 2000);
+  const copyTestLink = (e: React.MouseEvent, link: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fullUrl = `${window.location.origin}/test/${link}`;
+    navigator.clipboard.writeText(fullUrl);
+    toast.success('Test link copied to clipboard!');
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this test? This cannot be undone.')) return;
-    setDeleting(id);
-    await fetch(`/api/company/tests/${id}`, { method: 'DELETE' });
-    setTests((prev) => prev.filter((t) => t._id !== id));
-    setDeleting(null);
+  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/company/tests/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setTests((prev) => prev.filter((t) => t._id !== id));
+        toast.success('Assessment deleted');
+      } else {
+        toast.error('Failed to delete assessment');
+      }
+    } catch {
+      toast.error('Network error while deleting');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-    await fetch(`/api/company/tests/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    setTests((prev) => prev.map((t) => (t._id === id ? { ...t, status: status as any } : t)));
-  };
-
-  const filtered = filter === 'all' ? tests : tests.filter((t) => t.status === filter);
-
-  const getProctoringIcons = (p: TestItem['proctoring']) => {
-    const icons: string[] = [];
-    if (p.requireCamera) icons.push('📷');
-    if (p.requireMic) icons.push('🎤');
-    if (p.preventTabSwitch) icons.push('🚫');
-    if (p.requireFullScreen) icons.push('⛶');
-    if (p.disableCopyPaste) icons.push('📋');
-    return icons;
-  };
+  const filteredTests = tests.filter((t) => {
+    const matchSearch =
+      t.title.toLowerCase().includes(search.toLowerCase()) ||
+      t.description?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === 'all' || t.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
-    <div className="tests-page">
-      <div className="page-header">
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
-          <h1 className="page-title">Tests & Assessments</h1>
-          <p className="page-subtitle">Create and manage your coding assessments</p>
+          <p className="text-[11px] uppercase font-bold tracking-widest text-green-400 mb-1">
+            Assessments Engine
+          </p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+            Manage Assessments
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">
+            Configure test questions, proctoring security levels, and manage candidate access.
+          </p>
         </div>
-        <Link href="/company/tests/new" className="create-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Create Test
+
+        <Link
+          href="/company/tests/new"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-sm shadow-lg shadow-green-500/20 transition active:scale-[0.98] shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>New Assessment</span>
         </Link>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="filter-tabs">
-        {(['all', 'active', 'draft', 'archived'] as const).map((tab) => (
-          <button
-            key={tab}
-            className={`filter-tab ${filter === tab ? 'active' : ''}`}
-            onClick={() => setFilter(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            <span className="tab-count">
-              {tab === 'all' ? tests.length : tests.filter((t) => t.status === tab).length}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="loading-state">
-          <div className="loading-spinner" />
-          <p>Loading tests…</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">🎯</div>
-          <h3>No {filter === 'all' ? '' : filter} tests yet</h3>
-          <p>Create your first assessment to get started</p>
-          <Link href="/company/tests/new" className="create-btn">Create Test</Link>
-        </div>
-      ) : (
-        <div className="tests-grid">
-          {filtered.map((test) => (
-            <div key={test._id} className="test-card">
-              <div className="test-card-header">
-                <span className={`status-badge ${test.status}`}>{test.status}</span>
-                <div className="test-actions">
-                  <Link href={`/company/tests/${test._id}`} className="action-btn edit-btn" title="Edit">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </Link>
-                  <button
-                    className="action-btn copy-btn"
-                    onClick={() => handleCopyLink(test.testLink)}
-                    title="Copy test link"
-                  >
-                    {copySuccess === test.testLink ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => handleDelete(test._id)}
-                    disabled={deleting === test._id}
-                    title="Delete"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                      <path d="M10 11v6M14 11v6M9 6V4h6v2" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <h3 className="test-title">{test.title}</h3>
-
-              <div className="test-meta">
-                <span className="meta-item">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  {test.durationMinutes} min
-                </span>
-                <span className="meta-item">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-                    <rect x="9" y="3" width="6" height="4" rx="1" />
-                  </svg>
-                  {test.questions.length} questions
-                </span>
-              </div>
-
-              {/* Proctoring Icons */}
-              {getProctoringIcons(test.proctoring).length > 0 && (
-                <div className="proctoring-icons">
-                  {getProctoringIcons(test.proctoring).map((icon, i) => (
-                    <span key={i} className="proctor-icon" title="Proctoring enabled">{icon}</span>
-                  ))}
-                </div>
-              )}
-
-              {/* Validity */}
-              {(test.validFrom || test.validUntil) && (
-                <div className="validity-info">
-                  {test.validFrom && (
-                    <span>From: {new Date(test.validFrom).toLocaleDateString()}</span>
-                  )}
-                  {test.validUntil && (
-                    <span>Until: {new Date(test.validUntil).toLocaleDateString()}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Status Toggle */}
-              <div className="card-footer">
-                <select
-                  className="status-select"
-                  value={test.status}
-                  onChange={(e) => handleStatusChange(test._id, e.target.value)}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="archived">Archived</option>
-                </select>
-                <span className="test-date">
-                  {new Date(test.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 p-1 bg-[#0c0c0e] border border-white/[0.08] rounded-xl overflow-x-auto">
+          {(['all', 'active', 'draft', 'archived'] as const).map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition shrink-0 ${
+                statusFilter === st
+                  ? 'bg-white/[0.12] text-white shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {st} {st === 'all' ? `(${tests.length})` : `(${tests.filter((t) => t.status === st).length})`}
+            </button>
           ))}
         </div>
+
+        {/* Search */}
+        <div className="relative flex-1 max-w-xs">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search assessments..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0c0c0e] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-green-500/50 transition"
+          />
+          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-500" />
+        </div>
+      </div>
+
+      {/* Tests Grid / List */}
+      {loading ? (
+        <div className="flex min-h-[40vh] items-center justify-center text-sm text-zinc-500">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 animate-spin text-green-400" />
+            <span>Loading assessments...</span>
+          </div>
+        </div>
+      ) : filteredTests.length === 0 ? (
+        <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
+            <FileCode2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">No assessments found</h3>
+            <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+              {search || statusFilter !== 'all'
+                ? 'No assessments match your active search and filter criteria.'
+                : 'Get started by creating your first coding challenge assessment.'}
+            </p>
+          </div>
+          {!search && statusFilter === 'all' && (
+            <Link
+              href="/company/tests/new"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-xs shadow-md"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Assessment</span>
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTests.map((test) => {
+            const hasProctoring = Object.values(test.proctoring || {}).some(
+              (v) => typeof v === 'boolean' && v
+            );
+            const totalPoints = (test.questions || []).reduce((sum, q) => sum + (q.points || 0), 0);
+
+            return (
+              <div
+                key={test._id}
+                className="group bg-[#0c0c0e] border border-white/[0.08] hover:border-white/[0.16] rounded-2xl p-6 flex flex-col justify-between gap-5 transition shadow-sm"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <span
+                      className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                        test.status === 'active'
+                          ? 'border-green-400/20 bg-green-400/10 text-green-300'
+                          : test.status === 'draft'
+                          ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+                          : 'border-white/[0.08] text-zinc-500'
+                      }`}
+                    >
+                      {test.status}
+                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => copyTestLink(e, test.testLink)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
+                        title="Copy Public Test Link"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(e, test._id, test.title)}
+                        disabled={deletingId === test._id}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                        title="Delete Assessment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-white group-hover:text-green-400 transition line-clamp-1">
+                      {test.title}
+                    </h3>
+                    {test.description && (
+                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+                        {test.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 pt-1">
+                    <span className="flex items-center gap-1">
+                      <FileCode2 className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>{test.questions?.length || 0} Questions ({totalPoints} pts)</span>
+                    </span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>{test.durationMinutes} mins</span>
+                    </span>
+                  </div>
+
+                  {hasProctoring && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-green-400/80 bg-green-500/5 px-2.5 py-1 rounded-lg border border-green-500/10 w-fit">
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <span>Proctoring Security Enabled</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                  <span className="text-[11px] text-zinc-600">
+                    Created {new Date(test.createdAt).toLocaleDateString()}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/company/tests/${test._id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white border border-white/[0.08] transition"
+                    >
+                      <Edit className="w-3 h-3" />
+                      <span>Configure & Live Monitor</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
-
-      <style jsx>{`
-        .tests-page { padding: 32px; max-width: 1200px; }
-
-        .page-header {
-          display: flex; align-items: flex-start; justify-content: space-between;
-          margin-bottom: 24px; gap: 16px;
-        }
-
-        .page-title { font-size: 26px; font-weight: 700; color: #ffffff; margin: 0 0 6px; letter-spacing: -0.5px; }
-        .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.4); margin: 0; }
-
-        .create-btn {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 10px 20px;
-          background: #22c55e;
-          color: #050505;
-          border: none; border-radius: 10px; color: white;
-          font-size: 14px; font-weight: 600; text-decoration: none;
-          cursor: pointer; transition: all 0.2s; white-space: nowrap;
-        }
-
-        .create-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
-
-        .filter-tabs {
-          display: flex; gap: 4px; margin-bottom: 24px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 12px; padding: 4px; width: fit-content;
-        }
-
-        .filter-tab {
-          display: flex; align-items: center; gap: 6px;
-          padding: 8px 14px; border-radius: 8px;
-          background: transparent; border: none; color: rgba(255,255,255,0.45);
-          font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s;
-        }
-
-        .filter-tab:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
-        .filter-tab.active { background: rgba(108,99,255,0.2); color: #a09cff; }
-
-        .tab-count {
-          background: rgba(255,255,255,0.1); border-radius: 20px;
-          padding: 2px 7px; font-size: 11px;
-        }
-
-        .loading-state {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center; height: 40vh; gap: 14px;
-          color: rgba(255,255,255,0.4);
-        }
-
-        .loading-spinner {
-          width: 36px; height: 36px;
-          border: 3px solid rgba(108,99,255,0.2);
-          border-top-color: #22c55e; border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .empty-state {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 64px 24px; gap: 12px; text-align: center;
-        }
-
-        .empty-icon { font-size: 52px; }
-        .empty-state h3 { font-size: 20px; font-weight: 600; color: #ffffff; margin: 0; }
-        .empty-state p { font-size: 14px; color: rgba(255,255,255,0.4); margin: 0; }
-
-        .tests-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 16px;
-        }
-
-        .test-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 16px; padding: 20px;
-          transition: all 0.2s; display: flex; flex-direction: column; gap: 12px;
-        }
-
-        .test-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-2px); }
-
-        .test-card-header {
-          display: flex; align-items: center; justify-content: space-between;
-        }
-
-        .status-badge {
-          padding: 3px 10px; border-radius: 20px;
-          font-size: 11px; font-weight: 600; text-transform: capitalize;
-        }
-
-        .status-badge.active { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .status-badge.draft { background: rgba(255,179,71,0.15); color: #FFB347; }
-        .status-badge.archived { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
-
-        .test-actions { display: flex; gap: 4px; }
-
-        .action-btn {
-          width: 30px; height: 30px; border-radius: 8px;
-          border: none; cursor: pointer; display: flex;
-          align-items: center; justify-content: center;
-          transition: all 0.15s; text-decoration: none;
-        }
-
-        .edit-btn { background: rgba(108,99,255,0.1); color: #a09cff; }
-        .edit-btn:hover { background: rgba(108,99,255,0.2); }
-
-        .copy-btn { background: rgba(34,197,94,0.1); color: #4ade80; }
-        .copy-btn:hover { background: rgba(62,207,207,0.2); }
-
-        .delete-btn { background: rgba(255,77,79,0.08); color: rgba(255,100,100,0.7); }
-        .delete-btn:hover { background: rgba(255,77,79,0.15); color: #ff7875; }
-        .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .test-title { font-size: 16px; font-weight: 600; color: #ffffff; margin: 0; }
-
-        .test-meta { display: flex; gap: 12px; }
-
-        .meta-item {
-          display: flex; align-items: center; gap: 5px;
-          font-size: 12px; color: rgba(255,255,255,0.45);
-        }
-
-        .proctoring-icons { display: flex; gap: 6px; flex-wrap: wrap; }
-        .proctor-icon { font-size: 16px; }
-
-        .validity-info {
-          display: flex; gap: 12px; flex-wrap: wrap;
-          font-size: 11px; color: rgba(255,255,255,0.35);
-        }
-
-        .card-footer {
-          display: flex; align-items: center; justify-content: space-between;
-          margin-top: auto; padding-top: 8px;
-          border-top: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .status-select {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 6px; padding: 5px 8px;
-          color: rgba(255,255,255,0.7); font-size: 12px; cursor: pointer;
-          outline: none;
-        }
-
-        .test-date { font-size: 11px; color: rgba(255,255,255,0.3); }
-      `}</style>
     </div>
   );
 }

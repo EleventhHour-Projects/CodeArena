@@ -1,6 +1,21 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useRef, ChangeEvent } from 'react';
+import {
+  Building2,
+  Mail,
+  Globe,
+  FileText,
+  Upload,
+  Check,
+  AlertCircle,
+  Trash2,
+  Save,
+  ImageIcon,
+  Loader2,
+  ExternalLink,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CompanyProfile {
   name: string;
@@ -20,8 +35,8 @@ export default function CompanyProfilePage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/company/profile')
@@ -29,14 +44,49 @@ export default function CompanyProfilePage() {
       .then((d) => {
         if (d.company) setProfile(d.company);
         setLoading(false);
+      })
+      .catch(() => {
+        toast.error('Failed to load profile');
+        setLoading(false);
       });
   }, []);
+
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/company/upload-logo', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to upload logo');
+      } else {
+        setProfile((prev) => ({ ...prev, logo: data.url }));
+        toast.success('Logo uploaded successfully! Click save to apply changes.');
+      }
+    } catch {
+      toast.error('Network error while uploading image');
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
 
     try {
       const res = await fetch('/api/company/profile', {
@@ -52,14 +102,13 @@ export default function CompanyProfilePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Failed to save');
+        toast.error(data.error || 'Failed to save profile');
       } else {
         setProfile(data.company);
-        setSuccess('Profile updated successfully!');
-        setTimeout(() => setSuccess(''), 3000);
+        toast.success('Company profile updated successfully!');
       }
     } catch {
-      setError('Something went wrong');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -67,333 +116,248 @@ export default function CompanyProfilePage() {
 
   if (loading) {
     return (
-      <div className="profile-loading">
-        <div className="loading-spinner" />
-        <p>Loading profile…</p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-zinc-500 text-sm">
+          <Loader2 className="w-6 h-6 animate-spin text-green-400" />
+          <span>Loading company workspace...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="profile-page">
-      <div className="page-header">
-        <h1 className="page-title">Company Profile</h1>
-        <p className="page-subtitle">Manage your company information shown to candidates</p>
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="border-b border-white/[0.08] pb-6">
+        <p className="text-[11px] uppercase font-bold tracking-widest text-green-400 mb-1">
+          Workspace Settings
+        </p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          Company Profile
+        </h1>
+        <p className="text-sm text-zinc-400 mt-1">
+          Manage your organization credentials and public information displayed to candidates.
+        </p>
       </div>
 
-      <div className="profile-layout">
-        {/* Preview Card */}
-        <div className="preview-card">
-          <div className="preview-label">Preview</div>
-          <div className="preview-company">
-            <div className="preview-avatar">
-              {profile.logo ? (
-                <img src={profile.logo} alt={profile.name} className="preview-logo" />
-              ) : (
-                <span className="preview-initials">
-                  {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
-                </span>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left / Main Form */}
+        <div className="lg:col-span-7 space-y-6">
+          <form onSubmit={handleSave} className="space-y-6">
+            {/* Logo Upload Section */}
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-green-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Company Logo</h3>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.12] flex items-center justify-center shrink-0 shadow-inner">
+                  {profile.logo ? (
+                    <img src={profile.logo} alt={profile.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-black text-green-400">
+                      {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.07] hover:bg-white/[0.12] text-white border border-white/[0.1] transition disabled:opacity-50"
+                    >
+                      {uploadingLogo ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Image</span>
+                        </>
+                      )}
+                    </button>
+
+                    {profile.logo && (
+                      <button
+                        type="button"
+                        onClick={() => setProfile({ ...profile, logo: '' })}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Supports PNG, JPG, WEBP, or SVG up to 5MB. Directly uploads to your workspace.
+                  </p>
+                </div>
+              </div>
             </div>
-            <h3 className="preview-name">{profile.name || 'Company Name'}</h3>
-            {profile.website && (
-              <a href={profile.website} className="preview-website" target="_blank" rel="noreferrer">
-                🌐 {profile.website}
-              </a>
-            )}
-            {profile.description && (
-              <p className="preview-description">{profile.description}</p>
-            )}
-          </div>
-          <div className="preview-note">
-            This is how candidates see your company on the test landing page
-          </div>
+
+            {/* General Info */}
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-green-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">General Information</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Company Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    placeholder="e.g. Acme Technologies"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      disabled
+                      value={profile.email}
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-950 border border-white/[0.05] text-zinc-500 text-sm cursor-not-allowed"
+                    />
+                    <Mail className="absolute right-3.5 top-3 w-4 h-4 text-zinc-600" />
+                  </div>
+                  <span className="text-[10px] text-zinc-600 mt-1 block">
+                    Account email is managed by your system administrator.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Website URL
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={profile.website}
+                      onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition"
+                    />
+                    <Globe className="absolute right-3.5 top-3 w-4 h-4 text-zinc-600" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    About / Description
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={profile.description}
+                    onChange={(e) => setProfile({ ...profile, description: e.target.value })}
+                    placeholder="Brief overview of your company, mission, and culture..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Profile</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
 
-        {/* Edit Form */}
-        <form className="edit-form" onSubmit={handleSave}>
-          {success && (
-            <div className="alert success">
-              ✅ {success}
-            </div>
-          )}
-          {error && (
-            <div className="alert error">
-              ❌ {error}
-            </div>
-          )}
-
-          <div className="form-section">
-            <h3 className="form-section-title">Basic Information</h3>
-
-            <div className="form-group">
-              <label className="form-label">Company Name <span className="required">*</span></label>
-              <input
-                className="form-input"
-                type="text"
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                placeholder="Acme Corporation"
-                required
-              />
+        {/* Right / Live Preview Card */}
+        <div className="lg:col-span-5 sticky top-6">
+          <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-zinc-500">
+                Candidate View Preview
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-zinc-400 border border-white/[0.08]">
+                Public Card
+              </span>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                className="form-input disabled"
-                type="email"
-                value={profile.email}
-                disabled
-              />
-              <span className="form-hint">Email cannot be changed. Contact admin.</span>
-            </div>
+            <div className="text-center py-4 space-y-3">
+              <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.12] flex items-center justify-center shadow-lg">
+                {profile.logo ? (
+                  <img src={profile.logo} alt={profile.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-black text-green-400">
+                    {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
+                  </span>
+                )}
+              </div>
 
-            <div className="form-group">
-              <label className="form-label">Logo URL</label>
-              <input
-                className="form-input"
-                type="url"
-                value={profile.logo}
-                onChange={(e) => setProfile({ ...profile, logo: e.target.value })}
-                placeholder="https://example.com/logo.png"
-              />
-              <span className="form-hint">Direct URL to your company logo image</span>
-            </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  {profile.name || 'Company Name'}
+                </h3>
+                {profile.website && (
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-green-400 hover:text-green-300 mt-1"
+                  >
+                    <span>{profile.website.replace(/^https?:\/\//, '')}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
 
-            <div className="form-group">
-              <label className="form-label">Website</label>
-              <input
-                className="form-input"
-                type="url"
-                value={profile.website}
-                onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                placeholder="https://yourcompany.com"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <textarea
-                className="form-textarea"
-                value={profile.description}
-                onChange={(e) => setProfile({ ...profile, description: e.target.value })}
-                placeholder="Brief description of your company shown to candidates..."
-                rows={4}
-              />
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button type="submit" className="save-btn" disabled={saving}>
-              {saving ? (
-                <>
-                  <span className="btn-spinner" />
-                  Saving…
-                </>
+              {profile.description ? (
+                <p className="text-xs text-zinc-400 leading-relaxed px-2">
+                  {profile.description}
+                </p>
               ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
-                  </svg>
-                  Save Changes
-                </>
+                <p className="text-xs text-zinc-600 italic px-2">
+                  Your company bio will appear here on the test landing page.
+                </p>
               )}
-            </button>
+            </div>
+
+            <div className="bg-zinc-900/60 rounded-xl p-3 border border-white/[0.04] text-[11px] text-zinc-500 text-center">
+              This card is prominently displayed to candidates when they open any of your assessment links.
+            </div>
           </div>
-        </form>
+        </div>
       </div>
-
-      <style jsx>{`
-        .profile-page {
-          padding: 32px;
-          max-width: 1000px;
-        }
-
-        .profile-loading {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center; height: 60vh; gap: 16px;
-          color: rgba(255,255,255,0.4);
-        }
-
-        .loading-spinner {
-          width: 36px; height: 36px;
-          border: 3px solid rgba(108,99,255,0.2);
-          border-top-color: #22c55e;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .page-header { margin-bottom: 32px; }
-
-        .page-title {
-          font-size: 26px; font-weight: 700; color: #ffffff;
-          margin: 0 0 6px; letter-spacing: -0.5px;
-        }
-
-        .page-subtitle {
-          font-size: 14px; color: rgba(255,255,255,0.4); margin: 0;
-        }
-
-        .profile-layout {
-          display: grid;
-          grid-template-columns: 280px 1fr;
-          gap: 24px;
-          align-items: start;
-        }
-
-        @media (max-width: 768px) {
-          .profile-layout { grid-template-columns: 1fr; }
-        }
-
-        .preview-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 20px;
-          padding: 24px;
-          position: sticky;
-          top: 32px;
-        }
-
-        .preview-label {
-          font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35);
-          text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
-        }
-
-        .preview-company {
-          text-align: center; padding: 16px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-          margin-bottom: 14px;
-        }
-
-        .preview-avatar {
-          width: 72px; height: 72px; border-radius: 16px;
-          background: #22c55e;
-          color: #050505;
-          display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 12px; overflow: hidden;
-        }
-
-        .preview-logo { width: 100%; height: 100%; object-fit: cover; }
-
-        .preview-initials {
-          font-size: 32px; font-weight: 700; color: white;
-        }
-
-        .preview-name {
-          font-size: 18px; font-weight: 700; color: #ffffff;
-          margin: 0 0 8px;
-        }
-
-        .preview-website {
-          display: block; font-size: 12px;
-          color: rgba(108,99,255,0.7); text-decoration: none;
-          margin-bottom: 10px;
-        }
-
-        .preview-description {
-          font-size: 13px; color: rgba(255,255,255,0.45);
-          margin: 0; line-height: 1.5;
-        }
-
-        .preview-note {
-          font-size: 11px; color: rgba(255,255,255,0.25);
-          text-align: center; line-height: 1.5;
-        }
-
-        .edit-form {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px;
-          padding: 28px;
-          display: flex; flex-direction: column; gap: 24px;
-        }
-
-        .alert {
-          padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
-        }
-
-        .alert.success {
-          background: rgba(62,207,207,0.1); border: 1px solid rgba(62,207,207,0.25);
-          color: #4ade80;
-        }
-
-        .alert.error {
-          background: rgba(255,77,79,0.1); border: 1px solid rgba(255,77,79,0.25);
-          color: #ff7875;
-        }
-
-        .form-section-title {
-          font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6);
-          margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-
-        .form-section { display: flex; flex-direction: column; gap: 16px; }
-
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-
-        .form-label {
-          font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6);
-        }
-
-        .required { color: #ff7875; }
-
-        .form-hint { font-size: 11px; color: rgba(255,255,255,0.3); }
-
-        .form-input, .form-textarea {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 10px; padding: 11px 14px;
-          color: #ffffff; font-size: 14px; outline: none;
-          transition: all 0.2s; font-family: inherit;
-          resize: vertical;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-          border-color: rgba(108,99,255,0.6);
-          background: rgba(108,99,255,0.08);
-          box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-        }
-
-        .form-input::placeholder, .form-textarea::placeholder {
-          color: rgba(255,255,255,0.25);
-        }
-
-        .form-input.disabled {
-          opacity: 0.5; cursor: not-allowed;
-        }
-
-        .form-actions {
-          display: flex; justify-content: flex-end;
-        }
-
-        .save-btn {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 11px 24px;
-          background: #22c55e;
-          color: #050505;
-          border: none; border-radius: 10px; color: white;
-          font-size: 14px; font-weight: 600; cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .save-btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 8px 24px rgba(108,99,255,0.4);
-        }
-
-        .save-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .btn-spinner {
-          width: 16px; height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white; border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
