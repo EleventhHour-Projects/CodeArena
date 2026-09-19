@@ -91,19 +91,16 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         {/* Header / Brand */}
         <div className="relative z-10 flex items-center justify-between p-4 border-b border-white/[0.08]">
           <Link href="/company/dashboard" className="flex items-center gap-3 overflow-hidden group">
-            <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-zinc-900 border border-white/[0.1] shrink-0 transition group-hover:border-green-500/40">
-              <Logo width={22} height={17} />
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-zinc-900 border border-white/[0.1] shrink-0 transition group-hover:border-green-500/40">
+              <Logo width={24} height={18} />
             </div>
             {sidebarOpen && (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-base tracking-tight text-white">CodeArena</span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">
-                    Org
-                  </span>
+              <div className="flex flex-col justify-center pl-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-bold text-base tracking-tight text-white">CodeArena</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-medium tracking-wide">
-                  Assessment Portal
+                <span className="text-[10px] text-zinc-500 tracking-wider font-semibold">
+                  EleventhHour
                 </span>
               </div>
             )}
@@ -111,7 +108,7 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
             title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

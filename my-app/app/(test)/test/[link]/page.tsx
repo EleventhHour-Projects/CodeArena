@@ -2,6 +2,34 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Clock,
+  FileCode2,
+  ShieldCheck,
+  Camera,
+  Mic,
+  Maximize2,
+  EyeOff,
+  ClipboardX,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  ArrowRight,
+  Loader2,
+  Hourglass,
+  Check,
+  Phone,
+  GraduationCap,
+  Briefcase,
+  FileText,
+  Github,
+  Linkedin,
+  FileBadge,
+  BookOpen,
+} from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 interface ProctoringConfig {
   requireCamera: boolean;
@@ -12,6 +40,23 @@ interface ProctoringConfig {
   disableCopyPaste: boolean;
 }
 
+interface RegistrationFieldConfig {
+  enabled: boolean;
+  required: boolean;
+}
+
+interface RegistrationFormConfig {
+  phone?: RegistrationFieldConfig;
+  rollNumber?: RegistrationFieldConfig;
+  college?: RegistrationFieldConfig;
+  graduationYear?: RegistrationFieldConfig;
+  degree?: RegistrationFieldConfig;
+  github?: RegistrationFieldConfig;
+  linkedin?: RegistrationFieldConfig;
+  resumeUrl?: RegistrationFieldConfig;
+  experience?: RegistrationFieldConfig;
+}
+
 interface TestInfo {
   id: string;
   title: string;
@@ -20,7 +65,10 @@ interface TestInfo {
   durationMinutes: number;
   questionCount: number;
   proctoring: ProctoringConfig;
+  registrationForm?: RegistrationFormConfig;
+  validFrom?: string;
   validUntil?: string;
+  status: string;
 }
 
 interface CompanyInfo {
@@ -28,9 +76,10 @@ interface CompanyInfo {
   logo: string;
   website?: string;
   description?: string;
+  email?: string;
 }
 
-type Stage = 'loading' | 'info' | 'register' | 'precheck' | 'ready' | 'error';
+type Stage = 'loading' | 'upcoming' | 'ended' | 'info' | 'register' | 'precheck' | 'error';
 
 export default function TestLandingPage() {
   const params = useParams();
@@ -40,11 +89,28 @@ export default function TestLandingPage() {
   const [stage, setStage] = useState<Stage>('loading');
   const [testInfo, setTestInfo] = useState<TestInfo | null>(null);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [timeStatus, setTimeStatus] = useState<'upcoming' | 'active' | 'ended'>('active');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Countdown for upcoming tests
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
   // Registration form
-  const [candidate, setCandidate] = useState({ name: '', email: '', rollNumber: '', phone: '' });
+  const [candidate, setCandidate] = useState({
+    name: '',
+    email: '',
+    rollNumber: '',
+    phone: '',
+    college: '',
+    graduationYear: '',
+    degree: '',
+    github: '',
+    linkedin: '',
+    resumeUrl: '',
+    experience: '',
+  });
   const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState('');
   const [attemptId, setAttemptId] = useState('');
 
   // Pre-check state
@@ -52,12 +118,11 @@ export default function TestLandingPage() {
     camera: false,
     mic: false,
     fullscreen: false,
-    ready: false,
   });
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
+  const fetchTestData = () => {
     if (!link) return;
     fetch(`/api/test/${link}`)
       .then((r) => r.json())
@@ -67,19 +132,103 @@ export default function TestLandingPage() {
           setStage('error');
           return;
         }
+
         setTestInfo(data.test);
         setCompanyInfo(data.company);
-        setStage('info');
+        setTimeStatus(data.timeStatus);
+
+        if (data.timeStatus === 'upcoming') {
+          setStage('upcoming');
+        } else if (data.timeStatus === 'ended') {
+          setStage('ended');
+        } else {
+          setStage('info');
+        }
       })
       .catch(() => {
-        setErrorMsg('Failed to load test. Please check your link.');
+        setErrorMsg('Failed to load assessment. Please verify your link URL.');
         setStage('error');
       });
+  };
+
+  useEffect(() => {
+    fetchTestData();
   }, [link]);
 
+  // Upcoming Countdown Timer
+  useEffect(() => {
+    if (stage !== 'upcoming' || !testInfo?.validFrom) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const target = new Date(testInfo.validFrom!).getTime();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        clearInterval(interval);
+        setTimeStatus('active');
+        setStage('info');
+      } else {
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / (1000 * 60)) % 60);
+        const s = Math.floor((diff / 1000) % 60);
+        setCountdown({ days: d, hours: h, minutes: m, seconds: s });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [stage, testInfo?.validFrom]);
+
   const handleRegister = async () => {
-    if (!candidate.name.trim() || !candidate.email.trim()) return;
+    if (!candidate.name.trim() || !candidate.email.trim()) {
+      setRegisterError('Please provide your name and email address.');
+      return;
+    }
+
+    // Validate dynamic required fields
+    const rf = testInfo?.registrationForm;
+    if (rf) {
+      if (rf.phone?.enabled && rf.phone?.required && !candidate.phone.trim()) {
+        setRegisterError('Phone number is required.');
+        return;
+      }
+      if (rf.rollNumber?.enabled && rf.rollNumber?.required && !candidate.rollNumber.trim()) {
+        setRegisterError('Roll number / Student ID is required.');
+        return;
+      }
+      if (rf.college?.enabled && rf.college?.required && !candidate.college.trim()) {
+        setRegisterError('College / Institute name is required.');
+        return;
+      }
+      if (rf.degree?.enabled && rf.degree?.required && !candidate.degree.trim()) {
+        setRegisterError('Degree / Branch is required.');
+        return;
+      }
+      if (rf.graduationYear?.enabled && rf.graduationYear?.required && !candidate.graduationYear.trim()) {
+        setRegisterError('Graduation year is required.');
+        return;
+      }
+      if (rf.experience?.enabled && rf.experience?.required && !candidate.experience.trim()) {
+        setRegisterError('Work experience is required.');
+        return;
+      }
+      if (rf.github?.enabled && rf.github?.required && !candidate.github.trim()) {
+        setRegisterError('GitHub profile URL is required.');
+        return;
+      }
+      if (rf.linkedin?.enabled && rf.linkedin?.required && !candidate.linkedin.trim()) {
+        setRegisterError('LinkedIn profile URL is required.');
+        return;
+      }
+      if (rf.resumeUrl?.enabled && rf.resumeUrl?.required && !candidate.resumeUrl.trim()) {
+        setRegisterError('Resume link is required.');
+        return;
+      }
+    }
+
     setRegistering(true);
+    setRegisterError('');
 
     try {
       const res = await fetch(`/api/test/${link}/register`, {
@@ -90,15 +239,21 @@ export default function TestLandingPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error);
-        setStage('error');
+        setRegisterError(data.error || 'Registration failed');
         return;
       }
 
       setAttemptId(data.attemptId);
-      setStage('precheck');
+
+      const p = testInfo?.proctoring;
+      const needsAny = p?.requireCamera || p?.requireMic || p?.requireFullScreen;
+      if (!needsAny) {
+        router.push(`/test/${link}/attempt/${data.attemptId}`);
+      } else {
+        setStage('precheck');
+      }
     } catch {
-      setErrorMsg('Registration failed. Please try again.');
+      setRegisterError('Network error during registration. Please try again.');
     } finally {
       setRegistering(false);
     }
@@ -119,7 +274,7 @@ export default function TestLandingPage() {
         mic: Boolean(testInfo?.proctoring.requireMic),
       }));
     } catch {
-      alert('Please allow camera/mic access and try again.');
+      alert('Please allow camera/microphone permissions in your browser and try again.');
     }
   };
 
@@ -128,7 +283,7 @@ export default function TestLandingPage() {
       await document.documentElement.requestFullscreen();
       setChecks((c) => ({ ...c, fullscreen: true }));
     } catch {
-      alert('Please allow fullscreen mode.');
+      alert('Please allow full screen mode.');
     }
   };
 
@@ -152,592 +307,701 @@ export default function TestLandingPage() {
   };
 
   const handleStartTest = () => {
-    // TODO: redirect to actual test environment
     router.push(`/test/${link}/attempt/${attemptId}`);
   };
 
+  // 1. Loading State
   if (stage === 'loading') {
     return (
-      <div className="landing-page center">
-        <div className="spinner-large" />
-        <p className="loading-text">Loading your assessment…</p>
-      </div>
-    );
-  }
-
-  if (stage === 'error') {
-    return (
-      <div className="landing-page center">
-        <div className="error-card">
-          <div className="error-icon">❌</div>
-          <h2 className="error-title">Test Unavailable</h2>
-          <p className="error-msg">{errorMsg}</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-green-400" />
+          <span className="text-sm text-zinc-400">Loading assessment portal...</span>
         </div>
       </div>
     );
   }
 
-  if (stage === 'info') {
+  // 2. Error State
+  if (stage === 'error') {
     return (
-      <div className="landing-page">
-        <div className="landing-blob blob-1" />
-        <div className="landing-blob blob-2" />
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-400">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-extrabold text-white">Assessment Unavailable</h2>
+          <p className="text-xs text-zinc-400 leading-relaxed">{errorMsg}</p>
+          <div className="pt-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-bold text-white transition"
+            >
+              <span>Return to CodeArena</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="landing-card">
-          {/* Company Header */}
-          <div className="company-header">
-            {companyInfo?.logo ? (
-              <img src={companyInfo.logo} alt={companyInfo.name} className="company-logo" />
-            ) : (
-              <div className="company-logo-placeholder">
-                {companyInfo?.name?.charAt(0).toUpperCase()}
+  // 3. Upcoming Assessment State (Countdown)
+  if (stage === 'upcoming') {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-6 relative">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 50% 30%, rgba(34,197,94,0.08) 0%, transparent 70%)',
+          }}
+        />
+
+        <div className="w-full max-w-2xl bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 sm:p-10 space-y-8 relative z-10 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-6">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0">
+                {companyInfo?.logo ? (
+                  <img src={companyInfo.logo} alt={companyInfo.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-bold text-base text-green-400">
+                    {companyInfo?.name ? companyInfo.name.charAt(0).toUpperCase() : 'C'}
+                  </span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">{companyInfo?.name || 'Organization'}</h3>
+                {companyInfo?.website && (
+                  <a
+                    href={companyInfo.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-green-400 hover:text-green-300"
+                  >
+                    <span>{companyInfo.website.replace(/^https?:\/\//, '')}</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Logo width={22} height={17} />
+            </div>
+          </div>
+
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
+              <Hourglass className="w-3.5 h-3.5 animate-pulse" />
+              <span>Assessment Scheduled</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              {testInfo?.title}
+            </h1>
+            <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              This assessment has not started yet. It will open automatically when the countdown completes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3 p-4 rounded-2xl bg-zinc-900/70 border border-white/[0.06] text-center">
+            <div>
+              <span className="text-2xl sm:text-3xl font-black text-white">{countdown.days}</span>
+              <span className="text-[10px] uppercase font-bold text-zinc-500 block mt-0.5">Days</span>
+            </div>
+            <div>
+              <span className="text-2xl sm:text-3xl font-black text-white">
+                {countdown.hours.toString().padStart(2, '0')}
+              </span>
+              <span className="text-[10px] uppercase font-bold text-zinc-500 block mt-0.5">Hours</span>
+            </div>
+            <div>
+              <span className="text-2xl sm:text-3xl font-black text-white">
+                {countdown.minutes.toString().padStart(2, '0')}
+              </span>
+              <span className="text-[10px] uppercase font-bold text-zinc-500 block mt-0.5">Minutes</span>
+            </div>
+            <div>
+              <span className="text-2xl sm:text-3xl font-black text-green-400">
+                {countdown.seconds.toString().padStart(2, '0')}
+              </span>
+              <span className="text-[10px] uppercase font-bold text-zinc-500 block mt-0.5">Seconds</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-white/[0.04] space-y-1">
+              <span className="text-zinc-500 text-[11px] block">Start Time</span>
+              <span className="font-semibold text-zinc-200">
+                {testInfo?.validFrom ? new Date(testInfo.validFrom).toLocaleString() : 'Scheduled'}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-white/[0.04] space-y-1">
+              <span className="text-zinc-500 text-[11px] block">Duration & Questions</span>
+              <span className="font-semibold text-zinc-200">
+                {testInfo?.durationMinutes} Mins · {testInfo?.questionCount} Challenges
+              </span>
+            </div>
+          </div>
+
+          {testInfo?.instructions && (
+            <div className="p-4 rounded-2xl bg-zinc-900/40 border border-white/[0.04] space-y-2">
+              <span className="text-[11px] uppercase font-bold text-zinc-500">General Guidelines</span>
+              <p className="text-xs text-zinc-400 whitespace-pre-line leading-relaxed">
+                {testInfo.instructions}
+              </p>
+            </div>
+          )}
+
+          <div className="text-center">
+            <p className="text-[11px] text-zinc-500">
+              Keep this tab open. You will be able to register and begin as soon as the start time is reached.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Ended Assessment State
+  if (stage === 'ended') {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-lg bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 sm:p-10 text-center space-y-6 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
+            <Calendar className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-extrabold text-white">Assessment Has Ended</h1>
+            <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+              The submission window for <strong>{testInfo?.title}</strong> closed on{' '}
+              {testInfo?.validUntil ? new Date(testInfo.validUntil).toLocaleString() : 'the scheduled time'}.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/[0.04] text-xs space-y-2 text-left">
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Organization</span>
+              <span className="font-semibold text-white">{companyInfo?.name}</span>
+            </div>
+            {companyInfo?.email && (
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Contact</span>
+                <span className="text-zinc-300">{companyInfo.email}</span>
               </div>
             )}
-            <div>
-              <h2 className="company-name">{companyInfo?.name}</h2>
-              {companyInfo?.website && (
-                <a href={companyInfo.website} className="company-web" target="_blank" rel="noreferrer">
-                  🌐 {companyInfo.website}
-                </a>
+          </div>
+
+          <div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-bold text-white transition"
+            >
+              <span>Return to CodeArena</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 5. Active Assessment Landing & Instructions
+  if (stage === 'info') {
+    const hasProctoring =
+      testInfo && Object.values(testInfo.proctoring).some((v) => typeof v === 'boolean' && v);
+
+    return (
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-6 relative">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 50% 25%, rgba(34,197,94,0.08) 0%, transparent 70%)',
+          }}
+        />
+
+        <div className="w-full max-w-2xl bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 sm:p-10 space-y-8 relative z-10 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-6">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0 shadow-sm">
+                {companyInfo?.logo ? (
+                  <img src={companyInfo.logo} alt={companyInfo.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-bold text-base text-green-400">
+                    {companyInfo?.name ? companyInfo.name.charAt(0).toUpperCase() : 'C'}
+                  </span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">{companyInfo?.name || 'Organization'}</h3>
+                {companyInfo?.website && (
+                  <a
+                    href={companyInfo.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-green-400 hover:text-green-300"
+                  >
+                    <span>{companyInfo.website.replace(/^https?:\/\//, '')}</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Logo width={22} height={17} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              {testInfo?.title}
+            </h1>
+            {testInfo?.description && (
+              <p className="text-xs text-zinc-400 leading-relaxed">{testInfo.description}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-zinc-900 border border-white/[0.06] text-xs font-semibold text-zinc-300">
+                <Clock className="w-3.5 h-3.5 text-green-400" />
+                <span>{testInfo?.durationMinutes} Minutes</span>
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-zinc-900 border border-white/[0.06] text-xs font-semibold text-zinc-300">
+                <FileCode2 className="w-3.5 h-3.5 text-green-400" />
+                <span>{testInfo?.questionCount} Questions</span>
+              </span>
+
+              {testInfo?.validUntil && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-zinc-900 border border-white/[0.06] text-xs font-semibold text-zinc-300">
+                  <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Expires {new Date(testInfo.validUntil).toLocaleDateString()}</span>
+                </span>
               )}
             </div>
           </div>
 
-          {companyInfo?.description && (
-            <p className="company-desc">{companyInfo.description}</p>
+          {hasProctoring && (
+            <div className="p-4 rounded-2xl bg-green-500/[0.04] border border-green-500/20 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-green-400" />
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Proctoring Enabled
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {testInfo?.proctoring.requireCamera && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] text-zinc-300">
+                    <Camera className="w-3 h-3 text-green-400" /> Webcam Monitored
+                  </span>
+                )}
+                {testInfo?.proctoring.requireMic && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] text-zinc-300">
+                    <Mic className="w-3 h-3 text-green-400" /> Mic Active
+                  </span>
+                )}
+                {testInfo?.proctoring.requireFullScreen && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] text-zinc-300">
+                    <Maximize2 className="w-3 h-3 text-green-400" /> Full Screen Required
+                  </span>
+                )}
+                {testInfo?.proctoring.preventTabSwitch && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] text-zinc-300">
+                    <EyeOff className="w-3 h-3 text-amber-400" /> Tab Switch Monitored (Max {testInfo.proctoring.maxTabSwitches})
+                  </span>
+                )}
+                {testInfo?.proctoring.disableCopyPaste && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] text-zinc-300">
+                    <ClipboardX className="w-3 h-3 text-green-400" /> External Copy-Paste Disabled
+                  </span>
+                )}
+              </div>
+            </div>
           )}
 
-          <div className="divider" />
-
-          {/* Test Info */}
-          <h1 className="test-title">{testInfo?.title}</h1>
-
-          {testInfo?.description && (
-            <p className="test-desc">{testInfo.description}</p>
+          {testInfo?.instructions && (
+            <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/[0.06] space-y-2">
+              <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider">
+                Instructions for Candidates
+              </span>
+              <p className="text-xs text-zinc-400 whitespace-pre-line leading-relaxed">
+                {testInfo.instructions}
+              </p>
+            </div>
           )}
 
-          <div className="test-meta-chips">
-            <div className="chip">
-              <span>⏱️</span>
-              <span>{testInfo?.durationMinutes} minutes</span>
+          <button
+            type="button"
+            onClick={() => setStage('register')}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black text-sm font-bold shadow-lg shadow-green-500/20 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>Proceed to Candidate Registration</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 6. Registration Form Stage (Dynamic Fields configured by Company)
+  if (stage === 'register') {
+    const rf = testInfo?.registrationForm || {
+      phone: { enabled: true, required: false },
+      rollNumber: { enabled: true, required: false },
+      college: { enabled: true, required: false },
+    };
+
+    return (
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-lg bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setStage('info')}
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition block mb-2 cursor-pointer"
+            >
+              ← Back to Details
+            </button>
+            <h2 className="text-xl font-extrabold text-white">Candidate Registration</h2>
+            <p className="text-xs text-zinc-500">{testInfo?.title}</p>
+          </div>
+
+          {registerError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+              {registerError}
             </div>
-            <div className="chip">
-              <span>📋</span>
-              <span>{testInfo?.questionCount} questions</span>
+          )}
+
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {/* Core Required: Name & Email */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Full Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={candidate.name}
+                onChange={(e) => setCandidate({ ...candidate, name: e.target.value })}
+                placeholder="e.g. John Doe"
+                className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+              />
             </div>
-            {testInfo?.validUntil && (
-              <div className="chip chip-warn">
-                <span>📅</span>
-                <span>Expires {new Date(testInfo.validUntil).toLocaleString()}</span>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Email Address <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={candidate.email}
+                onChange={(e) => setCandidate({ ...candidate, email: e.target.value })}
+                placeholder="john@example.com"
+                className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+              />
+            </div>
+
+            {/* Dynamic Configured Fields */}
+            {rf.phone?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  Phone Number {rf.phone?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    required={rf.phone?.required}
+                    value={candidate.phone}
+                    onChange={(e) => setCandidate({ ...candidate, phone: e.target.value })}
+                    placeholder="+91 9876543210"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <Phone className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            {rf.rollNumber?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  Roll Number / Student ID {rf.rollNumber?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required={rf.rollNumber?.required}
+                    value={candidate.rollNumber}
+                    onChange={(e) => setCandidate({ ...candidate, rollNumber: e.target.value })}
+                    placeholder="e.g. 21BCE1024"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <FileBadge className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            {rf.college?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  College / Institute Name {rf.college?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required={rf.college?.required}
+                    value={candidate.college}
+                    onChange={(e) => setCandidate({ ...candidate, college: e.target.value })}
+                    placeholder="e.g. National Institute of Technology"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <GraduationCap className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {rf.degree?.enabled && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Degree & Branch {rf.degree?.required && <span className="text-red-400">*</span>}
+                  </label>
+                  <input
+                    type="text"
+                    required={rf.degree?.required}
+                    value={candidate.degree}
+                    onChange={(e) => setCandidate({ ...candidate, degree: e.target.value })}
+                    placeholder="B.Tech Computer Science"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                </div>
+              )}
+
+              {rf.graduationYear?.enabled && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Graduation Year {rf.graduationYear?.required && <span className="text-red-400">*</span>}
+                  </label>
+                  <input
+                    type="text"
+                    required={rf.graduationYear?.required}
+                    value={candidate.graduationYear}
+                    onChange={(e) => setCandidate({ ...candidate, graduationYear: e.target.value })}
+                    placeholder="2025"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                </div>
+              )}
+            </div>
+
+            {rf.experience?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  Years of Experience {rf.experience?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required={rf.experience?.required}
+                    value={candidate.experience}
+                    onChange={(e) => setCandidate({ ...candidate, experience: e.target.value })}
+                    placeholder="e.g. 1 year (or Fresher)"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <Briefcase className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            {rf.github?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  GitHub Profile URL {rf.github?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    required={rf.github?.required}
+                    value={candidate.github}
+                    onChange={(e) => setCandidate({ ...candidate, github: e.target.value })}
+                    placeholder="https://github.com/username"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <Github className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            {rf.linkedin?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  LinkedIn Profile URL {rf.linkedin?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    required={rf.linkedin?.required}
+                    value={candidate.linkedin}
+                    onChange={(e) => setCandidate({ ...candidate, linkedin: e.target.value })}
+                    placeholder="https://linkedin.com/in/username"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <Linkedin className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
+              </div>
+            )}
+
+            {rf.resumeUrl?.enabled && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  Resume / Portfolio Link {rf.resumeUrl?.required && <span className="text-red-400">*</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    required={rf.resumeUrl?.required}
+                    value={candidate.resumeUrl}
+                    onChange={(e) => setCandidate({ ...candidate, resumeUrl: e.target.value })}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
+                  />
+                  <FileText className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
+                </div>
               </div>
             )}
           </div>
 
-          {/* Proctoring Notice */}
-          {testInfo && Object.values(testInfo.proctoring).some((v) => typeof v === 'boolean' && v) && (
-            <div className="proctor-notice">
-              <div className="proctor-notice-title">
-                🔒 This test has proctoring enabled
-              </div>
-              <div className="proctor-tags">
-                {testInfo.proctoring.requireCamera && <span className="ptag">📷 Camera</span>}
-                {testInfo.proctoring.requireMic && <span className="ptag">🎤 Microphone</span>}
-                {testInfo.proctoring.requireFullScreen && <span className="ptag">⛶ Full Screen</span>}
-                {testInfo.proctoring.preventTabSwitch && <span className="ptag">🚫 Tab Watch</span>}
-                {testInfo.proctoring.disableCopyPaste && <span className="ptag">📋 No External Paste</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Instructions */}
-          {testInfo?.instructions && (
-            <div className="instructions-box">
-              <h3 className="instr-title">📄 Instructions</h3>
-              <div className="instr-content">
-                {testInfo.instructions.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button className="start-btn" onClick={() => setStage('register')}>
-            Proceed to Registration →
+          <button
+            type="button"
+            disabled={registering || !candidate.name.trim() || !candidate.email.trim()}
+            onClick={handleRegister}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-lg shadow-green-500/20 transition disabled:opacity-50 cursor-pointer"
+          >
+            {registering ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Registering...</span>
+              </>
+            ) : (
+              <>
+                <span>Proceed to Assessment</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </>
+            )}
           </button>
         </div>
-
-        <style jsx>{`
-          .landing-page {
-            min-height: 100vh;
-            background: #080810;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 40px 20px;
-            font-family: 'Inter', -apple-system, sans-serif;
-            position: relative;
-            overflow-x: hidden;
-          }
-
-          .landing-page.center {
-            align-items: center;
-          }
-
-          .landing-blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.1;
-            pointer-events: none;
-          }
-
-          .blob-1 {
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, #6C63FF, transparent);
-            top: -200px; left: -200px;
-            animation: blobFloat 12s ease-in-out infinite;
-          }
-
-          .blob-2 {
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, #3ECFCF, transparent);
-            bottom: -100px; right: -100px;
-            animation: blobFloat 9s ease-in-out infinite reverse;
-          }
-
-          @keyframes blobFloat {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(30px, -30px); }
-          }
-
-          .landing-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            max-width: 680px;
-            position: relative;
-            z-index: 10;
-            backdrop-filter: blur(20px);
-            animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          }
-
-          @keyframes cardIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          .company-header {
-            display: flex; align-items: center; gap: 16px; margin-bottom: 12px;
-          }
-
-          .company-logo {
-            width: 60px; height: 60px; border-radius: 14px; object-fit: cover;
-          }
-
-          .company-logo-placeholder {
-            width: 60px; height: 60px; border-radius: 14px;
-            background: linear-gradient(135deg, #6C63FF, #3ECFCF);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 28px; font-weight: 700; color: white;
-          }
-
-          .company-name {
-            font-size: 20px; font-weight: 700; color: #ffffff; margin: 0 0 4px;
-          }
-
-          .company-web {
-            font-size: 13px; color: rgba(108,99,255,0.7); text-decoration: none;
-          }
-
-          .company-desc {
-            font-size: 14px; color: rgba(255,255,255,0.45); margin: 0 0 16px; line-height: 1.6;
-          }
-
-          .divider {
-            height: 1px; background: rgba(255,255,255,0.08); margin: 20px 0;
-          }
-
-          .test-title {
-            font-size: 26px; font-weight: 700; color: #ffffff; margin: 0 0 10px;
-            letter-spacing: -0.5px;
-          }
-
-          .test-desc {
-            font-size: 14px; color: rgba(255,255,255,0.5); margin: 0 0 20px; line-height: 1.6;
-          }
-
-          .test-meta-chips {
-            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
-          }
-
-          .chip {
-            display: flex; align-items: center; gap: 6px;
-            padding: 6px 12px; border-radius: 20px;
-            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09);
-            font-size: 13px; color: rgba(255,255,255,0.7);
-          }
-
-          .chip.chip-warn {
-            background: rgba(255,179,71,0.1); border-color: rgba(255,179,71,0.25);
-            color: #FFB347;
-          }
-
-          .proctor-notice {
-            background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2);
-            border-radius: 14px; padding: 16px 20px; margin-bottom: 20px;
-          }
-
-          .proctor-notice-title {
-            font-size: 14px; font-weight: 600; color: #a09cff; margin-bottom: 10px;
-          }
-
-          .proctor-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-
-          .ptag {
-            padding: 4px 10px; border-radius: 20px;
-            background: rgba(108,99,255,0.15); color: #a09cff;
-            font-size: 12px; font-weight: 500;
-          }
-
-          .instructions-box {
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 14px; padding: 20px; margin-bottom: 24px;
-          }
-
-          .instr-title {
-            font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.65);
-            margin: 0 0 14px;
-          }
-
-          .instr-content p {
-            font-size: 14px; color: rgba(255,255,255,0.55); margin: 0 0 8px; line-height: 1.6;
-          }
-
-          .start-btn {
-            width: 100%; padding: 14px;
-            background: linear-gradient(135deg, #6C63FF, #3ECFCF);
-            border: none; border-radius: 12px; color: white;
-            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-          }
-
-          .start-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
-
-          /* Error card */
-          .error-card {
-            text-align: center; padding: 40px 32px;
-            background: rgba(255,77,79,0.08); border: 1px solid rgba(255,77,79,0.2);
-            border-radius: 20px; max-width: 400px;
-          }
-
-          .error-icon { font-size: 48px; margin-bottom: 16px; }
-
-          .error-title { font-size: 22px; font-weight: 700; color: #ff7875; margin: 0 0 10px; font-family: 'Inter', sans-serif; }
-          .error-msg { font-size: 14px; color: rgba(255,255,255,0.5); margin: 0; font-family: 'Inter', sans-serif; }
-
-          /* Spinner */
-          .spinner-large {
-            width: 48px; height: 48px;
-            border: 3px solid rgba(108,99,255,0.2);
-            border-top-color: #6C63FF; border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-
-          @keyframes spin { to { transform: rotate(360deg); } }
-
-          .loading-text { color: rgba(255,255,255,0.4); font-size: 14px; margin: 16px 0 0; font-family: 'Inter', sans-serif; }
-        `}</style>
       </div>
     );
   }
 
-  if (stage === 'register') {
-    return (
-      <div className="landing-page register-page">
-        <div className="landing-card register-card">
-          <div className="reg-header">
-            <button className="back-btn" onClick={() => setStage('info')}>← Back</button>
-            <h2 className="reg-title">Candidate Registration</h2>
-            <p className="reg-sub">{testInfo?.title}</p>
-          </div>
-
-          <div className="reg-form">
-            <div className="reg-group">
-              <label className="reg-label">Full Name <span className="req-star">*</span></label>
-              <input
-                className="reg-input"
-                type="text"
-                placeholder="John Doe"
-                value={candidate.name}
-                onChange={(e) => setCandidate({ ...candidate, name: e.target.value })}
-              />
-            </div>
-            <div className="reg-group">
-              <label className="reg-label">Email Address <span className="req-star">*</span></label>
-              <input
-                className="reg-input"
-                type="email"
-                placeholder="john@example.com"
-                value={candidate.email}
-                onChange={(e) => setCandidate({ ...candidate, email: e.target.value })}
-              />
-            </div>
-            <div className="reg-row">
-              <div className="reg-group">
-                <label className="reg-label">Roll / Student ID</label>
-                <input
-                  className="reg-input"
-                  type="text"
-                  placeholder="Optional"
-                  value={candidate.rollNumber}
-                  onChange={(e) => setCandidate({ ...candidate, rollNumber: e.target.value })}
-                />
-              </div>
-              <div className="reg-group">
-                <label className="reg-label">Phone</label>
-                <input
-                  className="reg-input"
-                  type="tel"
-                  placeholder="Optional"
-                  value={candidate.phone}
-                  onChange={(e) => setCandidate({ ...candidate, phone: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <button
-              className="proceed-btn"
-              disabled={!candidate.name.trim() || !candidate.email.trim() || registering}
-              onClick={handleRegister}
-            >
-              {registering ? 'Registering…' : 'Proceed to Pre-Check →'}
-            </button>
-          </div>
-        </div>
-
-        <style jsx>{`
-          .register-page {
-            min-height: 100vh; background: #080810;
-            display: flex; align-items: center; justify-content: center;
-            padding: 40px 20px; font-family: 'Inter', -apple-system, sans-serif;
-          }
-
-          .register-card {
-            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px; padding: 40px; width: 100%; max-width: 500px;
-            backdrop-filter: blur(20px);
-          }
-
-          .reg-header { margin-bottom: 28px; }
-
-          .back-btn {
-            background: none; border: none; color: rgba(255,255,255,0.4);
-            font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 12px;
-            display: block; transition: color 0.15s; font-family: inherit;
-          }
-
-          .back-btn:hover { color: rgba(255,255,255,0.7); }
-
-          .reg-title {
-            font-size: 22px; font-weight: 700; color: #ffffff; margin: 0 0 6px;
-          }
-
-          .reg-sub {
-            font-size: 13px; color: rgba(255,255,255,0.35); margin: 0;
-          }
-
-          .reg-form { display: flex; flex-direction: column; gap: 16px; }
-
-          .reg-group { display: flex; flex-direction: column; gap: 6px; }
-
-          .reg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-          .reg-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.55); }
-          .req-star { color: #ff7875; }
-
-          .reg-input {
-            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px; padding: 11px 14px; color: #ffffff;
-            font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit;
-          }
-
-          .reg-input:focus {
-            border-color: rgba(108,99,255,0.6); background: rgba(108,99,255,0.08);
-            box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-          }
-
-          .reg-input::placeholder { color: rgba(255,255,255,0.25); }
-
-          .proceed-btn {
-            width: 100%; padding: 13px;
-            background: linear-gradient(135deg, #6C63FF, #3ECFCF);
-            border: none; border-radius: 12px; color: white;
-            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            margin-top: 6px; font-family: inherit;
-          }
-
-          .proceed-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
-          .proceed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        `}</style>
-      </div>
-    );
-  }
-
+  // 7. Pre-check Stage (Webcam / Fullscreen verification)
   if (stage === 'precheck') {
     const p = testInfo!.proctoring;
     const needsCamera = p.requireCamera || p.requireMic;
     const needsFullscreen = p.requireFullScreen;
     const allOk = allChecksPassed();
-    const hasAnyRequirement = needsCamera || needsFullscreen;
 
     return (
-      <div className="precheck-page">
-        <div className="precheck-card">
-          <h2 className="precheck-title">🔒 System Pre-Check</h2>
-          <p className="precheck-sub">
-            Please complete all checks before starting <strong>{testInfo?.title}</strong>
-          </p>
-
-          {!hasAnyRequirement && (
-            <div className="no-checks-notice">
-              ✅ No special requirements for this test.
-            </div>
-          )}
-
-          {/* Camera Check */}
-          {needsCamera && (
-            <div className={`check-item ${checks.camera ? 'passed' : ''}`}>
-              <div className="check-icon">{checks.camera ? '✅' : '📷'}</div>
-              <div className="check-content">
-                <h4 className="check-title">{p.requireCamera ? 'Camera' : ''}{p.requireCamera && p.requireMic ? ' & ' : ''}{p.requireMic ? 'Microphone' : ''} Access</h4>
-                <p className="check-desc">Allow browser access to your {p.requireCamera ? 'camera' : ''}{p.requireCamera && p.requireMic ? ' and ' : ''}{p.requireMic ? 'microphone' : ''}.</p>
-                {!checks.camera && (
-                  <button className="check-btn" onClick={startCameraCheck}>
-                    Enable Access
-                  </button>
-                )}
-                {checks.camera && (
-                  <video ref={videoRef} autoPlay muted playsInline className="camera-preview" />
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Fullscreen Check */}
-          {needsFullscreen && (
-            <div className={`check-item ${checks.fullscreen ? 'passed' : ''}`}>
-              <div className="check-icon">{checks.fullscreen ? '✅' : '⛶'}</div>
-              <div className="check-content">
-                <h4 className="check-title">Full Screen Mode</h4>
-                <p className="check-desc">Enter full-screen mode. Exiting will be flagged as a violation.</p>
-                {!checks.fullscreen && (
-                  <button className="check-btn" onClick={startFullscreen}>Enter Full Screen</button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Summary */}
-          <div className={`precheck-summary ${allOk || !hasAnyRequirement ? 'ok' : 'pending'}`}>
-            {allOk || !hasAnyRequirement
-              ? '✅ All checks passed! You may start the test.'
-              : '⏳ Complete all checks above before proceeding.'}
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-lg bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+          <div className="space-y-1">
+            <h2 className="text-xl font-extrabold text-white">System Pre-Check</h2>
+            <p className="text-xs text-zinc-400">
+              Please grant required hardware permissions before starting <strong>{testInfo?.title}</strong>
+            </p>
           </div>
 
-          <button
-            className="start-test-btn"
-            disabled={hasAnyRequirement && !allOk}
-            onClick={handleStartTest}
-          >
-            🚀 Start Test Now
-          </button>
+          <div className="space-y-4">
+            {needsCamera && (
+              <div
+                className={`p-4 rounded-2xl border transition ${
+                  checks.camera
+                    ? 'bg-green-500/[0.04] border-green-500/30'
+                    : 'bg-zinc-900/50 border-white/[0.06]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-green-400" />
+                      <h4 className="text-xs font-bold text-white">Webcam & Microphone Permission</h4>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Allow browser access to verify your testing environment.
+                    </p>
+
+                    {checks.camera && (
+                      <div className="w-32 h-24 rounded-lg overflow-hidden border border-green-500/40 mt-2">
+                        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  {!checks.camera ? (
+                    <button
+                      type="button"
+                      onClick={startCameraCheck}
+                      className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-bold text-white border border-white/[0.1] transition cursor-pointer"
+                    >
+                      Enable Access
+                    </button>
+                  ) : (
+                    <span className="p-1 rounded-full bg-green-500/20 text-green-400">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {needsFullscreen && (
+              <div
+                className={`p-4 rounded-2xl border transition ${
+                  checks.fullscreen
+                    ? 'bg-green-500/[0.04] border-green-500/30'
+                    : 'bg-zinc-900/50 border-white/[0.06]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Maximize2 className="w-4 h-4 text-green-400" />
+                      <h4 className="text-xs font-bold text-white">Full Screen Mode</h4>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Enter full screen mode to minimize distractions.
+                    </p>
+                  </div>
+
+                  {!checks.fullscreen ? (
+                    <button
+                      type="button"
+                      onClick={startFullscreen}
+                      className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-bold text-white border border-white/[0.1] transition cursor-pointer"
+                    >
+                      Enter Full Screen
+                    </button>
+                  ) : (
+                    <span className="p-1 rounded-full bg-green-500/20 text-green-400">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              disabled={!allOk}
+              onClick={handleStartTest}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black text-sm font-bold shadow-lg shadow-green-500/20 transition disabled:opacity-40 cursor-pointer"
+            >
+              <span>Start Assessment Now</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-
-        <style jsx>{`
-          .precheck-page {
-            min-height: 100vh; background: #080810;
-            display: flex; align-items: center; justify-content: center;
-            padding: 40px 20px; font-family: 'Inter', -apple-system, sans-serif;
-          }
-
-          .precheck-card {
-            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px; padding: 40px; width: 100%; max-width: 560px;
-            backdrop-filter: blur(20px);
-          }
-
-          .precheck-title {
-            font-size: 22px; font-weight: 700; color: #ffffff; margin: 0 0 8px;
-          }
-
-          .precheck-sub {
-            font-size: 14px; color: rgba(255,255,255,0.4); margin: 0 0 28px; line-height: 1.5;
-          }
-
-          .precheck-sub strong { color: rgba(255,255,255,0.7); }
-
-          .no-checks-notice {
-            background: rgba(62,207,207,0.1); border: 1px solid rgba(62,207,207,0.25);
-            border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #3ECFCF;
-            margin-bottom: 20px;
-          }
-
-          .check-item {
-            display: flex; gap: 16px; padding: 20px;
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 14px; margin-bottom: 12px; transition: all 0.2s;
-          }
-
-          .check-item.passed {
-            background: rgba(62,207,207,0.06); border-color: rgba(62,207,207,0.2);
-          }
-
-          .check-icon { font-size: 28px; flex-shrink: 0; }
-          .check-content { flex: 1; }
-          .check-title { font-size: 15px; font-weight: 600; color: #ffffff; margin: 0 0 5px; }
-          .check-desc { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0 0 12px; }
-
-          .check-btn {
-            padding: 8px 16px;
-            background: rgba(108,99,255,0.2); border: 1px solid rgba(108,99,255,0.35);
-            border-radius: 8px; color: #a09cff; font-size: 13px; font-weight: 600;
-            cursor: pointer; transition: all 0.15s; font-family: inherit;
-          }
-
-          .check-btn:hover { background: rgba(108,99,255,0.3); }
-
-          .camera-preview {
-            width: 160px; height: 110px; border-radius: 8px; object-fit: cover;
-            border: 2px solid rgba(62,207,207,0.3); margin-top: 8px;
-          }
-
-          .precheck-summary {
-            padding: 12px 16px; border-radius: 10px;
-            font-size: 13px; font-weight: 600; margin: 20px 0 16px; text-align: center;
-          }
-
-          .precheck-summary.ok {
-            background: rgba(62,207,207,0.1); border: 1px solid rgba(62,207,207,0.25);
-            color: #3ECFCF;
-          }
-
-          .precheck-summary.pending {
-            background: rgba(255,179,71,0.1); border: 1px solid rgba(255,179,71,0.25);
-            color: #FFB347;
-          }
-
-          .start-test-btn {
-            width: 100%; padding: 14px;
-            background: linear-gradient(135deg, #6C63FF, #3ECFCF);
-            border: none; border-radius: 12px; color: white;
-            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-            font-family: inherit;
-          }
-
-          .start-test-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
-          .start-test-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        `}</style>
       </div>
     );
   }

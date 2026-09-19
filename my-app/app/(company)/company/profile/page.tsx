@@ -5,10 +5,7 @@ import {
   Building2,
   Mail,
   Globe,
-  FileText,
   Upload,
-  Check,
-  AlertCircle,
   Trash2,
   Save,
   ImageIcon,
@@ -51,7 +48,7 @@ export default function CompanyProfilePage() {
       });
   }, []);
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -61,27 +58,40 @@ export default function CompanyProfilePage() {
     }
 
     setUploadingLogo(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
-    try {
-      const res = await fetch('/api/company/upload-logo', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || 'Failed to upload logo');
-      } else {
-        setProfile((prev) => ({ ...prev, logo: data.url }));
-        toast.success('Logo uploaded successfully! Click save to apply changes.');
+    // Read directly via FileReader for 100% instant client preview & Base64 storage
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        setProfile((prev) => ({ ...prev, logo: base64Url }));
+
+        // Also upload to API in background
+        try {
+          const res = await fetch('/api/company/upload-logo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Url }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            setProfile((prev) => ({ ...prev, logo: data.url }));
+          }
+        } catch {
+          // Keep base64Url fallback
+        }
+        toast.success('Photo loaded! Click "Save Profile" to update.');
       }
-    } catch {
-      toast.error('Network error while uploading image');
-    } finally {
       setUploadingLogo(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    };
+
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
+      setUploadingLogo(false);
+    };
+
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -141,14 +151,14 @@ export default function CompanyProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left / Main Form */}
+        {/* Main Form */}
         <div className="lg:col-span-7 space-y-6">
           <form onSubmit={handleSave} className="space-y-6">
             {/* Logo Upload Section */}
             <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-green-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Company Logo</h3>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Company Logo / Photo</h3>
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
@@ -175,12 +185,12 @@ export default function CompanyProfilePage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.07] hover:bg-white/[0.12] text-white border border-white/[0.1] transition disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.07] hover:bg-white/[0.12] text-white border border-white/[0.1] transition disabled:opacity-50 cursor-pointer"
                     >
                       {uploadingLogo ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Uploading...</span>
+                          <span>Processing...</span>
                         </>
                       ) : (
                         <>
@@ -194,7 +204,7 @@ export default function CompanyProfilePage() {
                       <button
                         type="button"
                         onClick={() => setProfile({ ...profile, logo: '' })}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 transition cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Remove</span>
@@ -202,7 +212,7 @@ export default function CompanyProfilePage() {
                     )}
                   </div>
                   <p className="text-[11px] text-zinc-500">
-                    Supports PNG, JPG, WEBP, or SVG up to 5MB. Directly uploads to your workspace.
+                    Supports PNG, JPG, JPEG, WEBP, or SVG. Uploaded image will be displayed on all your candidate links.
                   </p>
                 </div>
               </div>
@@ -282,7 +292,7 @@ export default function CompanyProfilePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? (
                     <>
@@ -301,7 +311,7 @@ export default function CompanyProfilePage() {
           </form>
         </div>
 
-        {/* Right / Live Preview Card */}
+        {/* Live Preview Card */}
         <div className="lg:col-span-5 sticky top-6">
           <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">

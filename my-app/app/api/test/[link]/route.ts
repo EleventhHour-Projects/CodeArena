@@ -1,31 +1,48 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import TestAssessment from '@/lib/models/TestAssessment';
 import Company from '@/lib/models/Company';
 
-// GET /api/test/[link] — public endpoint: get test info by link UUID
+// GET /api/test/[link] — public endpoint: get test info by link UUID or ID
 export async function GET(request: Request, { params }: { params: Promise<{ link: string }> }) {
   try {
     const { link } = await params;
     await dbConnect();
 
-    const test = await TestAssessment.findOne({ testLink: link, status: 'active' });
+    let test = await TestAssessment.findOne({ testLink: link });
+    if (!test && mongoose.Types.ObjectId.isValid(link)) {
+      test = await TestAssessment.findById(link);
+    }
+
     if (!test) {
-      return NextResponse.json({ error: 'Test not found or no longer active' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Assessment not found. Please verify your link URL.' },
+        { status: 404 }
+      );
     }
 
-    // Check validity window
+    if (test.status === 'archived') {
+      return NextResponse.json(
+        { error: 'This assessment has been archived by the organization.' },
+        { status: 410 }
+      );
+    }
+
+    const company = await Company.findById(test.companyId).select('name logo website description email');
+
     const now = new Date();
-    if (test.validFrom && now < test.validFrom) {
-      return NextResponse.json({ error: 'Test has not started yet' }, { status: 403 });
-    }
-    if (test.validUntil && now > test.validUntil) {
-      return NextResponse.json({ error: 'Test link has expired' }, { status: 403 });
-    }
+    let timeStatus: 'upcoming' | 'active' | 'ended' = 'active';
 
-    const company = await Company.findById(test.companyId).select('name logo website description');
+    if (test.validFrom && now < new Date(test.validFrom)) {
+      timeStatus = 'upcoming';
+    } else if (test.validUntil && now > new Date(test.validUntil)) {
+      timeStatus = 'ended';
+    }
 
     return NextResponse.json({
+      timeStatus,
+      isDraft: test.status === 'draft',
       test: {
         id: test._id.toString(),
         title: test.title,
@@ -34,14 +51,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
         durationMinutes: test.durationMinutes,
         validFrom: test.validFrom,
         validUntil: test.validUntil,
-        questionCount: test.questions.length,
-        proctoring: test.proctoring,
+        questionCount: test.questions?.length || 0,
+        proctoring: test.proctoring || {},
+        registrationForm: test.registrationForm || {
+          phone: { enabled: true, required: false },
+          rollNumber: { enabled: true, required: false },
+          college: { enabled: true, required: false },
+        },
+        status: test.status,
       },
       company: {
-        name: company?.name,
-        logo: company?.logo,
-        website: company?.website,
-        description: company?.description,
+        name: company?.name || 'Organization',
+        logo: company?.logo || '',
+        website: company?.website || '',
+        description: company?.description || '',
+        email: company?.email || '',
       },
     });
   } catch (error: any) {
