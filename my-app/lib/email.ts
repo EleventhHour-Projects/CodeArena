@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 export interface SendInviteEmailParams {
   to: string;
   candidateName?: string;
@@ -9,6 +12,13 @@ export interface SendInviteEmailParams {
   durationMinutes: number;
   validFrom?: Date | string;
   validUntil?: Date | string;
+}
+
+interface ResendAttachment {
+  filename: string;
+  content: string; // Base64 string
+  content_type?: string;
+  cid?: string;
 }
 
 function escapeHtml(str: string): string {
@@ -30,7 +40,7 @@ export async function sendAssessmentInviteEmail(
       to: params.to,
       testUrl: params.testUrl,
       company: params.companyName,
-      logo: params.companyLogo,
+      hasLogo: Boolean(params.companyLogo),
     });
     return {
       success: true,
@@ -45,7 +55,90 @@ export async function sendAssessmentInviteEmail(
   const validUntilFormatted = params.validUntil ? new Date(params.validUntil).toLocaleString() : 'No expiration set';
   const companyInitial = (params.companyName?.trim() || 'C')[0].toUpperCase();
 
-  const companyLogoHeader = params.companyLogo
+  const attachments: ResendAttachment[] = [];
+  let logoImgSrc: string | null = null;
+
+  // Process and embed company logo via CID attachment or direct URL
+  if (params.companyLogo) {
+    try {
+      if (params.companyLogo.startsWith('data:image/')) {
+        // Base64 Data URI
+        const match = params.companyLogo.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          const mimeType = match[1];
+          const base64Data = match[2];
+          const ext = mimeType.split('/')[1]?.replace('+xml', '') || 'png';
+          attachments.push({
+            filename: `company-logo.${ext}`,
+            content: base64Data,
+            content_type: mimeType,
+            cid: 'company-logo',
+          });
+          logoImgSrc = 'cid:company-logo';
+        }
+      } else if (params.companyLogo.startsWith('http://') || params.companyLogo.startsWith('https://')) {
+        // External or localhost URL
+        if (params.companyLogo.includes('localhost') || params.companyLogo.includes('127.0.0.1')) {
+          // Check if it corresponds to a local file in public/
+          const relativePath = params.companyLogo.replace(/^https?:\/\/[^/]+/, '');
+          const localPath = path.join(process.cwd(), 'public', relativePath.replace(/^\//, ''));
+          if (fs.existsSync(localPath)) {
+            const fileBuf = fs.readFileSync(localPath);
+            const ext = path.extname(localPath).replace('.', '') || 'png';
+            attachments.push({
+              filename: `company-logo.${ext}`,
+              content: fileBuf.toString('base64'),
+              content_type: `image/${ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext}`,
+              cid: 'company-logo',
+            });
+            logoImgSrc = 'cid:company-logo';
+          } else {
+            logoImgSrc = params.companyLogo;
+          }
+        } else {
+          // Remote public URL - try to fetch and embed as CID to avoid image proxy blocks
+          try {
+            const imgRes = await fetch(params.companyLogo);
+            if (imgRes.ok) {
+              const arrayBuf = await imgRes.arrayBuffer();
+              const base64 = Buffer.from(arrayBuf).toString('base64');
+              const contentType = imgRes.headers.get('content-type') || 'image/png';
+              const ext = contentType.split('/')[1]?.replace('+xml', '') || 'png';
+              attachments.push({
+                filename: `company-logo.${ext}`,
+                content: base64,
+                content_type: contentType,
+                cid: 'company-logo',
+              });
+              logoImgSrc = 'cid:company-logo';
+            } else {
+              logoImgSrc = params.companyLogo;
+            }
+          } catch {
+            logoImgSrc = params.companyLogo;
+          }
+        }
+      } else {
+        // Relative file path on server
+        const localPath = path.join(process.cwd(), 'public', params.companyLogo.replace(/^\//, ''));
+        if (fs.existsSync(localPath)) {
+          const fileBuf = fs.readFileSync(localPath);
+          const ext = path.extname(localPath).replace('.', '') || 'png';
+          attachments.push({
+            filename: `company-logo.${ext}`,
+            content: fileBuf.toString('base64'),
+            content_type: `image/${ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext}`,
+            cid: 'company-logo',
+          });
+          logoImgSrc = 'cid:company-logo';
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to prepare company logo attachment:', err);
+    }
+  }
+
+  const companyLogoHeader = logoImgSrc
     ? `
     <table border="0" cellspacing="0" cellpadding="0">
       <tr>
@@ -60,7 +153,7 @@ export async function sendAssessmentInviteEmail(
           }
         </td>
         <td style="vertical-align: middle;">
-          <img src="${params.companyLogo}" alt="${companyNameEscaped}" width="42" height="42" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255, 255, 255, 0.15); display: block; background-color: #27272a;" />
+          <img src="${logoImgSrc}" alt="${companyNameEscaped}" width="42" height="42" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255, 255, 255, 0.15); display: block; background-color: #27272a;" />
         </td>
       </tr>
     </table>`
@@ -98,12 +191,26 @@ export async function sendAssessmentInviteEmail(
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td valign="middle" align="left">
-                    <div style="font-size: 20px; font-weight: 800; color: #22c55e; letter-spacing: -0.5px;">
-                      CodeArena
-                    </div>
-                    <div style="font-size: 10px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px;">
-                      Online Assessment
-                    </div>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td valign="middle" style="padding-right: 10px;">
+                          <!-- CodeArena 3-Tier Logo -->
+                          <table border="0" cellspacing="0" cellpadding="0">
+                            <tr><td style="padding-bottom: 2px;"><div style="width: 14px; height: 4px; background-color: #9ca3af; border-radius: 2px;"></div></td></tr>
+                            <tr><td style="padding-bottom: 2px;"><div style="width: 20px; height: 4px; background-color: #46d977; border-radius: 2px;"></div></td></tr>
+                            <tr><td><div style="width: 26px; height: 4px; background-color: #22c55e; border-radius: 2px;"></div></td></tr>
+                          </table>
+                        </td>
+                        <td valign="middle">
+                          <div style="font-size: 20px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                            Code<span style="color: #22c55e;">Arena</span>
+                          </div>
+                          <div style="font-size: 10px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 1px;">
+                            Technical Assessment
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                   <td valign="middle" align="right">
                     ${companyLogoHeader}
@@ -122,7 +229,7 @@ export async function sendAssessmentInviteEmail(
               
               <p style="margin: 0 0 24px; font-size: 14px; color: #a1a1aa; line-height: 1.6;">
                 Hello <strong>${candidateDisplayName}</strong>,<br>
-                <strong>${companyNameEscaped}</strong> has invited you to take the technical assessment <strong style="color: #ffffff;">${assessmentTitleEscaped}</strong> on CodeArena.
+                <strong>${companyNameEscaped}</strong> has invited you to complete the technical assessment: <strong style="color: #ffffff;">${assessmentTitleEscaped}</strong> on CodeArena.
               </p>
 
               <!-- Assessment Details Card -->
@@ -137,8 +244,8 @@ export async function sendAssessmentInviteEmail(
                         <td style="padding: 6px 0; font-size: 13px; color: #71717a;">Organization:</td>
                         <td style="padding: 6px 0; font-size: 13px; color: #ffffff; font-weight: 600; text-align: right;">
                           ${
-                            params.companyLogo
-                              ? `<img src="${params.companyLogo}" alt="${companyNameEscaped}" width="16" height="16" style="width: 16px; height: 16px; border-radius: 4px; vertical-align: middle; margin-right: 6px; display: inline-block;" />`
+                            logoImgSrc
+                              ? `<img src="${logoImgSrc}" alt="${companyNameEscaped}" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 6px; display: inline-block; object-fit: cover;" />`
                               : ''
                           }
                           <span style="vertical-align: middle;">${companyNameEscaped}</span>
@@ -179,12 +286,12 @@ export async function sendAssessmentInviteEmail(
               <!-- Instructions / Tips -->
               <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
                 <div style="font-size: 12px; font-weight: 700; color: #e4e4e7; margin-bottom: 6px;">
-                  Tips before starting:
+                  Important instructions:
                 </div>
                 <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #a1a1aa; line-height: 1.6;">
-                  <li>Make sure you have a reliable internet connection.</li>
                   <li>Use a modern desktop browser (Chrome, Edge, Firefox, Safari).</li>
-                  <li>Have your camera and microphone ready if proctoring is enabled.</li>
+                  <li>Ensure an uninterrupted internet connection before starting.</li>
+                  <li>Have your camera and microphone enabled if required by the organization.</li>
                 </ul>
               </div>
 
@@ -218,18 +325,24 @@ export async function sendAssessmentInviteEmail(
   `;
 
   try {
+    const requestBody: Record<string, any> = {
+      from: 'CodeArena <noreply@codearena.pro>',
+      to: [params.to],
+      subject: `Invitation: ${params.assessmentTitle} - ${params.companyName}`,
+      html: htmlContent,
+    };
+
+    if (attachments.length > 0) {
+      requestBody.attachments = attachments;
+    }
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'CodeArena <noreply@codearena.pro>',
-        to: [params.to],
-        subject: `Invitation: ${params.assessmentTitle} - ${params.companyName}`,
-        html: htmlContent,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const data = await response.json();

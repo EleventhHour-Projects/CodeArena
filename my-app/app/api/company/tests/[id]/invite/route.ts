@@ -142,9 +142,15 @@ export async function POST(
 
       let companyLogoUrl = '';
       if (company?.logo) {
-        companyLogoUrl = company.logo.startsWith('http')
-          ? company.logo
-          : `${baseUrl}${company.logo.startsWith('/') ? '' : '/'}${company.logo}`;
+        if (
+          company.logo.startsWith('data:image/') ||
+          company.logo.startsWith('http://') ||
+          company.logo.startsWith('https://')
+        ) {
+          companyLogoUrl = company.logo;
+        } else {
+          companyLogoUrl = `${baseUrl}${company.logo.startsWith('/') ? '' : '/'}${company.logo}`;
+        }
       }
 
       let sentCount = 0;
