@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, FormEvent, Suspense } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   FileCode2,
@@ -13,6 +13,8 @@ import {
   Trash2,
   Copy,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Save,
   Check,
   AlertCircle,
@@ -41,6 +43,7 @@ import {
   Github,
   Linkedin,
   FileBadge,
+  Code2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -122,7 +125,7 @@ interface CandidateAttempt {
   submittedAt?: string;
   tabSwitchCount: number;
   violations: { type: string; timestamp: string; details?: string }[];
-  answers: { problemId: number; score: number; status?: string; language?: string }[];
+  answers: { problemId: number; score: number; status?: string; language?: string; code?: string }[];
   totalScore: number;
   maxScore: number;
   feedback?: { rating: number; difficultyRating?: string; comments?: string; submittedAt?: string };
@@ -161,16 +164,22 @@ const DEFAULT_FORM: TestForm = {
   status: 'active',
 };
 
-export default function TestFormPage() {
+function TestFormContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params?.id as string | undefined;
   const isNew = id === 'new' || !id;
 
   const [form, setForm] = useState<TestForm>(DEFAULT_FORM);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'form' | 'proctoring' | 'settings' | 'activity'>('basic');
+  const initialTab =
+    searchParams?.get('tab') === 'activity' || searchParams?.get('tab') === 'results'
+      ? 'activity'
+      : 'basic';
+  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'form' | 'proctoring' | 'settings' | 'activity'>(initialTab);
+  const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState('');
 
   // Problem Bank Modal & Picker
@@ -1436,6 +1445,107 @@ export default function TestFormPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Expandable Action: Inspect Code & Answers */}
+                    <div className="pt-1 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedAttemptId(expandedAttemptId === att.id ? null : att.id)
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 transition cursor-pointer"
+                      >
+                        <Code2 className="w-3.5 h-3.5 text-green-400" />
+                        <span>
+                          {expandedAttemptId === att.id
+                            ? 'Hide Submission Details'
+                            : `View Submitted Code (${att.answers?.length || 0} Questions)`}
+                        </span>
+                        {expandedAttemptId === att.id ? (
+                          <ChevronUp className="w-3.5 h-3.5 ml-0.5 text-zinc-500" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 ml-0.5 text-zinc-500" />
+                        )}
+                      </button>
+
+                      <span className="text-[11px] text-zinc-500">
+                        {att.submittedAt
+                          ? `Submitted ${new Date(att.submittedAt).toLocaleTimeString()}`
+                          : att.startedAt
+                          ? `Started ${new Date(att.startedAt).toLocaleTimeString()}`
+                          : ''}
+                      </span>
+                    </div>
+
+                    {/* Detailed Code & Violations Panel */}
+                    {expandedAttemptId === att.id && (
+                      <div className="mt-3 p-4 rounded-2xl bg-zinc-950 border border-white/[0.06] space-y-4">
+                        <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                          <Code2 className="w-3.5 h-3.5 text-green-400" />
+                          <span>Candidate Code Submissions</span>
+                        </h5>
+
+                        {att.answers?.length === 0 ? (
+                          <p className="text-xs text-zinc-500 italic">No code submitted for this attempt.</p>
+                        ) : (
+                          <div className="space-y-4">
+                            {att.answers.map((ans, aIdx) => (
+                              <div
+                                key={aIdx}
+                                className="rounded-xl bg-[#0c0c0e] border border-white/[0.06] overflow-hidden"
+                              >
+                                <div className="px-4 py-2.5 bg-zinc-900/60 border-b border-white/[0.06] flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-white">
+                                      Problem #{ans.problemId}
+                                    </span>
+                                    <span className="text-[10px] uppercase font-bold text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">
+                                      {ans.language}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                                        ans.status === 'Accepted'
+                                          ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                      }`}
+                                    >
+                                      {ans.status} ({ans.score} pts)
+                                    </span>
+                                  </div>
+                                </div>
+                                <pre className="p-4 text-xs font-mono text-zinc-300 overflow-x-auto bg-[#09090b] max-h-64 leading-relaxed">
+                                  {ans.code || '// No code'}
+                                </pre>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {att.violations && att.violations.length > 0 && (
+                          <div className="pt-2 border-t border-white/[0.06] space-y-2">
+                            <h6 className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                              <span>Security & Proctoring Incidents</span>
+                            </h6>
+                            <div className="space-y-1.5">
+                              {att.violations.map((v, vIdx) => (
+                                <div
+                                  key={vIdx}
+                                  className="text-xs text-red-300/90 flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/10"
+                                >
+                                  <span className="font-semibold">{v.type.replace('_', ' ').toUpperCase()}</span>
+                                  <span className="text-[10px] text-zinc-500 font-mono">
+                                    {new Date(v.timestamp).toLocaleTimeString()}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1444,5 +1554,19 @@ export default function TestFormPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TestFormPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-white">
+          <Loader2 className="w-8 h-8 animate-spin text-green-400" />
+        </div>
+      }
+    >
+      <TestFormContent />
+    </Suspense>
   );
 }

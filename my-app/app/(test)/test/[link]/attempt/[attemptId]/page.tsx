@@ -27,6 +27,8 @@ import {
   RotateCcw,
   Aperture,
   CheckCheck,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -84,11 +86,12 @@ export default function TestAttemptPage() {
 
   // Resizable Panes State
   const [leftWidth, setLeftWidth] = useState(45);
-  const [topHeight, setTopHeight] = useState(62);
+  const [topHeight, setTopHeight] = useState(60);
   const [isResizingHz, setIsResizingHz] = useState(false);
   const [isResizingVt, setIsResizingVt] = useState(false);
   const [isEditorMaximized, setIsEditorMaximized] = useState(false);
   const [isProblemMaximized, setIsProblemMaximized] = useState(false);
+  const [isConsoleCollapsed, setIsConsoleCollapsed] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const rightPaneRef = useRef<HTMLDivElement>(null);
@@ -413,11 +416,42 @@ export default function TestAttemptPage() {
     setTimeout(check, 100);
   };
 
+  const handleEditorWillMount = (monaco: any) => {
+    monaco.editor.defineTheme('leetcode-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'e4e4e7' },
+        { token: 'comment', foreground: '71717a', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'f43f5e', fontStyle: 'bold' },
+        { token: 'string', foreground: '34d399' },
+        { token: 'number', foreground: 'fbbf24' },
+        { token: 'type', foreground: '38bdf8' },
+        { token: 'identifier', foreground: 'f4f4f5' },
+        { token: 'delimiter', foreground: 'a1a1aa' },
+      ],
+      colors: {
+        'editor.background': '#121214',
+        'editor.foreground': '#f4f4f5',
+        'editor.lineHighlightBackground': '#27272a24',
+        'editorLineNumber.foreground': '#52525b',
+        'editorLineNumber.activeForeground': '#22c55e',
+        'editorCursor.foreground': '#22c55e',
+        'editor.selectionBackground': '#3f3f4660',
+        'editor.inactiveSelectionBackground': '#27272a40',
+        'editorIndentGuide.background': '#27272a33',
+        'editorIndentGuide.activeBackground': '#3f3f46',
+      },
+    });
+  };
+
   // Run Code Action
   const handleRunCode = async () => {
     if (!activeQuestion) return;
     setIsExecuting(true);
     setExecutionResult(null);
+    setIsConsoleCollapsed(false);
+    setBottomTab('output');
 
     const testcasesToRun = useCustomInput
       ? [{ input: customInput, output: '' }]
@@ -460,6 +494,8 @@ export default function TestAttemptPage() {
     if (!activeQuestion) return;
     setIsExecuting(true);
     setExecutionResult(null);
+    setIsConsoleCollapsed(false);
+    setBottomTab('output');
 
     try {
       const res = await fetch('/api/battle/exec-code', {
@@ -807,8 +843,8 @@ export default function TestAttemptPage() {
         >
           {/* Top Half: Code Editor */}
           <div
-            style={{ height: `${topHeight}%` }}
-            className="flex flex-col bg-[#0c0c0e] shrink-0 min-h-[160px] overflow-hidden"
+            style={{ height: isConsoleCollapsed ? 'calc(100% - 40px)' : `${topHeight}%` }}
+            className="flex flex-col bg-[#0c0c0e] shrink-0 min-h-[160px] overflow-hidden transition-[height] duration-150"
           >
             {/* Editor Toolbar */}
             <div className="h-11 border-b border-white/[0.08] bg-[#0c0c0e] px-4 flex items-center justify-between shrink-0">
@@ -877,227 +913,285 @@ export default function TestAttemptPage() {
               </div>
             </div>
 
-            {/* Monaco Editor Container */}
-            <div className="flex-1 relative bg-[#09090b]">
+            {/* Monaco Editor Container (LeetCode Style Font & Colors) */}
+            <div className="flex-1 relative bg-[#121214]">
               <Editor
                 height="100%"
                 language={language === 'c' ? 'c' : language === 'go' ? 'go' : language}
                 value={activeCode}
                 onChange={handleCodeChange}
-                theme="vs-dark"
+                beforeMount={handleEditorWillMount}
+                theme="leetcode-dark"
                 options={{
-                  fontSize: 13,
-                  fontFamily: 'var(--font-geist-mono), monospace',
+                  fontSize: 14,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Fira Mono', Menlo, Monaco, Consolas, 'Courier New', monospace",
+                  fontLigatures: true,
                   minimap: { enabled: false },
                   lineNumbers: 'on',
+                  lineNumbersMinChars: 3,
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
                   tabSize: 4,
                   cursorBlinking: 'smooth',
+                  cursorSmoothCaretAnimation: 'on',
                   smoothScrolling: true,
-                  padding: { top: 12, bottom: 12 },
+                  padding: { top: 14, bottom: 14 },
+                  renderLineHighlight: 'all',
+                  lineHeight: 22,
+                  bracketPairColorization: { enabled: true },
+                  guides: { indentation: true, bracketPairs: true },
                 }}
               />
             </div>
           </div>
 
-          {/* VERTICAL DRAGGABLE RESIZE DIVIDER */}
-          <div
-            onMouseDown={() => setIsResizingVt(true)}
-            className="h-2 bg-[#09090b] border-y border-white/[0.06] flex items-center justify-center group outline-none hover:bg-zinc-800 transition-colors active:bg-zinc-700 cursor-row-resize shrink-0 z-10"
-            title="Drag to resize console / testcases"
-          >
+          {/* VERTICAL DRAGGABLE RESIZE DIVIDER (When Console is Open) */}
+          {!isConsoleCollapsed && (
             <div
-              className={`h-0.5 w-10 rounded-full transition-colors ${
-                isResizingVt ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-zinc-400'
-              }`}
-            />
-          </div>
+              onMouseDown={() => setIsResizingVt(true)}
+              className="h-2 bg-[#09090b] border-y border-white/[0.06] flex items-center justify-center group outline-none hover:bg-zinc-800 transition-colors active:bg-zinc-700 cursor-row-resize shrink-0 z-10"
+              title="Drag to resize console / testcases"
+            >
+              <div
+                className={`h-0.5 w-10 rounded-full transition-colors ${
+                  isResizingVt ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-zinc-400'
+                }`}
+              />
+            </div>
+          )}
 
-          {/* Bottom Half: Test Cases & Terminal Output */}
-          <div className="flex-1 flex flex-col bg-[#0c0c0e] min-h-[120px] overflow-hidden">
-            {/* Bottom Tabs Header */}
-            <div className="h-10 border-b border-white/[0.06] bg-[#0c0c0e] px-4 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-4">
+          {/* Bottom Half: Collapsible Test Cases & Terminal Output */}
+          {isConsoleCollapsed ? (
+            /* Bottom Docked Console Bar (LeetCode Style) */
+            <div className="h-10 border-t border-white/[0.08] bg-[#0c0c0e] px-4 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsConsoleCollapsed(false)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-zinc-300 transition cursor-pointer"
+                title="Expand Testcases & Console"
+              >
+                <Terminal className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Console</span>
+                {executionResult && (
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      executionResult.status === 'Accepted' ? 'bg-green-400' : 'bg-red-400'
+                    }`}
+                  />
+                )}
+                <ChevronUp className="w-3.5 h-3.5 text-zinc-500 ml-1" />
+              </button>
+
+              <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                <span>Test case console hidden</span>
                 <button
                   type="button"
-                  onClick={() => setBottomTab('testcases')}
-                  className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
-                    bottomTab === 'testcases'
-                      ? 'border-green-500 text-white'
-                      : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                  }`}
+                  onClick={() => setIsConsoleCollapsed(false)}
+                  className="text-green-400 hover:text-green-300 font-semibold cursor-pointer"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Test Cases</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setBottomTab('output')}
-                  className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
-                    bottomTab === 'output'
-                      ? 'border-green-500 text-white'
-                      : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  <Terminal className="w-3.5 h-3.5" />
-                  <span>Output / Console</span>
-                  {executionResult && (
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        executionResult.status === 'Accepted'
-                          ? 'bg-green-400'
-                          : 'bg-red-400'
-                      }`}
-                    />
-                  )}
+                  Show
                 </button>
               </div>
-
-              {isExecuting && (
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-green-400" />
-                  <span>Running code...</span>
-                </div>
-              )}
             </div>
+          ) : (
+            /* Expanded Console & Testcases Panel */
+            <div className="flex-1 flex flex-col bg-[#0c0c0e] min-h-[120px] overflow-hidden">
+              {/* Bottom Tabs Header */}
+              <div className="h-10 border-b border-white/[0.06] bg-[#0c0c0e] px-4 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setBottomTab('testcases')}
+                    className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
+                      bottomTab === 'testcases'
+                        ? 'border-green-500 text-white'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Test Cases</span>
+                  </button>
 
-            {/* Bottom Tab Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {bottomTab === 'testcases' ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 overflow-x-auto">
-                      {sampleCases.map((_, idx) => (
+                  <button
+                    type="button"
+                    onClick={() => setBottomTab('output')}
+                    className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
+                      bottomTab === 'output'
+                        ? 'border-green-500 text-white'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>Output / Console</span>
+                    {executionResult && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          executionResult.status === 'Accepted'
+                            ? 'bg-green-400'
+                            : 'bg-red-400'
+                        }`}
+                      />
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {isExecuting && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-400">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-green-400" />
+                      <span>Running code...</span>
+                    </div>
+                  )}
+
+                  {/* Button to fully collapse/hide test case window */}
+                  <button
+                    type="button"
+                    onClick={() => setIsConsoleCollapsed(true)}
+                    className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                    title="Hide Test Case Console"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                    <span className="hidden sm:inline">Hide</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Tab Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {bottomTab === 'testcases' ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 overflow-x-auto">
+                        {sampleCases.map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setUseCustomInput(false);
+                              setActiveTestCaseIdx(idx);
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                              !useCustomInput && activeTestCaseIdx === idx
+                                ? 'bg-white/[0.12] text-white'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                          >
+                            Case #{idx + 1}
+                          </button>
+                        ))}
+
                         <button
-                          key={idx}
                           type="button"
-                          onClick={() => {
-                            setUseCustomInput(false);
-                            setActiveTestCaseIdx(idx);
-                          }}
+                          onClick={() => setUseCustomInput(true)}
                           className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                            !useCustomInput && activeTestCaseIdx === idx
-                              ? 'bg-white/[0.12] text-white'
+                            useCustomInput
+                              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                               : 'text-zinc-500 hover:text-zinc-300'
                           }`}
                         >
-                          Case #{idx + 1}
+                          + Custom Input
                         </button>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() => setUseCustomInput(true)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                          useCustomInput
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                            : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                      >
-                        + Custom Input
-                      </button>
-                    </div>
-                  </div>
-
-                  {useCustomInput ? (
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-zinc-400">
-                        Custom Standard Input (stdin):
-                      </label>
-                      <textarea
-                        rows={4}
-                        value={customInput}
-                        onChange={(e) => setCustomInput(e.target.value)}
-                        placeholder="Enter custom input to feed to your program..."
-                        className="w-full p-3 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs font-mono text-zinc-200 focus:outline-none focus:border-green-500/50 resize-none"
-                      />
-                    </div>
-                  ) : sampleCases[activeTestCaseIdx] ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
-                          Input:
-                        </span>
-                        <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-300 overflow-x-auto">
-                          {sampleCases[activeTestCaseIdx].input}
-                        </pre>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
-                          Expected Output:
-                        </span>
-                        <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-300 overflow-x-auto">
-                          {sampleCases[activeTestCaseIdx].output}
-                        </pre>
                       </div>
                     </div>
-                  ) : (
-                    <p className="text-xs text-zinc-600">No testcases available.</p>
-                  )}
-                </div>
-              ) : (
-                /* TAB: Output / Console */
-                <div className="space-y-4">
-                  {!executionResult ? (
-                    <div className="py-8 text-center text-xs text-zinc-500">
-                      Click <strong className="text-zinc-300">Run</strong> to test your code or <strong className="text-green-400">Submit Question</strong> to evaluate against all test cases.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
-                              executionResult.status === 'Accepted'
-                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                            }`}
-                          >
-                            {executionResult.status}
-                          </span>
-                          {executionResult.exec_time !== undefined && (
-                            <span className="text-xs text-zinc-500 font-mono">
-                              {executionResult.exec_time} ms
-                            </span>
-                          )}
-                        </div>
+
+                    {useCustomInput ? (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-zinc-400">
+                          Custom Standard Input (stdin):
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={customInput}
+                          onChange={(e) => setCustomInput(e.target.value)}
+                          placeholder="Enter custom input to feed to your program..."
+                          className="w-full p-3 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs font-mono text-zinc-200 focus:outline-none focus:border-green-500/50 resize-none"
+                        />
                       </div>
-
-                      {executionResult.errorMsg && (
-                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400">
-                          {executionResult.errorMsg}
-                        </div>
-                      )}
-
-                      {executionResult.actual_output !== undefined && (
+                    ) : sampleCases[activeTestCaseIdx] ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
-                            Your Program Output:
+                            Input:
                           </span>
-                          <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-200 overflow-x-auto">
-                            {executionResult.actual_output || '(Empty Output)'}
+                          <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-300 overflow-x-auto">
+                            {sampleCases[activeTestCaseIdx].input}
                           </pre>
                         </div>
-                      )}
-
-                      {executionResult.expected_output !== undefined && executionResult.expected_output && (
                         <div>
                           <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
                             Expected Output:
                           </span>
-                          <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-400 overflow-x-auto">
-                            {executionResult.expected_output}
+                          <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-300 overflow-x-auto">
+                            {sampleCases[activeTestCaseIdx].output}
                           </pre>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-600">No testcases available.</p>
+                    )}
+                  </div>
+                ) : (
+                  /* TAB: Output / Console */
+                  <div className="space-y-4">
+                    {!executionResult ? (
+                      <div className="py-8 text-center text-xs text-zinc-500">
+                        Click <strong className="text-zinc-300">Run</strong> to test your code or <strong className="text-green-400">Submit Question</strong> to evaluate against all test cases.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
+                                executionResult.status === 'Accepted'
+                                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                              }`}
+                            >
+                              {executionResult.status}
+                            </span>
+                            {executionResult.exec_time !== undefined && (
+                              <span className="text-xs text-zinc-500 font-mono">
+                                {executionResult.exec_time} ms
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {executionResult.errorMsg && (
+                          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400">
+                            {executionResult.errorMsg}
+                          </div>
+                        )}
+
+                        {executionResult.actual_output !== undefined && (
+                          <div>
+                            <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
+                              Your Program Output:
+                            </span>
+                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-200 overflow-x-auto">
+                              {executionResult.actual_output || '(Empty Output)'}
+                            </pre>
+                          </div>
+                        )}
+
+                        {executionResult.expected_output !== undefined && executionResult.expected_output && (
+                          <div>
+                            <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
+                              Expected Output:
+                            </span>
+                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-400 overflow-x-auto">
+                              {executionResult.expected_output}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
