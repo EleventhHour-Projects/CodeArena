@@ -14,12 +14,6 @@ export interface SendInviteEmailParams {
   validUntil?: Date | string;
 }
 
-interface ResendAttachment {
-  filename: string;
-  content: string; // Base64 string
-  content_type?: string;
-  cid?: string;
-}
 
 function escapeHtml(str: string): string {
   return str
@@ -55,102 +49,22 @@ export async function sendAssessmentInviteEmail(
   const validUntilFormatted = params.validUntil ? new Date(params.validUntil).toLocaleString() : 'No expiration set';
   const companyInitial = (params.companyName?.trim() || 'C')[0].toUpperCase();
 
-  const attachments: ResendAttachment[] = [];
   let logoImgSrc: string | null = null;
-
-  // Process and embed company logo via CID attachment or direct URL
   if (params.companyLogo) {
-    try {
-      if (params.companyLogo.startsWith('data:image/')) {
-        // Base64 Data URI
-        const match = params.companyLogo.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) {
-          const mimeType = match[1];
-          const base64Data = match[2];
-          const ext = mimeType.split('/')[1]?.replace('+xml', '') || 'png';
-          attachments.push({
-            filename: `company-logo.${ext}`,
-            content: base64Data,
-            content_type: mimeType,
-            cid: 'company-logo',
-          });
-          logoImgSrc = 'cid:company-logo';
-        }
-      } else if (params.companyLogo.startsWith('http://') || params.companyLogo.startsWith('https://')) {
-        // External or localhost URL
-        if (params.companyLogo.includes('localhost') || params.companyLogo.includes('127.0.0.1')) {
-          // Check if it corresponds to a local file in public/
-          const relativePath = params.companyLogo.replace(/^https?:\/\/[^/]+/, '');
-          const localPath = path.join(process.cwd(), 'public', relativePath.replace(/^\//, ''));
-          if (fs.existsSync(localPath)) {
-            const fileBuf = fs.readFileSync(localPath);
-            const ext = path.extname(localPath).replace('.', '') || 'png';
-            attachments.push({
-              filename: `company-logo.${ext}`,
-              content: fileBuf.toString('base64'),
-              content_type: `image/${ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext}`,
-              cid: 'company-logo',
-            });
-            logoImgSrc = 'cid:company-logo';
-          } else {
-            logoImgSrc = params.companyLogo;
-          }
-        } else {
-          // Remote public URL - try to fetch and embed as CID to avoid image proxy blocks
-          try {
-            const imgRes = await fetch(params.companyLogo);
-            if (imgRes.ok) {
-              const arrayBuf = await imgRes.arrayBuffer();
-              const base64 = Buffer.from(arrayBuf).toString('base64');
-              const contentType = imgRes.headers.get('content-type') || 'image/png';
-              const ext = contentType.split('/')[1]?.replace('+xml', '') || 'png';
-              attachments.push({
-                filename: `company-logo.${ext}`,
-                content: base64,
-                content_type: contentType,
-                cid: 'company-logo',
-              });
-              logoImgSrc = 'cid:company-logo';
-            } else {
-              logoImgSrc = params.companyLogo;
-            }
-          } catch {
-            logoImgSrc = params.companyLogo;
-          }
-        }
-      } else {
-        // Relative file path on server
-        const localPath = path.join(process.cwd(), 'public', params.companyLogo.replace(/^\//, ''));
-        if (fs.existsSync(localPath)) {
-          const fileBuf = fs.readFileSync(localPath);
-          const ext = path.extname(localPath).replace('.', '') || 'png';
-          attachments.push({
-            filename: `company-logo.${ext}`,
-            content: fileBuf.toString('base64'),
-            content_type: `image/${ext === 'svg' ? 'svg+xml' : ext === 'jpg' ? 'jpeg' : ext}`,
-            cid: 'company-logo',
-          });
-          logoImgSrc = 'cid:company-logo';
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to prepare company logo attachment:', err);
-    }
+    logoImgSrc = params.companyLogo;
   }
-
   const companyLogoHeader = logoImgSrc
     ? `
     <table border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td align="right" style="padding-right: 12px; vertical-align: middle;">
           <span style="font-size: 13px; font-weight: 700; color: #ffffff; display: block; line-height: 1.2;">${companyNameEscaped}</span>
-          ${
-            params.companyWebsite
-              ? `<span style="font-size: 10px; color: #a1a1aa; display: block; margin-top: 2px;">${escapeHtml(
-                  params.companyWebsite.replace(/^https?:\/\//, '')
-                )}</span>`
-              : ''
-          }
+          ${params.companyWebsite
+      ? `<span style="font-size: 10px; color: #a1a1aa; display: block; margin-top: 2px;">${escapeHtml(
+        params.companyWebsite.replace(/^https?:\/\//, '')
+      )}</span>`
+      : ''
+    }
         </td>
         <td style="vertical-align: middle;">
           <img src="${logoImgSrc}" alt="${companyNameEscaped}" width="42" height="42" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255, 255, 255, 0.15); display: block; background-color: #27272a;" />
@@ -243,11 +157,10 @@ export async function sendAssessmentInviteEmail(
                       <tr>
                         <td style="padding: 6px 0; font-size: 13px; color: #71717a;">Organization:</td>
                         <td style="padding: 6px 0; font-size: 13px; color: #ffffff; font-weight: 600; text-align: right;">
-                          ${
-                            logoImgSrc
-                              ? `<img src="${logoImgSrc}" alt="${companyNameEscaped}" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 6px; display: inline-block; object-fit: cover;" />`
-                              : ''
-                          }
+                          ${logoImgSrc
+      ? `<img src="${logoImgSrc}" alt="${companyNameEscaped}" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 6px; display: inline-block; object-fit: cover;" />`
+      : ''
+    }
                           <span style="vertical-align: middle;">${companyNameEscaped}</span>
                         </td>
                       </tr>
@@ -331,10 +244,6 @@ export async function sendAssessmentInviteEmail(
       subject: `Invitation: ${params.assessmentTitle} - ${params.companyName}`,
       html: htmlContent,
     };
-
-    if (attachments.length > 0) {
-      requestBody.attachments = attachments;
-    }
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',

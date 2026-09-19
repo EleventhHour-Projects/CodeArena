@@ -71,6 +71,13 @@ export async function POST(
     if (!test) return NextResponse.json({ error: 'Test not found' }, { status: 404 });
 
     const company = await Company.findById(auth.id).select('name logo email website').lean();
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    const companyLogoUrl = company
+      ? `${baseUrl}/api/company/logo/${company._id}`
+      : '';
 
     if (!Array.isArray(test.invitedCandidates)) {
       test.invitedCandidates = [];
@@ -134,23 +141,6 @@ export async function POST(
 
       if (candidatesToSend.length === 0) {
         return NextResponse.json({ error: 'No candidates selected for email' }, { status: 400 });
-      }
-
-      const host = request.headers.get('host') || 'localhost:3000';
-      const protocol = host.includes('localhost') ? 'http' : 'https';
-      const baseUrl = `${protocol}://${host}`;
-
-      let companyLogoUrl = '';
-      if (company?.logo) {
-        if (
-          company.logo.startsWith('data:image/') ||
-          company.logo.startsWith('http://') ||
-          company.logo.startsWith('https://')
-        ) {
-          companyLogoUrl = company.logo;
-        } else {
-          companyLogoUrl = `${baseUrl}${company.logo.startsWith('/') ? '' : '/'}${company.logo}`;
-        }
       }
 
       let sentCount = 0;
