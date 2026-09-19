@@ -153,6 +153,8 @@ type Result struct {
 	ActualOutput         string  `bson:"actualOutput,omitempty" json:"actualOutput,omitempty"`
 	ExpectedOutput       string  `bson:"expectedOutput,omitempty" json:"expectedOutput,omitempty"`
 	IsHidden             bool    `bson:"isHidden,omitempty" json:"isHidden,omitempty"`
+	PassedCount          int     `bson:"passedCount,omitempty" json:"passedCount,omitempty"`
+	TotalCount           int     `bson:"totalCount,omitempty" json:"totalCount,omitempty"`
 }
 
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission

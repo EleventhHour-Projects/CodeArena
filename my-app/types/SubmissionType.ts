@@ -26,5 +26,7 @@ export interface Submission {
         expectedOutput?: string;
         errorMsg?: string;
         isHidden?: boolean;
+        passedCount?: number;
+        totalCount?: number;
     }
 }

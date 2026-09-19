@@ -399,21 +399,43 @@ export default function TestAttemptPage() {
 
         if (data.status && data.status !== 'PENDING') {
           setIsExecuting(false);
-          setExecutionResult(data);
+
+          const totalTc = data.total_count ?? (data.status === 'Accepted' ? 1 : 0);
+          const passedTc = data.status === 'Accepted' ? (data.total_count ?? 1) : (data.passed_count ?? 0);
+          const maxPts = activeQuestion?.points || 10;
+          
+          let earned = 0;
+          if (data.status === 'Accepted') {
+            earned = maxPts;
+          } else if (totalTc > 0 && passedTc > 0) {
+            earned = Math.round((passedTc / totalTc) * maxPts);
+          }
+
+          const enhancedResult = {
+            ...data,
+            passed_count: passedTc,
+            total_count: totalTc,
+            score_earned: earned,
+          };
+
+          setExecutionResult(enhancedResult);
           setBottomTab('output');
 
           if (type === 'Submit') {
             const isAcc = data.status === 'Accepted';
             if (isAcc) {
               setSolvedMap((prev) => ({ ...prev, [probId]: true }));
-              const earned = activeQuestion?.points || 10;
               setScoresMap((prev) => ({ ...prev, [probId]: earned }));
-              toast.success(`Question Accepted! +${earned} pts`);
+              toast.success(`Question Accepted! (All ${totalTc}/${totalTc} Passed) +${earned} pts`);
+            } else if (earned > 0) {
+              setScoresMap((prev) => ({ ...prev, [probId]: earned }));
+              toast.warning(`Partial Result: Passed ${passedTc}/${totalTc} Test Cases (+${earned}/${maxPts} pts)`);
             } else {
-              toast.error(`Submission Result: ${data.status}`);
+              setScoresMap((prev) => ({ ...prev, [probId]: 0 }));
+              toast.error(`Submission Result: ${data.status} (0/${totalTc} Passed)`);
             }
 
-            // Record answer on server
+            // Record answer on server with partial test cases
             fetch(`/api/test/attempt/${attemptId}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -423,7 +445,9 @@ export default function TestAttemptPage() {
                 code: activeCode,
                 language,
                 status: isAcc ? 'Accepted' : 'Rejected',
-                score: isAcc ? activeQuestion?.points || 10 : 0,
+                score: earned,
+                passedTestCases: passedTc,
+                totalTestCases: totalTc,
                 execCodeId: execId,
               }),
             });
@@ -1178,17 +1202,36 @@ export default function TestAttemptPage() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span
                               className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
                                 executionResult.status === 'Accepted'
-                                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  : executionResult.score_earned > 0
+                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                               }`}
                             >
-                              {executionResult.status}
+                              {executionResult.status === 'Accepted'
+                                ? 'Accepted'
+                                : executionResult.score_earned > 0
+                                ? 'Partially Accepted'
+                                : executionResult.status}
                             </span>
+
+                            {executionResult.total_count !== undefined && executionResult.total_count > 0 && (
+                              <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 border border-white/[0.08] text-zinc-200">
+                                Passed {executionResult.passed_count ?? 0} / {executionResult.total_count} Test Cases
+                              </span>
+                            )}
+
+                            {executionResult.score_earned !== undefined && (
+                              <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                Score: {executionResult.score_earned} / {activeQuestion?.points || 10} pts
+                              </span>
+                            )}
+
                             {executionResult.exec_time !== undefined && (
                               <span className="text-xs text-zinc-500 font-mono">
                                 {executionResult.exec_time} ms

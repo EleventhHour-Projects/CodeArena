@@ -141,9 +141,15 @@ export default function TestLandingPage() {
     };
   }, []);
 
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [invitedCandidate, setInvitedCandidate] = useState<{ email: string; name?: string; token: string } | null>(null);
+
   const fetchTestData = () => {
     if (!link) return;
-    fetch(`/api/test/${link}`)
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const token = urlParams ? urlParams.get('token') : null;
+
+    fetch(`/api/test/${link}${token ? `?token=${token}` : ''}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -155,6 +161,25 @@ export default function TestLandingPage() {
         setTestInfo(data.test);
         setCompanyInfo(data.company);
         setTimeStatus(data.timeStatus);
+
+        if (data.startsInSeconds !== null && data.startsInSeconds !== undefined) {
+          setRemainingSeconds(data.startsInSeconds);
+          const diff = data.startsInSeconds;
+          const d = Math.floor(diff / (60 * 60 * 24));
+          const h = Math.floor((diff % (60 * 60 * 24)) / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          const s = diff % 60;
+          setCountdown({ days: d, hours: h, minutes: m, seconds: s });
+        }
+
+        if (data.invitedCandidate) {
+          setInvitedCandidate(data.invitedCandidate);
+          setCandidate((prev) => ({
+            ...prev,
+            email: data.invitedCandidate.email || prev.email,
+            name: data.invitedCandidate.name || prev.name,
+          }));
+        }
 
         if (data.timeStatus === 'upcoming') {
           setStage('upcoming');
@@ -174,30 +199,32 @@ export default function TestLandingPage() {
     fetchTestData();
   }, [link]);
 
-  // Upcoming Countdown Timer
+  // Upcoming Countdown Timer (Server-Authoritative)
   useEffect(() => {
-    if (stage !== 'upcoming' || !testInfo?.validFrom) return;
+    if (stage !== 'upcoming' || remainingSeconds === null || remainingSeconds <= 0) return;
 
     const interval = setInterval(() => {
-      const now = Date.now();
-      const target = new Date(testInfo.validFrom!).getTime();
-      const diff = target - now;
+      setRemainingSeconds((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          setTimeStatus('active');
+          setStage('info');
+          fetchTestData();
+          return 0;
+        }
 
-      if (diff <= 0) {
-        clearInterval(interval);
-        setTimeStatus('active');
-        setStage('info');
-      } else {
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((diff / (1000 * 60)) % 60);
-        const s = Math.floor((diff / 1000) % 60);
+        const next = prev - 1;
+        const d = Math.floor(next / (60 * 60 * 24));
+        const h = Math.floor((next % (60 * 60 * 24)) / 3600);
+        const m = Math.floor((next % 3600) / 60);
+        const s = next % 60;
         setCountdown({ days: d, hours: h, minutes: m, seconds: s });
-      }
+        return next;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [stage, testInfo?.validFrom]);
+  }, [stage, remainingSeconds]);
 
   const handleRegister = async () => {
     if (!candidate.name.trim() || !candidate.email.trim()) {
@@ -756,6 +783,13 @@ export default function TestLandingPage() {
             <h2 className="text-xl font-extrabold text-white">Candidate Registration</h2>
             <p className="text-xs text-zinc-500">{testInfo?.title}</p>
           </div>
+
+          {invitedCandidate && (
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>Verified Personal Invitation for <strong>{invitedCandidate.name || invitedCandidate.email}</strong></span>
+            </div>
+          )}
 
           {registerError && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">

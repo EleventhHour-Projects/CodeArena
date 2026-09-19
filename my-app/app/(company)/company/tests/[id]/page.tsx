@@ -44,6 +44,12 @@ import {
   Linkedin,
   FileBadge,
   Code2,
+  Mail,
+  Send,
+  Sparkles,
+  UserPlus,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -125,11 +131,28 @@ interface CandidateAttempt {
   submittedAt?: string;
   tabSwitchCount: number;
   violations: { type: string; timestamp: string; details?: string }[];
-  answers: { problemId: number; score: number; status?: string; language?: string; code?: string }[];
+  answers: {
+    problemId: number;
+    score: number;
+    status?: string;
+    language?: string;
+    code?: string;
+    passedTestCases?: number;
+    totalTestCases?: number;
+  }[];
   totalScore: number;
   maxScore: number;
   feedback?: { rating: number; difficultyRating?: string; comments?: string; submittedAt?: string };
   createdAt: string;
+}
+
+interface InvitedCandidateItem {
+  email: string;
+  name?: string;
+  token: string;
+  inviteSent: boolean;
+  inviteSentAt?: string;
+  status?: 'pending' | 'started' | 'completed';
 }
 
 const DEFAULT_REGISTRATION_FORM: RegistrationFormConfig = {
@@ -189,8 +212,10 @@ function TestFormContent() {
   const initialTab =
     searchParams?.get('tab') === 'activity' || searchParams?.get('tab') === 'results'
       ? 'activity'
+      : searchParams?.get('tab') === 'invites'
+      ? 'invites'
       : 'basic';
-  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'form' | 'proctoring' | 'settings' | 'activity'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'form' | 'invites' | 'proctoring' | 'settings' | 'activity'>(initialTab);
   const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState('');
 
@@ -201,6 +226,24 @@ function TestFormContent() {
   const [problemSearch, setProblemSearch] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [selectedProblemPoints, setSelectedProblemPoints] = useState<Record<number, number>>({});
+
+  // Auto-Pick by Difficulty state
+  const [showAutoPickModal, setShowAutoPickModal] = useState(false);
+  const [autoPickConfig, setAutoPickConfig] = useState({
+    easyCount: 2,
+    mediumCount: 2,
+    hardCount: 1,
+    easyPoints: 10,
+    mediumPoints: 20,
+    hardPoints: 30,
+  });
+
+  // Invited Candidates & Resend Email state
+  const [invitedCandidates, setInvitedCandidates] = useState<InvitedCandidateItem[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
+  const [bulkCandidateText, setBulkCandidateText] = useState('');
+  const [selectedCandidateTokens, setSelectedCandidateTokens] = useState<string[]>([]);
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   // Live Activity state
   const [activityLoading, setActivityLoading] = useState(false);
@@ -391,6 +434,180 @@ function TestFormContent() {
     }
   };
 
+  // Auto-Pick Questions by Difficulty
+  const handleAutoPickQuestions = async () => {
+    let pool = availableProblems;
+    if (pool.length === 0) {
+      setLoadingProblems(true);
+      try {
+        const res = await fetch('/api/company/problems');
+        const data = await res.json();
+        pool = data.problems || [];
+        setAvailableProblems(pool);
+      } catch {
+        toast.error('Failed to load problem bank');
+        return;
+      } finally {
+        setLoadingProblems(false);
+      }
+    }
+
+    const easyPool = pool.filter((p) => p.difficulty === 'easy');
+    const mediumPool = pool.filter((p) => p.difficulty === 'medium');
+    const hardPool = pool.filter((p) => p.difficulty === 'hard');
+
+    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+
+    const pickedEasy = shuffle(easyPool)
+      .slice(0, Math.max(0, autoPickConfig.easyCount))
+      .map((p) => ({
+        problemId: p.id,
+        title: p.title,
+        difficulty: 'easy' as const,
+        points: autoPickConfig.easyPoints,
+      }));
+
+    const pickedMedium = shuffle(mediumPool)
+      .slice(0, Math.max(0, autoPickConfig.mediumCount))
+      .map((p) => ({
+        problemId: p.id,
+        title: p.title,
+        difficulty: 'medium' as const,
+        points: autoPickConfig.mediumPoints,
+      }));
+
+    const pickedHard = shuffle(hardPool)
+      .slice(0, Math.max(0, autoPickConfig.hardCount))
+      .map((p) => ({
+        problemId: p.id,
+        title: p.title,
+        difficulty: 'hard' as const,
+        points: autoPickConfig.hardPoints,
+      }));
+
+    const allPicked = [...pickedEasy, ...pickedMedium, ...pickedHard];
+    if (allPicked.length === 0) {
+      toast.warning('Please specify at least 1 question to pick.');
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      questions: allPicked,
+    }));
+
+    setShowAutoPickModal(false);
+    toast.success(`Auto-picked ${allPicked.length} questions (${pickedEasy.length} Easy, ${pickedMedium.length} Medium, ${pickedHard.length} Hard)`);
+  };
+
+  // Invited Candidates Handlers
+  const loadInvitedCandidates = async () => {
+    if (isNew) return;
+    setLoadingInvites(true);
+    try {
+      const res = await fetch(`/api/company/tests/${id}/invite`);
+      const data = await res.json();
+      if (data.invitedCandidates) {
+        setInvitedCandidates(data.invitedCandidates);
+      }
+    } catch {
+      toast.error('Failed to load candidate invites');
+    } finally {
+      setLoadingInvites(false);
+    }
+  };
+
+  const handleBulkAddCandidates = async () => {
+    if (!bulkCandidateText.trim()) {
+      toast.warning('Please enter candidate email addresses.');
+      return;
+    }
+
+    const lines = bulkCandidateText.split('\n').map((l) => l.trim()).filter(Boolean);
+    const parsed = lines.map((line) => {
+      const parts = line.split(/[,\t]/).map((p) => p.trim());
+      return {
+        email: parts[0],
+        name: parts[1] || '',
+      };
+    }).filter((c) => c.email && c.email.includes('@'));
+
+    if (parsed.length === 0) {
+      toast.error('No valid email addresses found.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/company/tests/${id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', candidates: parsed }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message);
+        setInvitedCandidates(data.invitedCandidates || []);
+        setBulkCandidateText('');
+      } else {
+        toast.error(data.error || 'Failed to add candidates');
+      }
+    } catch {
+      toast.error('Error adding candidates');
+    }
+  };
+
+  const handleDeleteCandidate = async (token: string, email: string) => {
+    try {
+      const res = await fetch(`/api/company/tests/${id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', token, email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.info('Candidate removed');
+        setInvitedCandidates(data.invitedCandidates || []);
+        setSelectedCandidateTokens((prev) => prev.filter((t) => t !== token));
+      } else {
+        toast.error(data.error || 'Failed to remove candidate');
+      }
+    } catch {
+      toast.error('Error removing candidate');
+    }
+  };
+
+  const handleSendEmails = async (sendAll = false) => {
+    if (!sendAll && selectedCandidateTokens.length === 0) {
+      toast.warning('Please select candidates to send invitations to.');
+      return;
+    }
+
+    setSendingEmails(true);
+    try {
+      const res = await fetch(`/api/company/tests/${id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_email',
+          tokens: selectedCandidateTokens,
+          sendAll,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Successfully sent ${data.sentCount} invitation email(s) via Resend!`);
+        setInvitedCandidates(data.invitedCandidates || []);
+        setSelectedCandidateTokens([]);
+      } else {
+        toast.error(data.error || 'Failed to send invite emails');
+      }
+    } catch {
+      toast.error('Error dispatching emails');
+    } finally {
+      setSendingEmails(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center text-sm text-zinc-500">
@@ -570,6 +787,24 @@ function TestFormContent() {
           <span>Candidate Form</span>
         </button>
 
+        {!isNew && (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('invites');
+              loadInvitedCandidates();
+            }}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
+              activeTab === 'invites'
+                ? 'border-green-500 text-white'
+                : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>Invited Candidates & Emails ({invitedCandidates.length})</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => setActiveTab('proctoring')}
@@ -714,17 +949,28 @@ function TestFormContent() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      loadProblemBank();
-                      setShowProblemPicker(true);
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Browse Question Bank</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAutoPickModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold border border-white/[0.08] transition cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Auto-Pick by Difficulty</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        loadProblemBank();
+                        setShowProblemPicker(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Browse Bank</span>
+                    </button>
+                  </div>
                 </div>
 
                 {form.questions.length === 0 ? (
@@ -919,6 +1165,148 @@ function TestFormContent() {
                   </div>
                 </div>
               )}
+
+              {/* Auto-Pick Problems by Difficulty Modal */}
+              {showAutoPickModal && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-[#0c0c0e] border border-white/[0.12] rounded-2xl w-full max-w-lg flex flex-col shadow-2xl overflow-hidden">
+                    <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-white">Auto-Pick Questions</h3>
+                          <p className="text-xs text-zinc-400">Specify question counts and points per difficulty</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAutoPickModal(false)}
+                        className="p-1 rounded-lg text-zinc-500 hover:text-white transition cursor-pointer"
+                      >
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                      {/* Easy */}
+                      <div className="p-4 rounded-xl bg-zinc-900/60 border border-emerald-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase text-emerald-400">Easy Problems</span>
+                          <span className="text-[11px] text-zinc-500 font-mono">Difficulty: Easy</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Number of Questions</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              value={autoPickConfig.easyCount}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, easyCount: parseInt(e.target.value) || 0 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Points per Question</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={autoPickConfig.easyPoints}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, easyPoints: parseInt(e.target.value) || 10 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Medium */}
+                      <div className="p-4 rounded-xl bg-zinc-900/60 border border-amber-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase text-amber-400">Medium Problems</span>
+                          <span className="text-[11px] text-zinc-500 font-mono">Difficulty: Medium</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Number of Questions</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              value={autoPickConfig.mediumCount}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, mediumCount: parseInt(e.target.value) || 0 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Points per Question</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={autoPickConfig.mediumPoints}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, mediumPoints: parseInt(e.target.value) || 20 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hard */}
+                      <div className="p-4 rounded-xl bg-zinc-900/60 border border-rose-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase text-rose-400">Hard Problems</span>
+                          <span className="text-[11px] text-zinc-500 font-mono">Difficulty: Hard</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Number of Questions</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              value={autoPickConfig.hardCount}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, hardCount: parseInt(e.target.value) || 0 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-rose-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-zinc-400 mb-1">Points per Question</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={autoPickConfig.hardPoints}
+                              onChange={(e) => setAutoPickConfig({ ...autoPickConfig, hardPoints: parseInt(e.target.value) || 30 })}
+                              className="w-full px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/[0.1] text-xs text-white focus:outline-none focus:border-rose-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border-t border-white/[0.08] bg-zinc-950 flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAutoPickModal(false)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAutoPickQuestions}
+                        className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition active:scale-[0.98] cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Generate & Replace Questions</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1007,6 +1395,246 @@ function TestFormContent() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: Candidate Invites & Custom Unique Links */}
+          {activeTab === 'invites' && (
+            <div className="space-y-6">
+              {/* Top Banner & Import Card */}
+              <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
+                  <div className="space-y-1">
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-green-400" />
+                      <span>Candidate Invitations & Unique Links</span>
+                    </h2>
+                    <p className="text-xs text-zinc-400">
+                      Import candidate email lists, generate individual tokenized links, and dispatch invitation emails via Resend.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={loadInvitedCandidates}
+                      disabled={loadingInvites}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition cursor-pointer"
+                      title="Refresh invited list"
+                    >
+                      <RotateCcw className={`w-3.5 h-3.5 ${loadingInvites ? 'animate-spin text-green-400' : ''}`} />
+                      <span>Refresh</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bulk Import Textarea */}
+                <div className="space-y-3">
+                  <label className="block text-xs font-semibold text-zinc-300">
+                    Add Candidate Emails (One per line or &quot;email, Full Name&quot;)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={bulkCandidateText}
+                    onChange={(e) => setBulkCandidateText(e.target.value)}
+                    placeholder={`candidate1@gmail.com, John Doe\ncandidate2@outlook.com, Alice Smith\ncandidate3@university.edu`}
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs font-mono focus:outline-none focus:border-green-500/50 transition resize-none"
+                  />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-[11px] text-zinc-500">
+                      Each candidate will be assigned a cryptographically unique 16-character access token.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleBulkAddCandidates}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-white/[0.08] transition cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-green-400" />
+                      <span>Add Candidates & Generate Links</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Candidates Table & Bulk Email Dispatcher */}
+              <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl overflow-hidden space-y-0">
+                {/* Actions Ribbon */}
+                <div className="p-4 bg-zinc-900/60 border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-white">
+                      {invitedCandidates.length} Total Candidates
+                    </span>
+                    {selectedCandidateTokens.length > 0 && (
+                      <span className="text-xs font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-0.5 rounded-full">
+                        {selectedCandidateTokens.length} Selected
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={invitedCandidates.length === 0}
+                      onClick={() => {
+                        if (selectedCandidateTokens.length === invitedCandidates.length) {
+                          setSelectedCandidateTokens([]);
+                        } else {
+                          setSelectedCandidateTokens(invitedCandidates.map((c) => c.token));
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {selectedCandidateTokens.length === invitedCandidates.length && invitedCandidates.length > 0
+                        ? 'Deselect All'
+                        : 'Select All'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={sendingEmails || selectedCandidateTokens.length === 0}
+                      onClick={() => handleSendEmails(false)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition disabled:opacity-40 cursor-pointer"
+                    >
+                      {sendingEmails ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Send className="w-3.5 h-3.5" />
+                      )}
+                      <span>Send to Selected ({selectedCandidateTokens.length})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={sendingEmails || invitedCandidates.length === 0}
+                      onClick={() => handleSendEmails(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-bold border border-white/[0.1] transition disabled:opacity-40 cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-zinc-300" />
+                      <span>Send to All ({invitedCandidates.length})</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Candidate List / Table */}
+                {loadingInvites ? (
+                  <div className="py-16 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                    <span>Loading candidate records...</span>
+                  </div>
+                ) : invitedCandidates.length === 0 ? (
+                  <div className="py-16 text-center space-y-2">
+                    <Mail className="w-8 h-8 text-zinc-600 mx-auto" />
+                    <p className="text-sm font-semibold text-zinc-400">No candidates added yet</p>
+                    <p className="text-xs text-zinc-600 max-w-sm mx-auto">
+                      Use the import box above to generate custom invitation links for each candidate.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.06]">
+                    {invitedCandidates.map((cand) => {
+                      const isSelected = selectedCandidateTokens.includes(cand.token);
+                      const customUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/test/${generatedLink || id}?token=${cand.token}`;
+
+                      return (
+                        <div
+                          key={cand.token}
+                          className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition ${
+                            isSelected ? 'bg-green-500/[0.03]' : 'hover:bg-white/[0.015]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCandidateTokens((prev) => [...prev, cand.token]);
+                                } else {
+                                  setSelectedCandidateTokens((prev) => prev.filter((t) => t !== cand.token));
+                                }
+                              }}
+                              className="w-4 h-4 rounded accent-green-500 cursor-pointer"
+                            />
+
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-white">
+                                  {cand.name || cand.email.split('@')[0]}
+                                </h4>
+                                {cand.name && (
+                                  <span className="text-[10px] text-zinc-500 font-mono">({cand.email})</span>
+                                )}
+                              </div>
+                              {!cand.name && (
+                                <p className="text-xs text-zinc-400 font-mono">{cand.email}</p>
+                              )}
+                              
+                              {/* Custom Link Badge & Copy */}
+                              <div className="pt-1 flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 border border-white/[0.06] px-2 py-0.5 rounded truncate max-w-xs sm:max-w-md">
+                                  .../test/{generatedLink || id}?token={cand.token}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(customUrl);
+                                    toast.success(`Copied unique link for ${cand.email}`);
+                                  }}
+                                  className="p-1 rounded-md bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 transition cursor-pointer"
+                                  title="Copy custom test link"
+                                >
+                                  <Copy className="w-3 h-3 text-green-400" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs shrink-0 self-end sm:self-center">
+                            {/* Email Status */}
+                            <div>
+                              {cand.inviteSent ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Email Sent</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-800 border border-white/[0.06] text-zinc-400 text-[10px] font-bold">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Not Sent</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Attempt Status */}
+                            <div>
+                              <span
+                                className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                                  cand.status === 'completed'
+                                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    : cand.status === 'started'
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                    : 'bg-zinc-800 text-zinc-500'
+                                }`}
+                              >
+                                {cand.status || 'pending'}
+                              </span>
+                            </div>
+
+                            {/* Delete Candidate */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCandidate(cand.token, cand.email)}
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+                              title="Delete candidate invite"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1516,6 +2144,11 @@ function TestFormContent() {
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
+                                    {ans.passedTestCases !== undefined && ans.totalTestCases !== undefined && (
+                                      <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 border border-white/[0.08] px-2 py-0.5 rounded">
+                                        {ans.passedTestCases} / {ans.totalTestCases} Tests Passed
+                                      </span>
+                                    )}
                                     <span
                                       className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                                         ans.status === 'Accepted'

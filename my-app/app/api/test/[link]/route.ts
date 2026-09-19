@@ -8,6 +8,9 @@ import Company from '@/lib/models/Company';
 export async function GET(request: Request, { params }: { params: Promise<{ link: string }> }) {
   try {
     const { link } = await params;
+    const url = new URL(request.url);
+    const token = url.searchParams.get('token');
+
     await dbConnect();
 
     let test = await TestAssessment.findOne({ testLink: link });
@@ -32,16 +35,49 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
     const company = await Company.findById(test.companyId).select('name logo website description email');
 
     const now = new Date();
+    const nowTime = now.getTime();
     let timeStatus: 'upcoming' | 'active' | 'ended' = 'active';
 
-    if (test.validFrom && now < new Date(test.validFrom)) {
-      timeStatus = 'upcoming';
-    } else if (test.validUntil && now > new Date(test.validUntil)) {
-      timeStatus = 'ended';
+    let startsInSeconds: number | null = null;
+    let endsInSeconds: number | null = null;
+
+    if (test.validFrom) {
+      const fromTime = new Date(test.validFrom).getTime();
+      if (nowTime < fromTime) {
+        timeStatus = 'upcoming';
+        startsInSeconds = Math.max(0, Math.floor((fromTime - nowTime) / 1000));
+      }
+    }
+
+    if (test.validUntil) {
+      const untilTime = new Date(test.validUntil).getTime();
+      if (nowTime > untilTime) {
+        timeStatus = 'ended';
+      } else {
+        endsInSeconds = Math.max(0, Math.floor((untilTime - nowTime) / 1000));
+      }
+    }
+
+    // Check if token matches an invited candidate
+    let invitedCandidate = null;
+    if (token && Array.isArray((test as any).invitedCandidates)) {
+      const found = (test as any).invitedCandidates.find((c: any) => c.token === token);
+      if (found) {
+        invitedCandidate = {
+          email: found.email,
+          name: found.name || '',
+          token: found.token,
+          status: found.status || 'pending',
+        };
+      }
     }
 
     return NextResponse.json({
       timeStatus,
+      serverTime: now.toISOString(),
+      startsInSeconds,
+      endsInSeconds,
+      invitedCandidate,
       isDraft: test.status === 'draft',
       test: {
         id: test._id.toString(),

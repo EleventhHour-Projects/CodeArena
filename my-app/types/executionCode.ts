@@ -34,6 +34,8 @@ export interface ExecutionCode {
         runTimeMs?: number;
         memoryUsedMB?: number;
         isHidden?: boolean;
+        passedCount?: number;
+        totalCount?: number;
     };
     type: executionType;
     createdAt: Date;
