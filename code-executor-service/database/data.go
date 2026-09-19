@@ -73,8 +73,12 @@ func findQuestionsDir(sub string) string {
 	return filepath.Join("..", sub)
 }
 
-// GetProblemTestCases is a function that fetches the test cases for a given problem ID, using an in-memory cache
-func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
+// GetProblemTestCasesList fetches problem test cases as an ordered slice of TestCaseItem
+// mode can be:
+// - "non_hidden" or "run": only non-hidden (Run) test cases (IsHidden = false)
+// - "hidden" or "submit": only hidden (Submit) test cases (IsHidden = true)
+// - "all": non-hidden test cases followed by hidden test cases
+func GetProblemTestCasesList(problemID int, mode string) ([]utils.TestCaseItem, error) {
 	problemCacheMu.RLock()
 	problem, found := problemCache[problemID]
 	problemCacheMu.RUnlock()
@@ -100,16 +104,46 @@ func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
 		problemCacheMu.Unlock()
 	}
 
-	testCases := make(map[string]string, len(problem.Testcases.Run)+len(problem.Testcases.Submit))
+	var list []utils.TestCaseItem
+	modeLower := strings.ToLower(strings.TrimSpace(mode))
 
-	for _, tc := range problem.Testcases.Run {
-		testCases[tc.Input] = tc.Output
+	if modeLower == "non_hidden" || modeLower == "nonhidden" || modeLower == "run" || modeLower == "all" || modeLower == "" {
+		for _, tc := range problem.Testcases.Run {
+			list = append(list, utils.TestCaseItem{
+				Input:    tc.Input,
+				Output:   tc.Output,
+				IsHidden: false,
+			})
+		}
 	}
 
-	if all {
+	if modeLower == "hidden" || modeLower == "submit" || modeLower == "all" {
 		for _, tc := range problem.Testcases.Submit {
-			testCases[tc.Input] = tc.Output
+			list = append(list, utils.TestCaseItem{
+				Input:    tc.Input,
+				Output:   tc.Output,
+				IsHidden: true,
+			})
 		}
+	}
+
+	return list, nil
+}
+
+// GetProblemTestCases is a function that fetches the test cases for a given problem ID, using an in-memory cache
+func GetProblemTestCases(problemID int, all bool) (map[string]string, error) {
+	mode := "run"
+	if all {
+		mode = "all"
+	}
+	items, err := GetProblemTestCasesList(problemID, mode)
+	if err != nil {
+		return nil, err
+	}
+
+	testCases := make(map[string]string, len(items))
+	for _, tc := range items {
+		testCases[tc.Input] = tc.Output
 	}
 
 	return testCases, nil
@@ -136,26 +170,28 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 
 	var subID *bson.ObjectID
 
-	if task.Type == "Submit" {
-		r, err := m.SumissionsCollection.InsertOne(context.Background(), utils.Submission{
+	isSubmitType := strings.EqualFold(task.Type, "Submit") || strings.EqualFold(task.Type, "All")
+	if isSubmitType {
+		subDoc := utils.Submission{
 			ExecutionCodeID: bsonObjId,
 			Code:            task.Code,
+			CodeType:        task.CodeType,
 			Language:        task.Language,
 			Result:          &status,
 			CreatedAt:       time.Now(),
 			UserID:          task.UserID,
-			BattleID:        task.BattleID,
 			Problem:         task.Problem,
 			Status:          &passString,
-		})
-		if err != nil {
-			return nil, err
 		}
-		idVal, ok := r.InsertedID.(bson.ObjectID)
-		if !ok {
-			return nil, fmt.Errorf("failed to cast inserted ID")
+		if !task.BattleID.IsZero() {
+			subDoc.BattleID = task.BattleID
 		}
-		subID = &idVal
+		r, err := m.SumissionsCollection.InsertOne(context.Background(), subDoc)
+		if err == nil {
+			if idVal, ok := r.InsertedID.(bson.ObjectID); ok {
+				subID = &idVal
+			}
+		}
 	}
 
 	objID, err := bson.ObjectIDFromHex(id)
@@ -163,11 +199,15 @@ func (m *MongoDBClient) UpdateExecutionCodeStatus(id string, status utils.Result
 		return nil, err
 	}
 	filter := bson.M{"_id": objID}
+	updateSet := bson.M{
+		"status": passString,
+		"result": status,
+	}
+	if task.CodeType != "" {
+		updateSet["codeType"] = task.CodeType
+	}
 	_, err = m.ExecutionCode.UpdateOne(context.TODO(), filter, bson.M{
-		"$set": bson.M{
-			"status": passString,
-			"result": status,
-		},
+		"$set": updateSet,
 	})
 	if err != nil {
 		return nil, err

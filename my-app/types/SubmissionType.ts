@@ -5,9 +5,10 @@ export type SubmissionStatus = "Accepted" | "Rejected";
 export interface Submission {
     _id: Types.ObjectId;
     code: string;
+    codeType?: string;
     language?: string;
     userId: Types.ObjectId;
-    battleId: Types.ObjectId;
+    battleId?: Types.ObjectId;
     problem: {
         difficulty: string;
         id: number;
@@ -23,5 +24,7 @@ export interface Submission {
         memoryUsedMB: number;
         actualOutput?: string;
         expectedOutput?: string;
+        errorMsg?: string;
+        isHidden?: boolean;
     }
 }
