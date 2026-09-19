@@ -91,6 +91,7 @@ export default function TestLandingPage() {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [timeStatus, setTimeStatus] = useState<'upcoming' | 'active' | 'ended'>('active');
   const [errorMsg, setErrorMsg] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Countdown for upcoming tests
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -620,23 +621,92 @@ export default function TestLandingPage() {
             </div>
           )}
 
+          {/* Default Standard Assessment Guidelines */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-green-400" />
+              <span>Assessment Rules & Guidelines</span>
+            </h4>
+
+            <div className="grid grid-cols-1 gap-2.5 text-xs text-zinc-300">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-900/60 border border-white/[0.04]">
+                <div className="w-5 h-5 rounded-md bg-green-500/10 text-green-400 flex items-center justify-center shrink-0 font-bold text-[11px] mt-0.5">
+                  1
+                </div>
+                <div>
+                  <strong className="text-white block font-semibold">Continuous Non-Stop Timer</strong>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Once started, the timer runs continuously ({testInfo?.durationMinutes} mins) and cannot be paused. Your solutions will be automatically submitted when time expires.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-900/60 border border-white/[0.04]">
+                <div className="w-5 h-5 rounded-md bg-green-500/10 text-green-400 flex items-center justify-center shrink-0 font-bold text-[11px] mt-0.5">
+                  2
+                </div>
+                <div>
+                  <strong className="text-white block font-semibold">Multiple Languages & Test Cases</strong>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Write code in C++, C, Python, Java, or Go. You can test your code against sample cases or custom inputs anytime before submitting each question.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-900/60 border border-white/[0.04]">
+                <div className="w-5 h-5 rounded-md bg-green-500/10 text-green-400 flex items-center justify-center shrink-0 font-bold text-[11px] mt-0.5">
+                  3
+                </div>
+                <div>
+                  <strong className="text-white block font-semibold">Honor Code & Anti-Cheating Policy</strong>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    All submissions are checked for plagiarism and authenticity. Tab switches, external pasting, and window unfocusing are actively logged and may result in immediate disqualification.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Company-Specific Custom Instructions */}
           {testInfo?.instructions && (
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-white/[0.06] space-y-2">
-              <span className="text-[11px] uppercase font-bold text-zinc-500 tracking-wider">
-                Instructions for Candidates
+              <span className="text-[11px] uppercase font-bold text-zinc-400 tracking-wider flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Special Instructions from {companyInfo?.name || 'Company'}</span>
               </span>
-              <p className="text-xs text-zinc-400 whitespace-pre-line leading-relaxed">
+              <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed">
                 {testInfo.instructions}
               </p>
             </div>
           )}
 
+          {/* Agreement Checkbox */}
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/[0.14] transition">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-green-500 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-green-500"
+              />
+              <span className="text-xs text-zinc-300 leading-relaxed">
+                I confirm that I will take this assessment independently without unauthorized aids or plagiarism. I have read, understood, and agree to the{' '}
+                <strong className="text-white font-medium">assessment instructions, honor code, and proctoring rules</strong>.
+              </span>
+            </label>
+          </div>
+
           <button
             type="button"
+            disabled={!agreedToTerms}
             onClick={() => setStage('register')}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 text-black text-sm font-bold shadow-lg shadow-green-500/20 transition active:scale-[0.98] cursor-pointer"
+            className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold shadow-lg transition active:scale-[0.98] cursor-pointer ${
+              agreedToTerms
+                ? 'bg-green-500 hover:bg-green-400 text-black shadow-green-500/20'
+                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/[0.04]'
+            }`}
           >
-            <span>Proceed to Candidate Registration</span>
+            <span>Agree & Proceed to Registration</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

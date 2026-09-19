@@ -28,7 +28,7 @@ export async function GET(
       if (payload.role !== 'company') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
-      companyId = payload.companyId as string;
+      companyId = (payload.id || payload.companyId) as string;
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
