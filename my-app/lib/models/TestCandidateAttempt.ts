@@ -23,6 +23,13 @@ export interface ICandidateInfo {
   phone?: string;
 }
 
+export interface ICandidateFeedback {
+  rating: number; // 1 to 5
+  difficultyRating?: 'easy' | 'medium' | 'hard' | 'just_right';
+  comments?: string;
+  submittedAt?: Date;
+}
+
 export interface ITestCandidateAttempt extends Document {
   testId: mongoose.Types.ObjectId;
   companyId: mongoose.Types.ObjectId;
@@ -35,6 +42,7 @@ export interface ITestCandidateAttempt extends Document {
   answers: IAnswer[];
   totalScore: number;
   maxScore: number;
+  feedback?: ICandidateFeedback;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,6 +70,13 @@ const CandidateInfoSchema = new Schema<ICandidateInfo>({
   phone: { type: String },
 });
 
+const FeedbackSchema = new Schema<ICandidateFeedback>({
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  difficultyRating: { type: String, enum: ['easy', 'medium', 'hard', 'just_right'] },
+  comments: { type: String, default: '' },
+  submittedAt: { type: Date, default: Date.now },
+});
+
 const TestCandidateAttemptSchema: Schema<ITestCandidateAttempt> = new Schema(
   {
     testId: { type: Schema.Types.ObjectId, ref: 'TestAssessment', required: true },
@@ -79,6 +94,7 @@ const TestCandidateAttemptSchema: Schema<ITestCandidateAttempt> = new Schema(
     answers: { type: [AnswerSchema], default: [] },
     totalScore: { type: Number, default: 0 },
     maxScore: { type: Number, default: 0 },
+    feedback: { type: FeedbackSchema },
   },
   { timestamps: true }
 );
