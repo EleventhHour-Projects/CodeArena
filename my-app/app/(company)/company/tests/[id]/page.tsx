@@ -144,6 +144,18 @@ const DEFAULT_REGISTRATION_FORM: RegistrationFormConfig = {
   experience: { enabled: false, required: false },
 };
 
+function toLocalDatetimeString(dateInput?: string | Date | null): string {
+  if (!dateInput) return '';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 const DEFAULT_FORM: TestForm = {
   title: '',
   description: '',
@@ -216,8 +228,8 @@ function TestFormContent() {
               description: t.description || '',
               instructions: t.instructions || '',
               durationMinutes: t.durationMinutes || 60,
-              validFrom: t.validFrom ? new Date(t.validFrom).toISOString().slice(0, 16) : '',
-              validUntil: t.validUntil ? new Date(t.validUntil).toISOString().slice(0, 16) : '',
+              validFrom: toLocalDatetimeString(t.validFrom),
+              validUntil: toLocalDatetimeString(t.validUntil),
               questions: t.questions || [],
               proctoring: t.proctoring || DEFAULT_FORM.proctoring,
               registrationForm: {
@@ -621,7 +633,7 @@ function TestFormContent() {
                     required
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder="e.g. Senior Backend Engineer Coding Round"
+                    placeholder="Enter assessment title (e.g. Software Engineering Online Assessment)"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition"
                   />
                 </div>
@@ -669,7 +681,7 @@ function TestFormContent() {
                     rows={3}
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    placeholder="Brief description of the assessment scope..."
+                    placeholder="Enter a brief summary of the assessment scope and target role..."
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition resize-none"
                   />
                 </div>
@@ -682,7 +694,7 @@ function TestFormContent() {
                     rows={5}
                     value={form.instructions}
                     onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                    placeholder="Provide specific guidelines, permitted languages, and rules for test takers..."
+                    placeholder="Enter specific guidelines, permitted languages, scoring rules, and instructions for test takers..."
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-green-500/50 transition resize-none font-mono text-xs"
                   />
                 </div>

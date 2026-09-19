@@ -122,6 +122,24 @@ export default function TestLandingPage() {
   });
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Proctoring: Keep camera preview connected when precheck renders
+  useEffect(() => {
+    if (checks.camera && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [checks.camera]);
+
+  // Cleanup stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
 
   const fetchTestData = () => {
     if (!link) return;
@@ -263,17 +281,19 @@ export default function TestLandingPage() {
   const startCameraCheck = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: Boolean(testInfo?.proctoring.requireCamera),
-        audio: Boolean(testInfo?.proctoring.requireMic),
+        video: Boolean(testInfo?.proctoring?.requireCamera),
+        audio: Boolean(testInfo?.proctoring?.requireMic),
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      streamRef.current = stream;
       setChecks((c) => ({
         ...c,
-        camera: Boolean(testInfo?.proctoring.requireCamera),
-        mic: Boolean(testInfo?.proctoring.requireMic),
+        camera: Boolean(testInfo?.proctoring?.requireCamera),
+        mic: Boolean(testInfo?.proctoring?.requireMic),
       }));
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
     } catch {
       alert('Please allow camera/microphone permissions in your browser and try again.');
     }
@@ -754,7 +774,7 @@ export default function TestLandingPage() {
                 required
                 value={candidate.name}
                 onChange={(e) => setCandidate({ ...candidate, name: e.target.value })}
-                placeholder="e.g. John Doe"
+                placeholder="Enter your full name"
                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
               />
             </div>
@@ -768,7 +788,7 @@ export default function TestLandingPage() {
                 required
                 value={candidate.email}
                 onChange={(e) => setCandidate({ ...candidate, email: e.target.value })}
-                placeholder="john@example.com"
+                placeholder="Enter your email address"
                 className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
               />
             </div>
@@ -785,7 +805,7 @@ export default function TestLandingPage() {
                     required={rf.phone?.required}
                     value={candidate.phone}
                     onChange={(e) => setCandidate({ ...candidate, phone: e.target.value })}
-                    placeholder="+91 9876543210"
+                    placeholder="Enter your contact phone number"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <Phone className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -804,7 +824,7 @@ export default function TestLandingPage() {
                     required={rf.rollNumber?.required}
                     value={candidate.rollNumber}
                     onChange={(e) => setCandidate({ ...candidate, rollNumber: e.target.value })}
-                    placeholder="e.g. 21BCE1024"
+                    placeholder="Enter your roll number or student ID"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <FileBadge className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -823,7 +843,7 @@ export default function TestLandingPage() {
                     required={rf.college?.required}
                     value={candidate.college}
                     onChange={(e) => setCandidate({ ...candidate, college: e.target.value })}
-                    placeholder="e.g. National Institute of Technology"
+                    placeholder="Enter your college or university name"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <GraduationCap className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -842,7 +862,7 @@ export default function TestLandingPage() {
                     required={rf.degree?.required}
                     value={candidate.degree}
                     onChange={(e) => setCandidate({ ...candidate, degree: e.target.value })}
-                    placeholder="B.Tech Computer Science"
+                    placeholder="Enter degree (e.g. B.Tech CS)"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                 </div>
@@ -858,7 +878,7 @@ export default function TestLandingPage() {
                     required={rf.graduationYear?.required}
                     value={candidate.graduationYear}
                     onChange={(e) => setCandidate({ ...candidate, graduationYear: e.target.value })}
-                    placeholder="2025"
+                    placeholder="Enter graduation year (e.g. 2026)"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                 </div>
@@ -876,7 +896,7 @@ export default function TestLandingPage() {
                     required={rf.experience?.required}
                     value={candidate.experience}
                     onChange={(e) => setCandidate({ ...candidate, experience: e.target.value })}
-                    placeholder="e.g. 1 year (or Fresher)"
+                    placeholder="Enter experience (e.g. Fresher / 1+ years)"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <Briefcase className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -895,7 +915,7 @@ export default function TestLandingPage() {
                     required={rf.github?.required}
                     value={candidate.github}
                     onChange={(e) => setCandidate({ ...candidate, github: e.target.value })}
-                    placeholder="https://github.com/username"
+                    placeholder="https://github.com/your-username"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <Github className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -914,7 +934,7 @@ export default function TestLandingPage() {
                     required={rf.linkedin?.required}
                     value={candidate.linkedin}
                     onChange={(e) => setCandidate({ ...candidate, linkedin: e.target.value })}
-                    placeholder="https://linkedin.com/in/username"
+                    placeholder="https://linkedin.com/in/your-profile"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <Linkedin className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -933,7 +953,7 @@ export default function TestLandingPage() {
                     required={rf.resumeUrl?.required}
                     value={candidate.resumeUrl}
                     onChange={(e) => setCandidate({ ...candidate, resumeUrl: e.target.value })}
-                    placeholder="https://drive.google.com/..."
+                    placeholder="https://drive.google.com/your-resume-link"
                     className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-green-500/50"
                   />
                   <FileText className="absolute right-3.5 top-3 w-3.5 h-3.5 text-zinc-600" />
@@ -1003,7 +1023,14 @@ export default function TestLandingPage() {
 
                     {checks.camera && (
                       <div className="w-32 h-24 rounded-lg overflow-hidden border border-green-500/40 mt-2">
-                        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          muted
+                          playsInline
+                          onLoadedMetadata={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                          className="w-full h-full object-cover scale-x-[-1]"
+                        />
                       </div>
                     )}
                   </div>
