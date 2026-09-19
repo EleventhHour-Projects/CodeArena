@@ -29,6 +29,8 @@ import {
   CheckCheck,
   ChevronUp,
   ChevronDown,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -92,6 +94,7 @@ export default function TestAttemptPage() {
   const [isEditorMaximized, setIsEditorMaximized] = useState(false);
   const [isProblemMaximized, setIsProblemMaximized] = useState(false);
   const [isConsoleCollapsed, setIsConsoleCollapsed] = useState(false);
+  const [isWebcamHidden, setIsWebcamHidden] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const rightPaneRef = useRef<HTMLDivElement>(null);
@@ -116,6 +119,7 @@ export default function TestAttemptPage() {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Feedback Modal
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -190,41 +194,52 @@ export default function TestAttemptPage() {
       });
   }, [attemptId, link, router]);
 
-  // Handle Drag / Resize Listeners
+  // Handle Drag / Resize Listeners (Smooth & Glitch-Free)
   useEffect(() => {
+    let animFrame: number;
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResizingHz && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-        // Clamp between 20% and 80%
-        if (newWidth >= 20 && newWidth <= 80) {
-          setLeftWidth(newWidth);
+      cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(() => {
+        if (isResizingHz && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+          // Clamp between 20% and 80%
+          if (newWidth >= 20 && newWidth <= 80) {
+            setLeftWidth(newWidth);
+          }
+        } else if (isResizingVt && rightPaneRef.current) {
+          const rect = rightPaneRef.current.getBoundingClientRect();
+          const newHeight = ((e.clientY - rect.top) / rect.height) * 100;
+          // Clamp between 20% and 85%
+          if (newHeight >= 20 && newHeight <= 85) {
+            setTopHeight(newHeight);
+          }
         }
-      } else if (isResizingVt && rightPaneRef.current) {
-        const rect = rightPaneRef.current.getBoundingClientRect();
-        const newHeight = ((e.clientY - rect.top) / rect.height) * 100;
-        // Clamp between 25% and 85%
-        if (newHeight >= 25 && newHeight <= 85) {
-          setTopHeight(newHeight);
-        }
-      }
+      });
     };
 
     const handleMouseUp = () => {
+      cancelAnimationFrame(animFrame);
       setIsResizingHz(false);
       setIsResizingVt(false);
-      document.body.style.userSelect = 'auto';
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     };
 
     if (isResizingHz || isResizingVt) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+      window.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = isResizingHz ? 'col-resize' : 'row-resize';
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      cancelAnimationFrame(animFrame);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     };
   }, [isResizingHz, isResizingVt]);
 
@@ -277,15 +292,33 @@ export default function TestAttemptPage() {
       navigator.mediaDevices
         ?.getUserMedia({ video: true, audio: Boolean(test.proctoring.requireMic) })
         .then((stream) => {
+          streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
           }
         })
         .catch(() => {
           toast.warning('Webcam access was interrupted.');
         });
     }
-  }, [test]);
+
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [test?.proctoring?.requireCamera, test?.proctoring?.requireMic]);
+
+  // Sync webcam stream to video element whenever DOM/loading updates
+  useEffect(() => {
+    if (!loading && videoRef.current && streamRef.current) {
+      if (videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [loading, isWebcamHidden]);
 
   // Proctoring: Fullscreen detection
   useEffect(() => {
@@ -421,26 +454,24 @@ export default function TestAttemptPage() {
       base: 'vs-dark',
       inherit: true,
       rules: [
-        { token: '', foreground: 'e4e4e7' },
+        { token: '', foreground: 'd4d4d8' },
         { token: 'comment', foreground: '71717a', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'f43f5e', fontStyle: 'bold' },
-        { token: 'string', foreground: '34d399' },
-        { token: 'number', foreground: 'fbbf24' },
-        { token: 'type', foreground: '38bdf8' },
-        { token: 'identifier', foreground: 'f4f4f5' },
+        { token: 'keyword', foreground: '569cd6' },
+        { token: 'string', foreground: 'ce9178' },
+        { token: 'number', foreground: 'b5cea8' },
+        { token: 'type', foreground: '4ec9b0' },
+        { token: 'identifier', foreground: '9cdcfe' },
         { token: 'delimiter', foreground: 'a1a1aa' },
       ],
       colors: {
-        'editor.background': '#121214',
-        'editor.foreground': '#f4f4f5',
-        'editor.lineHighlightBackground': '#27272a24',
+        'editor.background': '#18181b',
+        'editor.foreground': '#d4d4d8',
+        'editor.lineHighlightBackground': '#27272a40',
         'editorLineNumber.foreground': '#52525b',
-        'editorLineNumber.activeForeground': '#22c55e',
+        'editorLineNumber.activeForeground': '#a1a1aa',
         'editorCursor.foreground': '#22c55e',
-        'editor.selectionBackground': '#3f3f4660',
-        'editor.inactiveSelectionBackground': '#27272a40',
-        'editorIndentGuide.background': '#27272a33',
-        'editorIndentGuide.activeBackground': '#3f3f46',
+        'editor.selectionBackground': '#264f78',
+        'editor.inactiveSelectionBackground': '#3a3d41',
       },
     });
   };
@@ -821,15 +852,24 @@ export default function TestAttemptPage() {
         {!isEditorMaximized && !isProblemMaximized && (
           <div
             onMouseDown={() => setIsResizingHz(true)}
-            className="w-2 bg-[#09090b] border-x border-white/[0.06] flex items-center justify-center group outline-none hover:bg-zinc-800 transition-colors active:bg-zinc-700 cursor-col-resize shrink-0 z-10"
+            className="w-3 -mx-1.5 flex items-center justify-center group outline-none hover:bg-green-500/10 active:bg-green-500/20 cursor-col-resize shrink-0 z-20 select-none"
             title="Drag to resize panels"
           >
             <div
-              className={`w-0.5 h-8 rounded-full transition-colors ${
-                isResizingHz ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-zinc-400'
+              className={`w-[2px] h-10 rounded-full transition-colors ${
+                isResizingHz ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-green-400'
               }`}
             />
           </div>
+        )}
+
+        {/* Fullscreen mouse capture overlay during dragging */}
+        {(isResizingHz || isResizingVt) && (
+          <div
+            className={`fixed inset-0 z-50 select-none ${
+              isResizingHz ? 'cursor-col-resize' : 'cursor-row-resize'
+            }`}
+          />
         )}
 
         {/* RIGHT PANE: Code Editor & Testing Console */}
@@ -844,40 +884,37 @@ export default function TestAttemptPage() {
           {/* Top Half: Code Editor */}
           <div
             style={{ height: isConsoleCollapsed ? 'calc(100% - 40px)' : `${topHeight}%` }}
-            className="flex flex-col bg-[#0c0c0e] shrink-0 min-h-[160px] overflow-hidden transition-[height] duration-150"
+            className="flex flex-col bg-[#0c0c0e] shrink-0 min-h-[160px] overflow-hidden"
           >
             {/* Editor Toolbar */}
-            <div className="h-11 border-b border-white/[0.08] bg-[#0c0c0e] px-4 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Code2 className="w-4 h-4 text-green-400" />
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="bg-zinc-900 border border-white/[0.08] text-xs font-semibold text-zinc-200 px-3 py-1.5 rounded-xl focus:outline-none focus:border-green-500 cursor-pointer"
-                  >
-                    <option value="cpp">C++ (GCC 11)</option>
-                    <option value="c">C (GCC 11)</option>
-                    <option value="python">Python 3.10</option>
-                    <option value="java">Java 17</option>
-                    <option value="go">Go 1.19</option>
-                  </select>
-                </div>
+            <div className="h-10 border-b border-white/[0.08] bg-[#121214] px-3.5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="bg-zinc-800/90 border border-white/[0.1] text-xs text-zinc-200 px-2.5 py-1 rounded-md focus:outline-none focus:border-zinc-500 cursor-pointer"
+                >
+                  <option value="cpp">C++</option>
+                  <option value="python">Python 3</option>
+                  <option value="java">Java</option>
+                  <option value="c">C</option>
+                  <option value="go">Go</option>
+                </select>
 
                 <button
                   type="button"
                   onClick={handleResetCode}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/[0.06] hover:bg-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] transition cursor-pointer"
                   title="Reset code template"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>Reset</span>
+                  <span className="hidden sm:inline">Reset</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
                 {solvedMap[activeQuestion?.problemId || 0] && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                     <Check className="w-3 h-3" /> Solved
                   </span>
                 )}
@@ -885,7 +922,7 @@ export default function TestAttemptPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditorMaximized(!isEditorMaximized)}
-                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
+                  className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
                   title={isEditorMaximized ? 'Restore View' : 'Maximize Editor'}
                 >
                   {isEditorMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -895,9 +932,9 @@ export default function TestAttemptPage() {
                   type="button"
                   onClick={handleRunCode}
                   disabled={isExecuting}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-white/[0.08] transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-white/[0.08] transition active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
-                  <Play className={`w-3 h-3 text-amber-400 ${isExecuting ? 'animate-pulse' : ''}`} />
+                  <Play className={`w-3 h-3 text-zinc-300 ${isExecuting ? 'animate-pulse' : ''}`} />
                   <span>Run</span>
                 </button>
 
@@ -905,16 +942,16 @@ export default function TestAttemptPage() {
                   type="button"
                   onClick={handleSubmitQuestion}
                   disabled={isExecuting}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md shadow-green-500/10 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   <Upload className={`w-3 h-3 ${isExecuting ? 'animate-bounce' : ''}`} />
-                  <span>Submit Question</span>
+                  <span>Submit</span>
                 </button>
               </div>
             </div>
 
-            {/* Monaco Editor Container (LeetCode Style Font & Colors) */}
-            <div className="flex-1 relative bg-[#121214]">
+            {/* Monaco Editor Container */}
+            <div className="flex-1 relative bg-[#18181b]">
               <Editor
                 height="100%"
                 language={language === 'c' ? 'c' : language === 'go' ? 'go' : language}
@@ -923,9 +960,8 @@ export default function TestAttemptPage() {
                 beforeMount={handleEditorWillMount}
                 theme="leetcode-dark"
                 options={{
-                  fontSize: 14,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Fira Mono', Menlo, Monaco, Consolas, 'Courier New', monospace",
-                  fontLigatures: true,
+                  fontSize: 13.5,
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
                   minimap: { enabled: false },
                   lineNumbers: 'on',
                   lineNumbersMinChars: 3,
@@ -933,13 +969,16 @@ export default function TestAttemptPage() {
                   automaticLayout: true,
                   tabSize: 4,
                   cursorBlinking: 'smooth',
-                  cursorSmoothCaretAnimation: 'on',
                   smoothScrolling: true,
-                  padding: { top: 14, bottom: 14 },
-                  renderLineHighlight: 'all',
-                  lineHeight: 22,
-                  bracketPairColorization: { enabled: true },
-                  guides: { indentation: true, bracketPairs: true },
+                  padding: { top: 12, bottom: 12 },
+                  renderLineHighlight: 'line',
+                  lineHeight: 21,
+                  overviewRulerLanes: 0,
+                  hideCursorInOverviewRuler: true,
+                  scrollbar: {
+                    verticalScrollbarSize: 8,
+                    horizontalScrollbarSize: 8,
+                  },
                 }}
               />
             </div>
@@ -949,12 +988,12 @@ export default function TestAttemptPage() {
           {!isConsoleCollapsed && (
             <div
               onMouseDown={() => setIsResizingVt(true)}
-              className="h-2 bg-[#09090b] border-y border-white/[0.06] flex items-center justify-center group outline-none hover:bg-zinc-800 transition-colors active:bg-zinc-700 cursor-row-resize shrink-0 z-10"
+              className="h-3 -my-1.5 flex items-center justify-center group outline-none hover:bg-green-500/10 active:bg-green-500/20 cursor-row-resize shrink-0 z-20 select-none"
               title="Drag to resize console / testcases"
             >
               <div
-                className={`h-0.5 w-10 rounded-full transition-colors ${
-                  isResizingVt ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-zinc-400'
+                className={`h-[2px] w-12 rounded-full transition-colors ${
+                  isResizingVt ? 'bg-green-400' : 'bg-zinc-700/60 group-hover:bg-green-400'
                 }`}
               />
             </div>
@@ -1002,32 +1041,32 @@ export default function TestAttemptPage() {
                   <button
                     type="button"
                     onClick={() => setBottomTab('testcases')}
-                    className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
+                    className={`flex items-center gap-1.5 text-xs font-semibold py-2.5 transition border-b-2 cursor-pointer ${
                       bottomTab === 'testcases'
-                        ? 'border-green-500 text-white'
-                        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                        ? 'border-emerald-500 text-white'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    <span>Test Cases</span>
+                    <span>Testcase</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setBottomTab('output')}
-                    className={`flex items-center gap-1.5 text-xs font-bold py-2.5 transition border-b-2 cursor-pointer ${
+                    className={`flex items-center gap-1.5 text-xs font-semibold py-2.5 transition border-b-2 cursor-pointer ${
                       bottomTab === 'output'
-                        ? 'border-green-500 text-white'
-                        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                        ? 'border-emerald-500 text-white'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
                     <Terminal className="w-3.5 h-3.5" />
-                    <span>Output / Console</span>
+                    <span>Test Result</span>
                     {executionResult && (
                       <span
                         className={`w-2 h-2 rounded-full ${
                           executionResult.status === 'Accepted'
-                            ? 'bg-green-400'
+                            ? 'bg-emerald-400'
                             : 'bg-red-400'
                         }`}
                       />
@@ -1195,21 +1234,56 @@ export default function TestAttemptPage() {
         </div>
       </div>
 
-      {/* Floating Proctoring Webcam Picture-in-Picture */}
+      {/* Floating Proctoring Webcam Picture-in-Picture with Hide/Show Toggle */}
       {test.proctoring?.requireCamera && (
-        <div className="fixed bottom-4 right-4 z-30 w-36 h-28 rounded-2xl overflow-hidden border border-white/[0.15] bg-black shadow-2xl">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[9px] font-bold text-green-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span>LIVE CAM</span>
+        <>
+          {/* Active video container */}
+          <div
+            className={`fixed bottom-4 right-4 z-30 transition-all duration-200 ${
+              isWebcamHidden
+                ? 'pointer-events-none opacity-0 scale-75'
+                : 'w-36 h-28 opacity-100 scale-100'
+            } rounded-2xl overflow-hidden border border-white/[0.15] bg-black shadow-2xl`}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              onLoadedMetadata={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+              className="w-full h-full object-cover scale-x-[-1]"
+            />
+            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[9px] font-bold text-green-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span>LIVE CAM</span>
+            </div>
+
+            {/* Minimize / Hide Button */}
+            <button
+              type="button"
+              onClick={() => setIsWebcamHidden(true)}
+              className="pointer-events-auto absolute top-1.5 right-1.5 p-1 rounded-md bg-black/70 hover:bg-black/90 text-zinc-400 hover:text-white transition cursor-pointer"
+              title="Minimize camera view"
+            >
+              <EyeOff className="w-3.5 h-3.5" />
+            </button>
           </div>
-        </div>
+
+          {/* Compact Restore Pill when minimized */}
+          {isWebcamHidden && (
+            <button
+              type="button"
+              onClick={() => setIsWebcamHidden(false)}
+              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.15] text-white text-xs font-semibold shadow-2xl backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+              title="Restore camera view"
+            >
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <Camera className="w-3.5 h-3.5 text-zinc-300" />
+              <span>Show Webcam</span>
+              <Eye className="w-3.5 h-3.5 text-zinc-400" />
+            </button>
+          )}
+        </>
       )}
 
       {/* POST-TEST FEEDBACK MODAL */}
