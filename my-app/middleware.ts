@@ -19,6 +19,10 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // 1. Admin Authentication Check
+  if (path.startsWith("/api/company/logo/")) {
+    return NextResponse.next();
+  }
+  
   if (path.startsWith('/admin') || path.startsWith('/api/admin')) {
     // Exclude login paths
     if (path === '/admin/login' || path === '/api/admin/login' || path === '/api/admin/setup') {
