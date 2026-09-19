@@ -69,20 +69,29 @@ type CodeConfigConstraints struct {
 	MaxMemory int `json:"max_memory,omitempty"`
 }
 
+// TestCaseItem represents a single test case with input, expected output, and whether it is hidden.
+type TestCaseItem struct {
+	Input    string `json:"input" bson:"input"`
+	Output   string `json:"output" bson:"output"`
+	IsHidden bool   `json:"is_hidden,omitempty" bson:"isHidden,omitempty"`
+}
+
 // CodeConfig is a struct that represents the configuration for a code execution task
 // It contains the task ID, code to be executed, programming language, and test cases
 // TaskID is a unique identifier for the task, Code is the code to be executed, Language is the programming language of the code, and TestCases is a map of input-output pairs for testing the code
 type CodeConfig struct {
-	TaskID      string                 `json:"task_id,omitempty"`
-	Code        string                 `json:"code,omitempty"`
-	Language    string                 `json:"language,omitempty"`
-	TestCases   map[string]string      `json:"test_cases,omitempty"`
-	Constraints *CodeConfigConstraints `json:"constraints,omitempty"`
-	UserID      bson.ObjectID          `json:"user_id,omitempty"`
-	BattleID    bson.ObjectID          `json:"battle_id,omitempty"`
-	Problem     Problem                `json:"problem,omitempty"`
-	Type        string                 `json:"type,omitempty"`
-	StopSignal  *bool
+	TaskID       string                 `json:"task_id,omitempty"`
+	Code         string                 `json:"code,omitempty"`
+	Language     string                 `json:"language,omitempty"`
+	CodeType     string                 `json:"code_type,omitempty"` // "battle", "test", "normal"
+	TestCases    map[string]string      `json:"test_cases,omitempty"`
+	TestCaseList []TestCaseItem         `json:"test_case_list,omitempty"`
+	Constraints  *CodeConfigConstraints `json:"constraints,omitempty"`
+	UserID       bson.ObjectID          `json:"user_id,omitempty"`
+	BattleID     bson.ObjectID          `json:"battle_id,omitempty"`
+	Problem      Problem                `json:"problem,omitempty"`
+	Type         string                 `json:"type,omitempty"`
+	StopSignal   *bool
 }
 
 // WorkerPool is a struct that manages the worker pool for executing code tasks
@@ -115,36 +124,35 @@ type WorkerPool struct {
 // It contains fields for the code to be executed, programming language, user ID, status, battle ID, problem ID, and creation timestamp
 // The struct tags specify how the fields are mapped to the MongoDB document fields, with omitempty used for optional fields and omitzero used for the CreatedAt field to omit it if it is zero
 type ExecutionCode struct {
-	ID        bson.ObjectID `bson:"_id"`
-	Code      string        `bson:"code"`
-	Type      string        `bson:"type"`
-	Language  string        `bson:"language"`
-	UserID    bson.ObjectID `bson:"userId"`
-	Status    *string       `bson:"status,omitempty"`
-	BattleID  bson.ObjectID `bson:"battleId"`
-	Problem   Problem       `bson:"problem"`
-	Testcases []struct {
-		Input  string `bson:"input"`
-		Output string `bson:"output"`
-	} `bson:"testcases,omitempty"`
-	CreatedAt time.Time `bson:"createdAt,omitzero"`
+	ID        bson.ObjectID  `bson:"_id"`
+	Code      string         `bson:"code"`
+	CodeType  string         `bson:"codeType,omitempty"` // "battle", "test", "normal"
+	Type      string         `bson:"type"`               // "Run", "Submit", "Custom", "NonHidden", "All"
+	Language  string         `bson:"language"`
+	UserID    bson.ObjectID  `bson:"userId"`
+	Status    *string        `bson:"status,omitempty"`
+	BattleID  bson.ObjectID  `bson:"battleId,omitempty"`
+	Problem   Problem        `bson:"problem,omitempty"`
+	Testcases []TestCaseItem `bson:"testcases,omitempty"`
+	CreatedAt time.Time      `bson:"createdAt,omitzero"`
 }
 
 type Problem struct {
-	Difficulty string `bson:"difficulty"`
-	ID         int    `bson:"id"`
+	Difficulty string `bson:"difficulty,omitempty"`
+	ID         int    `bson:"id,omitempty"`
 }
 
 // Result is a struct that represents the result of a code execution task...
 type Result struct {
-	TLE                  bool    `bson:"tle,omitempty"`
-	MLE                  bool    `bson:"mle,omitempty"`
-	FailedTestCaseNumber *string `bson:"failedTestCaseNumber,omitempty"`
-	RunTimeMs            int     `bson:"runTimeMs,omitempty"`
-	MemoryUsedMB         int     `bson:"memoryUsedMB,omitempty"`
-	ErrorMSG             string  `bson:"errorMsg,omitempty"`
-	ActualOutput         string  `bson:"actualOutput,omitempty"`
-	ExpectedOutput       string  `bson:"expectedOutput,omitempty"`
+	TLE                  bool    `bson:"tle,omitempty" json:"tle,omitempty"`
+	MLE                  bool    `bson:"mle,omitempty" json:"mle,omitempty"`
+	FailedTestCaseNumber *string `bson:"failedTestCaseNumber,omitempty" json:"failedTestCaseNumber,omitempty"`
+	RunTimeMs            int     `bson:"runTimeMs,omitempty" json:"runTimeMs,omitempty"`
+	MemoryUsedMB         int     `bson:"memoryUsedMB,omitempty" json:"memoryUsedMB,omitempty"`
+	ErrorMSG             string  `bson:"errorMsg,omitempty" json:"errorMsg,omitempty"`
+	ActualOutput         string  `bson:"actualOutput,omitempty" json:"actualOutput,omitempty"`
+	ExpectedOutput       string  `bson:"expectedOutput,omitempty" json:"expectedOutput,omitempty"`
+	IsHidden             bool    `bson:"isHidden,omitempty" json:"isHidden,omitempty"`
 }
 
 // Submission is a struct that represents a code submission in the MongoDB collection, including fields for the submission ID, code, programming language, user ID, status, battle ID, problem ID, creation timestamp, and result of the submission
@@ -153,11 +161,12 @@ type Submission struct {
 	ID              bson.ObjectID `bson:"_id,omitempty"`
 	ExecutionCodeID bson.ObjectID `bson:"execCodeId"`
 	Code            string        `bson:"code"`
+	CodeType        string        `bson:"codeType,omitempty"`
 	Language        string        `bson:"language"`
 	UserID          bson.ObjectID `bson:"userId"`
 	Status          *string       `bson:"status,omitempty"`
-	BattleID        bson.ObjectID `bson:"battleId"`
-	Problem         Problem       `bson:"problem"`
+	BattleID        bson.ObjectID `bson:"battleId,omitempty"`
+	Problem         Problem       `bson:"problem,omitempty"`
 	CreatedAt       time.Time     `bson:"createdAt,omitzero"`
 	Result          *Result       `bson:"result,omitempty"`
 }

@@ -33,14 +33,15 @@ export async function GET(
         const submission = await SubmissionModel.findOne({ execCodeId: exec_id }).lean();
 
         if (!submission) {
-            // If there's no Submission record, check if it's a "Run" completed in the ExecutionCode model
+            // If there's no Submission record, check if completed in the ExecutionCode model (for Run, Custom, NonHidden, Verify, etc.)
             const ExecutionCodeModel = mongoose.models.ExecutionCode || require("@/lib/models/ExecutionCode").default;
             const execCode = await ExecutionCodeModel.findById(exec_id).lean();
 
-            if (execCode && (execCode.type === "Run" || execCode.type === "Verify") && execCode.status !== "Pending") {
+            if (execCode && execCode.status !== "Pending") {
                 const responseData = {
                     success: true,
                     status: execCode.status, // "Accepted" or "Rejected"
+                    code_type: execCode.codeType || "battle",
                     exec_id: execCode._id,
                     user_id: execCode.userId,
                     problem_id: execCode.problem?.id,
@@ -54,6 +55,7 @@ export async function GET(
                     actual_output: execCode.result?.actualOutput,
                     errorMsg: execCode.result?.errorMsg,
                     expected_output: execCode.result?.expectedOutput,
+                    is_hidden: execCode.result?.isHidden,
                 };
                 
                 await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
@@ -69,6 +71,7 @@ export async function GET(
         const responseData = {
             success: true,
             status: submission.status,
+            code_type: submission.codeType || "battle",
             exec_id: submission.execCodeId,
             user_id: submission.userId,
             problem_id: submission.problemId || submission.problem?.id,
@@ -83,6 +86,7 @@ export async function GET(
             actual_output: submission.result?.actualOutput,
             errorMsg: submission.result?.errorMsg,
             expected_output: submission.result?.expectedOutput,
+            is_hidden: submission.result?.isHidden,
         };
 
         // Complete/terminal submissions are largely immutable, cache for longer (e.g., 5 mins)

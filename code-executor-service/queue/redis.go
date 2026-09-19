@@ -5,6 +5,7 @@ import (
 	"executor-service/database"
 	"executor-service/utils"
 	"fmt"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -57,18 +58,57 @@ func processTask(ctx context.Context, task string) {
 		return
 	}
 
+	// Normalize codeType: default to "battle" if empty/battleId exists, otherwise "normal"
+	codeType := strings.ToLower(strings.TrimSpace(data.CodeType))
+	if codeType == "" {
+		if !data.BattleID.IsZero() {
+			codeType = "battle"
+		} else {
+			codeType = "normal"
+		}
+	}
+
+	execType := strings.TrimSpace(data.Type)
+	if execType == "" {
+		execType = "Run"
+	}
+
+	var testCaseList []utils.TestCaseItem
 	testCases := make(map[string]string)
-	if len(data.Testcases) > 0 {
+
+	// Determine test cases to run
+	// Case 1: Custom testcases provided in document or Type == "Custom"
+	if len(data.Testcases) > 0 || strings.EqualFold(execType, "Custom") {
 		for _, tc := range data.Testcases {
+			item := utils.TestCaseItem{
+				Input:    tc.Input,
+				Output:   tc.Output,
+				IsHidden: false, // Custom test cases are visible to the user
+			}
+			testCaseList = append(testCaseList, item)
+			testCases[tc.Input] = tc.Output
+		}
+	} else if strings.EqualFold(execType, "NonHidden") || strings.EqualFold(execType, "Run") {
+		// Case 2: Non-hidden testcases only (Sample / Run test cases)
+		items, err := database.GetProblemTestCasesList(data.Problem.ID, "non_hidden")
+		if err != nil {
+			fmt.Println(utils.Red+"Error fetching non-hidden test cases:"+utils.Reset, err)
+			return
+		}
+		testCaseList = items
+		for _, tc := range items {
 			testCases[tc.Input] = tc.Output
 		}
 	} else {
-		all := (data.Type == "Submit")
-		var err error
-		testCases, err = database.GetProblemTestCases(data.Problem.ID, all)
+		// Case 3: All testcases ("Submit" or "All")
+		items, err := database.GetProblemTestCasesList(data.Problem.ID, "all")
 		if err != nil {
-			fmt.Println(utils.Red+"Error fetching problem test cases:"+utils.Reset, err)
+			fmt.Println(utils.Red+"Error fetching all problem test cases:"+utils.Reset, err)
 			return
+		}
+		testCaseList = items
+		for _, tc := range items {
+			testCases[tc.Input] = tc.Output
 		}
 	}
 
@@ -80,18 +120,20 @@ func processTask(ctx context.Context, task string) {
 
 	utils.TaskInfo.IncrementSubmitted()
 	utils.WorkerPoolData.AddTask(utils.CodeConfig{
-		TaskID:    task,
-		Code:      data.Code,
-		Language:  data.Language,
-		TestCases: testCases,
-		UserID:    data.UserID,
-		BattleID:  data.BattleID,
-		Problem:   data.Problem,
+		TaskID:       task,
+		Code:         data.Code,
+		Language:     data.Language,
+		CodeType:     codeType,
+		TestCases:    testCases,
+		TestCaseList: testCaseList,
+		UserID:       data.UserID,
+		BattleID:     data.BattleID,
+		Problem:      data.Problem,
 		Constraints: &utils.CodeConfigConstraints{
 			MaxTime:   maxTime,
 			MaxMemory: maxMemory,
 		},
-		Type: data.Type,
+		Type: execType,
 	})
 }
 

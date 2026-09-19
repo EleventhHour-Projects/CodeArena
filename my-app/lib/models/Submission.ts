@@ -3,12 +3,13 @@ import mongoose from "mongoose";
 
 const submissionSchema = new mongoose.Schema<Submission>({
     code: { type: String, required: true },
+    codeType: { type: String, required: false, default: "battle" },
     language: { type: String, required: false, default: "cpp" },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: true },
+    battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: false },
     problem: {
-        difficulty: { type: String, required: true },
-        id: { type: Number, required: true }
+        difficulty: { type: String, required: false },
+        id: { type: Number, required: false }
     },
     execCodeId: { type: mongoose.Schema.Types.ObjectId, ref: "ExecutionCode", required: true, unique: true },
     status: { type: String, required: true}, // Accepted or Rejected
@@ -22,6 +23,7 @@ const submissionSchema = new mongoose.Schema<Submission>({
         actualOutput: { type: String, required: false },
         expectedOutput: { type: String, required: false },
         errorMsg: { type: String, required: false },
+        isHidden: { type: Boolean, required: false, default: false },
     },
 })
 

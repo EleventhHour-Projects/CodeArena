@@ -3,6 +3,7 @@ package worker
 import (
 	"executor-service/database"
 	"executor-service/utils"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type FailedInfo struct {
 	TestCase       string
 	ActualOutput   string
 	ExpectedOutput string
+	IsHidden       bool
 }
 
 // SaveSubmissionResult is a function that saves the result of a code submission to the MongoDB database, including the execution time, memory used, and whether the submission passed or failed based on the test cases
@@ -21,39 +23,63 @@ type FailedInfo struct {
 func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, memory int, failed *FailedInfo) error {
 	var status utils.Result
 	isTle := false
-	if int(timeElapsed.Seconds()) > task.Constraints.MaxTime {
+	if task.Constraints != nil && task.Constraints.MaxTime > 0 && int(timeElapsed.Seconds()) > task.Constraints.MaxTime {
 		isTle = true
 	}
 	isMle := false
-	if memory > task.Constraints.MaxMemory {
+	if task.Constraints != nil && task.Constraints.MaxMemory > 0 && memory > task.Constraints.MaxMemory {
 		isMle = true
 	}
+
+	actualOutput := failed.ActualOutput
+	expectedOutput := failed.ExpectedOutput
+	testCaseStr := failed.TestCase
+
+	// If failed on a hidden testcase, mask outputs and input from user
+	if failed.IsHidden {
+		actualOutput = ""
+		expectedOutput = ""
+		if failed.isFailed {
+			testCaseStr = "[Hidden Test Case]"
+		}
+	}
+
 	status = utils.Result{
 		TLE:                  isTle,
 		MLE:                  isMle,
-		FailedTestCaseNumber: &failed.TestCase,
+		FailedTestCaseNumber: &testCaseStr,
 		RunTimeMs:            int(timeElapsed.Milliseconds()),
 		MemoryUsedMB:         memory,
 		ErrorMSG:             failed.ErrorMessage,
-		ActualOutput:         failed.ActualOutput,
-		ExpectedOutput:       failed.ExpectedOutput,
+		ActualOutput:         actualOutput,
+		ExpectedOutput:       expectedOutput,
+		IsHidden:             failed.IsHidden,
 	}
+
 	event := utils.EVENTTYPESUBMITPASS
+	isRunType := strings.EqualFold(task.Type, "Run") || strings.EqualFold(task.Type, "Custom") || strings.EqualFold(task.Type, "NonHidden")
 	if failed.isFailed {
-		event = utils.EVENTTYPESUBMITFAIL
-	} else if task.Type == "Run" {
+		if isRunType {
+			event = utils.EVENTTYPERUNFAIL
+		} else {
+			event = utils.EVENTTYPESUBMITFAIL
+		}
+	} else if isRunType {
 		event = utils.EVENTTYPERUNPASS
-		if isTle || isMle || failed.isFailed {
+		if isTle || isMle {
 			event = utils.EVENTTYPERUNFAIL
 		}
 	}
+
 	subID, _ := database.MongoDB.UpdateExecutionCodeStatus(task.TaskID, status, *task, !failed.isFailed)
-	utils.WSServer.Add(utils.WSSPayload{
-		UserID:       task.UserID,
-		BattleID:     task.BattleID,
-		SubmissionID: subID,
-		ProblemID:    task.Problem.ID,
-		Event:        utils.EVENTTYPE(event),
-	})
+	if !task.BattleID.IsZero() {
+		utils.WSServer.Add(utils.WSSPayload{
+			UserID:       task.UserID,
+			BattleID:     task.BattleID,
+			SubmissionID: subID,
+			ProblemID:    task.Problem.ID,
+			Event:        utils.EVENTTYPE(event),
+		})
+	}
 	return nil
 }

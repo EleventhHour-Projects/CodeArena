@@ -28,7 +28,6 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get('admin_token')?.value;
 
     if (!token) {
-      // Redirect to login if accessing page, return 401 if accessing API
       if (path.startsWith('/api/')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -37,12 +36,37 @@ export async function middleware(request: NextRequest) {
 
     try {
       await jwtVerify(token, secretKey);
-      // Valid token, continue
     } catch (err) {
       if (path.startsWith('/api/')) {
         return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
       }
       return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
+  // 2. Company Authentication Check
+  if (path.startsWith('/company') || path.startsWith('/api/company')) {
+    // Exclude login/logout
+    if (path === '/company/login' || path === '/api/company/login' || path === '/api/company/logout') {
+      return NextResponse.next();
+    }
+
+    const token = request.cookies.get('company_token')?.value;
+
+    if (!token) {
+      if (path.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/company/login', request.url));
+    }
+
+    try {
+      await jwtVerify(token, secretKey);
+    } catch (err) {
+      if (path.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/company/login', request.url));
     }
   }
 
@@ -74,6 +98,8 @@ export const config = {
   matcher: [
     "/api/check-username-unique",
     "/admin/:path*",
-    "/api/admin/:path*"
+    "/api/admin/:path*",
+    "/company/:path*",
+    "/api/company/:path*",
   ],
 };

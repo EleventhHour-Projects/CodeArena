@@ -6,27 +6,31 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         console.log("Exec-code request body:", body);
-        const { code, language, userId, battleId, difficulty, problemId, type, testcases } = body;
+        const { code, codeType, language, userId, battleId, difficulty, problemId, type, testcases } = body;
 
-        if (!difficulty || problemId === undefined) {
-             console.error("[ERROR] Missing difficulty or problemId in request body");
+        const normalizedCodeType = (codeType || (battleId ? "battle" : "normal")).toLowerCase();
+        const normalizedType = type || "Run";
+
+        if (problemId === undefined && (!testcases || testcases.length === 0)) {
+             console.error("[ERROR] Missing problemId and testcases in request body");
              return NextResponse.json({ 
                  success: false, 
-                 error: "Missing difficulty or problemId",
-                 received: { difficulty, problemId }
+                 error: "Missing problemId or testcases",
+                 received: { difficulty, problemId, type }
              }, { status: 400 });
         }
 
         const redisClient = await redisClientPromise;
         const executionCode = new ExecutionCodeModel({
             code,
+            codeType: normalizedCodeType,
             language,
             userId,
-            battleId,
-            problem: { difficulty, id: problemId },
-            testcases: type === "Run" ? testcases : undefined,
+            battleId: battleId || undefined,
+            problem: problemId !== undefined ? { difficulty: difficulty || "medium", id: problemId } : undefined,
+            testcases: testcases && testcases.length > 0 ? testcases : undefined,
             status: "Pending",
-            type: type || "Run"
+            type: normalizedType
         });
         await executionCode.save();
         console.log("Execution Code document created in DB:", executionCode._id);

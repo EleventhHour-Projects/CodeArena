@@ -3,14 +3,15 @@ import mongoose from "mongoose";
 
 const executionCodeSchema = new mongoose.Schema<ExecutionCode>({
     code: { type: String, required: true },
+    codeType: { type: String, required: false, default: "battle", enum: ["normal", "battle", "test"] },
     language: { type: String, required: false, default: "cpp" },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: true },
+    battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: false },
     problem: {
-        difficulty: { type: String, required: true },
-        id: { type: Number, required: true }
+        difficulty: { type: String, required: false },
+        id: { type: Number, required: false }
     },
-    testcases: { type: [{ input: String, output: String }], required: false },
+    testcases: { type: [{ input: String, output: String, is_hidden: Boolean }], required: false },
     status: { type: String, required: true, default: "Pending" },
     type: { type: String, required: true, default: "Run" },
     result: { type: mongoose.Schema.Types.Mixed, required: false },

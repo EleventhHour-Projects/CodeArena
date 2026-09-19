@@ -102,6 +102,7 @@ func normalizeOutput(s string) string {
 type runnerTestCase struct {
 	Input    string `json:"input"`
 	Expected string `json:"expected"`
+	Hidden   bool   `json:"hidden"`
 }
 
 type runnerPayload struct {
@@ -117,6 +118,7 @@ type runnerResult struct {
 	TestCase    string `json:"testcase"`
 	Actual      string `json:"actual"`
 	Expected    string `json:"expected"`
+	IsHidden    bool   `json:"is_hidden"`
 	RunnerError string `json:"runner_error"`
 }
 
@@ -134,11 +136,12 @@ try:
     testcases = data["testcases"]
 
     total_ns = 0
-    res = {"passed": True, "total_time_ms": 0, "error": "", "testcase": "", "actual": "", "expected": ""}
+    res = {"passed": True, "total_time_ms": 0, "error": "", "testcase": "", "actual": "", "expected": "", "is_hidden": False}
 
     for tc in testcases:
         tc_in = tc["input"] + "\n"
         exp = norm(tc.get("expected", ""))
+        is_hidden = tc.get("hidden", False)
         
         start = time.perf_counter_ns()
         try:
@@ -150,17 +153,23 @@ try:
             err = p.stderr
             
             if exp in ("true", "false"):
-                if actual == "0":
+                if actual == "0" or actual == "False":
                     actual = "false"
-                elif actual == "1":
+                elif actual == "1" or actual == "True":
                     actual = "true"
             
             if p.returncode != 0 and actual == "" and err != "":
                 res["passed"] = False
                 res["error"] = "Runtime Error / Segfault"
-                res["testcase"] = tc["input"]
-                res["actual"] = err
-                res["expected"] = exp
+                res["is_hidden"] = is_hidden
+                if not is_hidden:
+                    res["testcase"] = tc["input"]
+                    res["actual"] = err
+                    res["expected"] = exp
+                else:
+                    res["testcase"] = "[Hidden Test Case]"
+                    res["actual"] = ""
+                    res["expected"] = ""
                 break
 
             if actual != exp:
@@ -170,23 +179,41 @@ try:
                     actual = err
                 res["passed"] = False
                 res["error"] = err_msg
-                res["testcase"] = tc["input"]
-                res["actual"] = actual
-                res["expected"] = exp
+                res["is_hidden"] = is_hidden
+                if not is_hidden:
+                    res["testcase"] = tc["input"]
+                    res["actual"] = actual
+                    res["expected"] = exp
+                else:
+                    res["testcase"] = "[Hidden Test Case]"
+                    res["actual"] = ""
+                    res["expected"] = ""
                 break
+            else:
+                if not is_hidden:
+                    res["actual"] = actual
 
         except subprocess.TimeoutExpired:
             elapsed = time.perf_counter_ns() - start
             total_ns += elapsed
             res["passed"] = False
             res["error"] = "Time Limit Exceeded (>1s)"
-            res["testcase"] = tc["input"]
+            res["is_hidden"] = is_hidden
+            if not is_hidden:
+                res["testcase"] = tc["input"]
+            else:
+                res["testcase"] = "[Hidden Test Case]"
             break
         except Exception as e:
             res["passed"] = False
             res["error"] = "Runtime Error / Segfault"
-            res["testcase"] = tc["input"]
-            res["actual"] = str(e)
+            res["is_hidden"] = is_hidden
+            if not is_hidden:
+                res["testcase"] = tc["input"]
+                res["actual"] = str(e)
+            else:
+                res["testcase"] = "[Hidden Test Case]"
+                res["actual"] = ""
             break
 
     res["total_time_ms"] = int(total_ns / 1000000)
@@ -240,11 +267,22 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 	}
 
 	var testCasesList []runnerTestCase
-	for input, expected := range task.TestCases {
-		testCasesList = append(testCasesList, runnerTestCase{
-			Input:    input,
-			Expected: fmt.Sprint(expected),
-		})
+	if len(task.TestCaseList) > 0 {
+		for _, tc := range task.TestCaseList {
+			testCasesList = append(testCasesList, runnerTestCase{
+				Input:    tc.Input,
+				Expected: tc.Output,
+				Hidden:   tc.IsHidden,
+			})
+		}
+	} else {
+		for input, expected := range task.TestCases {
+			testCasesList = append(testCasesList, runnerTestCase{
+				Input:    input,
+				Expected: fmt.Sprint(expected),
+				Hidden:   false,
+			})
+		}
 	}
 
 	payload := runnerPayload{
@@ -268,9 +306,14 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 						TestCase:       res.TestCase,
 						ActualOutput:   res.Actual,
 						ExpectedOutput: res.Expected,
+						IsHidden:       res.IsHidden,
 					}
 				} else {
-					failedInfo = FailedInfo{isFailed: false}
+					failedInfo = FailedInfo{
+						isFailed:     false,
+						ActualOutput: res.Actual,
+						IsHidden:     false,
+					}
 				}
 
 				SaveSubmissionResult(task, totalTime, 0, &failedInfo)
@@ -282,19 +325,37 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 
 	// Fallback to sequential test execution if single-exec runner encounters issues
 	var totalTime time.Duration
-	for input, expected := range task.TestCases {
-		ectx, cancel := context.WithTimeout(ctx, time.Second*2)
+	var seqCases []utils.TestCaseItem
+	if len(task.TestCaseList) > 0 {
+		seqCases = task.TestCaseList
+	} else {
+		for in, exp := range task.TestCases {
+			seqCases = append(seqCases, utils.TestCaseItem{
+				Input:    in,
+				Output:   exp,
+				IsHidden: false,
+			})
+		}
+	}
+
+	for _, tc := range seqCases {
+		ectx, cancel := context.WithTimeout(ctx, time.Second*1)
 		start := time.Now()
-		output, runStderr, err := execCommand(ectx, cli, containerID, runtime.RunCmd, input+"\n")
+		output, runStderr, err := execCommand(ectx, cli, containerID, runtime.RunCmd, tc.Input+"\n")
 		elapsed := time.Since(start)
 		totalTime += elapsed
 		cancel()
 
 		if ectx.Err() == context.DeadlineExceeded {
+			tcInput := tc.Input
+			if tc.IsHidden {
+				tcInput = "[Hidden Test Case]"
+			}
 			failedInfo = FailedInfo{
 				isFailed:     true,
 				ErrorMessage: "Time Limit Exceeded (>1s)",
-				TestCase:     input,
+				TestCase:     tcInput,
+				IsHidden:     tc.IsHidden,
 			}
 			break
 		}
@@ -304,12 +365,12 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 		}
 
 		actual := normalizeOutput(output)
-		exp := normalizeOutput(fmt.Sprint(expected))
+		exp := normalizeOutput(tc.Output)
 
 		if exp == "true" || exp == "false" {
-			if actual == "0" {
+			if actual == "0" || actual == "False" {
 				actual = "false"
-			} else if actual == "1" {
+			} else if actual == "1" || actual == "True" {
 				actual = "true"
 			}
 		}
@@ -321,12 +382,22 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 				actual = runStderr
 			}
 
+			tcInput := tc.Input
+			actualOut := actual
+			expOut := exp
+			if tc.IsHidden {
+				tcInput = "[Hidden Test Case]"
+				actualOut = ""
+				expOut = ""
+			}
+
 			failedInfo = FailedInfo{
 				isFailed:       true,
 				ErrorMessage:   errorMsg,
-				TestCase:       input,
-				ActualOutput:   actual,
-				ExpectedOutput: exp,
+				TestCase:       tcInput,
+				ActualOutput:   actualOut,
+				ExpectedOutput: expOut,
+				IsHidden:       tc.IsHidden,
 			}
 			break
 		}
@@ -399,22 +470,24 @@ func worker(ctx context.Context) {
 		}
 		fmt.Println("Worker received task:", task.TaskID)
 		eventType := utils.EVENTTYPERUN
-		if task.Type == "Submit" {
+		if strings.EqualFold(task.Type, "Submit") || strings.EqualFold(task.Type, "All") {
 			eventType = utils.EVENTTYPESUBMIT
 		}
-		utils.WSServer.Add(utils.WSSPayload{
-			UserID:       task.UserID,
-			BattleID:     task.BattleID,
-			SubmissionID: nil,
-			ProblemID:    task.Problem.ID,
-			Event:        utils.EVENTTYPE(eventType),
-		})
+		if !task.BattleID.IsZero() {
+			utils.WSServer.Add(utils.WSSPayload{
+				UserID:       task.UserID,
+				BattleID:     task.BattleID,
+				SubmissionID: nil,
+				ProblemID:    task.Problem.ID,
+				Event:        utils.EVENTTYPE(eventType),
+			})
+		}
 
 		// Register the current task for tracking
 		utils.WorkerPoolData.SetActiveTask(resp.ID, &task)
 
-		// 10 seconds is more reasonable for compilation + multiple test cases
-		runCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		// 3 seconds is more reasonable for compilation + multiple test cases
+		runCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {

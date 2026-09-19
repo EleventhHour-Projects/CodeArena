@@ -17,6 +17,7 @@ import {
   Film,
   Award,
   Bot,
+  Building2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -65,6 +66,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, imgIcon: null },
   { title: "Bot Management", url: "/admin/bot", icon: Bot, imgIcon: null },
+  { title: "Companies", url: "/admin/companies", icon: Building2, imgIcon: null },
   { title: "Add Problem", url: "/admin/add", icon: PlusCircle, imgIcon: null },
   { title: "Test Problem", url: "/admin/testproblem", icon: Code2, imgIcon: null },
   { title: "Reports", url: "/admin/reports", icon: Flag, imgIcon: null },
