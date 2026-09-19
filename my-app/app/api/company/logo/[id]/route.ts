@@ -11,20 +11,36 @@ export async function GET(
 
     await dbConnect();
 
-    const company = await Company.findById(id).select('logo').lean();
+    const company = await Company.findById(id)
+      .select('logo')
+      .lean();
 
     if (!company?.logo) {
-      return new NextResponse(null, { status: 404 });
+      return new NextResponse('Logo not found', {
+        status: 404,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
 
     const logo = company.logo;
 
-    // Expecting:
-    // data:image/png;base64,XXXXX
-    const match = logo.match(/^data:(image\/[^;]+);base64,(.+)$/);
+    // MongoDB stores:
+    // data:image/png;base64,iVBORw0KGgo...
+    const match = logo.match(
+      /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
+    );
 
     if (!match) {
-      return new NextResponse(null, { status: 400 });
+      console.error('Invalid company logo format');
+
+      return new NextResponse('Invalid logo format', {
+        status: 400,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
 
     const contentType = match[1];
@@ -36,14 +52,23 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400',
+        'Content-Length': imageBuffer.length.toString(),
+
+        // Important for Gmail's image proxy
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+
+        // Tell clients this is an image, not a download
+        'Content-Disposition': 'inline',
       },
     });
   } catch (error) {
-    console.error('Company logo error:', error);
+    console.error('Company logo API error:', error);
 
-    return new NextResponse(null, {
+    return new NextResponse('Internal Server Error', {
       status: 500,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
     });
   }
 }
