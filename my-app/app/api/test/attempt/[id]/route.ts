@@ -33,8 +33,9 @@ export async function GET(
         let constraints = '';
         let sampleTestcases: { input: string; output: string; explanation?: string }[] = [];
 
+        const diff = (q.difficulty || 'easy').toLowerCase();
         try {
-          const filePath = path.join(questionsDir, q.difficulty.toLowerCase(), `${q.problemId}.json`);
+          const filePath = path.join(questionsDir, diff, `${q.problemId}.json`);
           const fileContent = await fs.readFile(filePath, 'utf-8');
           const pData = JSON.parse(fileContent);
           fullDescription = pData.description || '';
@@ -60,9 +61,9 @@ export async function GET(
 
         return {
           problemId: q.problemId,
-          title: q.title,
-          difficulty: q.difficulty,
-          points: q.points,
+          title: q.title || `Problem #${q.problemId}`,
+          difficulty: q.difficulty || 'medium',
+          points: q.points || 10,
           description: fullDescription,
           inputFormat,
           outputFormat,

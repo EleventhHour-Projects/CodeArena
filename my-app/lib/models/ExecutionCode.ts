@@ -5,7 +5,7 @@ const executionCodeSchema = new mongoose.Schema<ExecutionCode>({
     code: { type: String, required: true },
     codeType: { type: String, required: false, default: "battle", enum: ["normal", "battle", "test"] },
     language: { type: String, required: false, default: "cpp" },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     battleId: { type: mongoose.Schema.Types.ObjectId, ref: "Battle", required: false },
     problem: {
         difficulty: { type: String, required: false },

@@ -339,7 +339,7 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 	}
 
 	for _, tc := range seqCases {
-		ectx, cancel := context.WithTimeout(ctx, time.Second*1)
+		ectx, cancel := context.WithTimeout(ctx, time.Second*3)
 		start := time.Now()
 		output, runStderr, err := execCommand(ectx, cli, containerID, runtime.RunCmd, tc.Input+"\n")
 		elapsed := time.Since(start)
@@ -353,7 +353,7 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 			}
 			failedInfo = FailedInfo{
 				isFailed:     true,
-				ErrorMessage: "Time Limit Exceeded (>1s)",
+				ErrorMessage: "Time Limit Exceeded (>3s)",
 				TestCase:     tcInput,
 				IsHidden:     tc.IsHidden,
 			}
@@ -487,7 +487,7 @@ func worker(ctx context.Context) {
 		utils.WorkerPoolData.SetActiveTask(resp.ID, &task)
 
 		// 3 seconds is more reasonable for compilation + multiple test cases
-		runCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		runCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
 		if err != nil {
