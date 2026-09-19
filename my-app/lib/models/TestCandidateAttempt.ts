@@ -21,6 +21,14 @@ export interface ICandidateInfo {
   email: string;
   rollNumber?: string;
   phone?: string;
+  college?: string;
+  graduationYear?: string;
+  degree?: string;
+  github?: string;
+  linkedin?: string;
+  resumeUrl?: string;
+  experience?: string;
+  customData?: Record<string, string>;
 }
 
 export interface ICandidateFeedback {
@@ -68,6 +76,14 @@ const CandidateInfoSchema = new Schema<ICandidateInfo>({
   email: { type: String, required: true },
   rollNumber: { type: String },
   phone: { type: String },
+  college: { type: String },
+  graduationYear: { type: String },
+  degree: { type: String },
+  github: { type: String },
+  linkedin: { type: String },
+  resumeUrl: { type: String },
+  experience: { type: String },
+  customData: { type: Schema.Types.Mixed },
 });
 
 const FeedbackSchema = new Schema<ICandidateFeedback>({

@@ -54,6 +54,7 @@ export async function POST(request: Request) {
       validUntil,
       questions,
       proctoring,
+      registrationForm,
       status,
     } = body;
 
@@ -73,7 +74,8 @@ export async function POST(request: Request) {
       validUntil: validUntil ? new Date(validUntil) : undefined,
       questions: questions || [],
       proctoring: proctoring || {},
-      status: status || 'draft',
+      registrationForm: registrationForm || {},
+      status: status || 'active',
     });
 
     return NextResponse.json({ test }, { status: 201 });

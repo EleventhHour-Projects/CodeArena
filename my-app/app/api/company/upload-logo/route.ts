@@ -27,6 +27,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    const contentType = req.headers.get('content-type') || '';
+
+    // Handle JSON with Base64 Image
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      if (!body.image) {
+        return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+      }
+      return NextResponse.json({ success: true, url: body.image });
+    }
+
+    // Handle Multipart Form Data
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
@@ -34,44 +46,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    // Validate size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File size must be under 5MB' }, { status: 400 });
     }
 
-    // Validate mime type
-    const validMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
-    if (!validMimes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Unsupported file format. Please upload JPG, PNG, WEBP, or SVG.' },
-        { status: 400 }
-      );
-    }
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64Data = `data:${file.type || 'image/png'};base64,${buffer.toString('base64')}`;
 
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'company');
-    await fs.mkdir(uploadsDir, { recursive: true });
+    // Also attempt to write file to public directory
+    try {
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'company');
+      await fs.mkdir(uploadsDir, { recursive: true });
 
-    // Generate safe file extension & name
-    let ext = '.png';
-    if (file.type === 'image/jpeg') ext = '.jpg';
-    else if (file.type === 'image/webp') ext = '.webp';
-    else if (file.type === 'image/svg+xml') ext = '.svg';
-    else if (file.type === 'image/gif') ext = '.gif';
+      let ext = '.png';
+      if (file.type === 'image/jpeg') ext = '.jpg';
+      else if (file.type === 'image/webp') ext = '.webp';
+      else if (file.type === 'image/svg+xml') ext = '.svg';
+      else if (file.type === 'image/gif') ext = '.gif';
 
-    const filename = `logo-${uuidv4()}${ext}`;
-    const filePath = path.join(uploadsDir, filename);
-
-    await fs.writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/company/${filename}`;
+      const filename = `logo-${uuidv4()}${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+      await fs.writeFile(filePath, buffer);
+    } catch (e) {
+      console.warn('Could not write file to public uploads dir, using base64 data URI:', e);
+    }
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: base64Data,
     });
   } catch (error) {
     console.error('Upload logo error:', error);

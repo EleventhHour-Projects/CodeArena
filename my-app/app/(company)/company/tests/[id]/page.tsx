@@ -33,6 +33,14 @@ import {
   RotateCcw,
   Loader2,
   ExternalLink,
+  UserCheck,
+  Phone,
+  GraduationCap,
+  Briefcase,
+  FileText,
+  Github,
+  Linkedin,
+  FileBadge,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,6 +60,23 @@ interface ProctoringConfig {
   disableCopyPaste: boolean;
 }
 
+interface RegistrationFieldConfig {
+  enabled: boolean;
+  required: boolean;
+}
+
+interface RegistrationFormConfig {
+  phone: RegistrationFieldConfig;
+  rollNumber: RegistrationFieldConfig;
+  college: RegistrationFieldConfig;
+  graduationYear: RegistrationFieldConfig;
+  degree: RegistrationFieldConfig;
+  github: RegistrationFieldConfig;
+  linkedin: RegistrationFieldConfig;
+  resumeUrl: RegistrationFieldConfig;
+  experience: RegistrationFieldConfig;
+}
+
 interface TestForm {
   title: string;
   description: string;
@@ -61,6 +86,7 @@ interface TestForm {
   validUntil: string;
   questions: TestQuestion[];
   proctoring: ProctoringConfig;
+  registrationForm: RegistrationFormConfig;
   status: 'draft' | 'active' | 'archived';
 }
 
@@ -78,7 +104,19 @@ interface ProblemItem {
 
 interface CandidateAttempt {
   id: string;
-  candidate: { name: string; email: string; rollNumber?: string; phone?: string };
+  candidate: {
+    name: string;
+    email: string;
+    rollNumber?: string;
+    phone?: string;
+    college?: string;
+    graduationYear?: string;
+    degree?: string;
+    github?: string;
+    linkedin?: string;
+    resumeUrl?: string;
+    experience?: string;
+  };
   status: 'registered' | 'in_progress' | 'submitted' | 'terminated';
   startedAt?: string;
   submittedAt?: string;
@@ -90,6 +128,18 @@ interface CandidateAttempt {
   feedback?: { rating: number; difficultyRating?: string; comments?: string; submittedAt?: string };
   createdAt: string;
 }
+
+const DEFAULT_REGISTRATION_FORM: RegistrationFormConfig = {
+  phone: { enabled: true, required: false },
+  rollNumber: { enabled: true, required: false },
+  college: { enabled: true, required: false },
+  graduationYear: { enabled: false, required: false },
+  degree: { enabled: false, required: false },
+  github: { enabled: false, required: false },
+  linkedin: { enabled: false, required: false },
+  resumeUrl: { enabled: false, required: false },
+  experience: { enabled: false, required: false },
+};
 
 const DEFAULT_FORM: TestForm = {
   title: '',
@@ -107,7 +157,8 @@ const DEFAULT_FORM: TestForm = {
     requireFullScreen: false,
     disableCopyPaste: false,
   },
-  status: 'draft',
+  registrationForm: DEFAULT_REGISTRATION_FORM,
+  status: 'active',
 };
 
 export default function TestFormPage() {
@@ -119,7 +170,7 @@ export default function TestFormPage() {
   const [form, setForm] = useState<TestForm>(DEFAULT_FORM);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'proctoring' | 'settings' | 'activity'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'questions' | 'form' | 'proctoring' | 'settings' | 'activity'>('basic');
   const [generatedLink, setGeneratedLink] = useState('');
 
   // Problem Bank Modal & Picker
@@ -160,7 +211,11 @@ export default function TestFormPage() {
               validUntil: t.validUntil ? new Date(t.validUntil).toISOString().slice(0, 16) : '',
               questions: t.questions || [],
               proctoring: t.proctoring || DEFAULT_FORM.proctoring,
-              status: t.status || 'draft',
+              registrationForm: {
+                ...DEFAULT_REGISTRATION_FORM,
+                ...(t.registrationForm || {}),
+              },
+              status: t.status || 'active',
             });
             setGeneratedLink(t.testLink);
           }
@@ -210,7 +265,7 @@ export default function TestFormPage() {
   useEffect(() => {
     if (activeTab === 'activity' && !isNew) {
       loadLiveActivity();
-      const interval = setInterval(loadLiveActivity, 10000); // auto-refresh every 10s
+      const interval = setInterval(loadLiveActivity, 10000);
       return () => clearInterval(interval);
     }
   }, [activeTab, id, isNew]);
@@ -294,6 +349,20 @@ export default function TestFormPage() {
     setForm((f) => ({ ...f, proctoring: { ...f.proctoring, [key]: value } }));
   };
 
+  const updateRegistrationField = (field: keyof RegistrationFormConfig, key: 'enabled' | 'required', val: boolean) => {
+    setForm((f) => ({
+      ...f,
+      registrationForm: {
+        ...f.registrationForm,
+        [field]: {
+          ...f.registrationForm[field],
+          [key]: val,
+          ...(key === 'required' && val ? { enabled: true } : {}), // If marked required, auto-enable
+        },
+      },
+    }));
+  };
+
   const copyTestLink = () => {
     if (generatedLink) {
       navigator.clipboard.writeText(`${window.location.origin}/test/${generatedLink}`);
@@ -321,6 +390,68 @@ export default function TestFormPage() {
   });
 
   const totalAssessmentPoints = form.questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
+  const registrationFieldsList: {
+    key: keyof RegistrationFormConfig;
+    label: string;
+    description: string;
+    icon: any;
+  }[] = [
+    {
+      key: 'phone',
+      label: 'Phone Number',
+      description: 'Candidate contact or WhatsApp phone number',
+      icon: Phone,
+    },
+    {
+      key: 'rollNumber',
+      label: 'Roll Number / Student ID',
+      description: 'College university roll number or application registration code',
+      icon: FileBadge,
+    },
+    {
+      key: 'college',
+      label: 'College / Institute Name',
+      description: 'Current or graduated university/college name',
+      icon: GraduationCap,
+    },
+    {
+      key: 'degree',
+      label: 'Degree & Branch',
+      description: 'Program of study (e.g. B.Tech Computer Science, MCA)',
+      icon: BookOpen,
+    },
+    {
+      key: 'graduationYear',
+      label: 'Graduation Year / Batch',
+      description: 'Passing out year (e.g. 2025, 2026)',
+      icon: Clock,
+    },
+    {
+      key: 'experience',
+      label: 'Years of Experience',
+      description: 'Total professional or internship experience',
+      icon: Briefcase,
+    },
+    {
+      key: 'github',
+      label: 'GitHub Profile URL',
+      description: 'Link to candidate GitHub account & repositories',
+      icon: Github,
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn Profile URL',
+      description: 'Link to candidate professional LinkedIn profile',
+      icon: Linkedin,
+    },
+    {
+      key: 'resumeUrl',
+      label: 'Resume / Portfolio Link',
+      description: 'Google Drive, PDF, or portfolio URL',
+      icon: FileText,
+    },
+  ];
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
@@ -357,7 +488,7 @@ export default function TestFormPage() {
             <button
               type="button"
               onClick={copyTestLink}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.1] transition"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.1] transition cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5 text-green-400" />
               <span>Copy Public Link</span>
@@ -379,7 +510,7 @@ export default function TestFormPage() {
         <button
           type="button"
           onClick={() => setActiveTab('basic')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
             activeTab === 'basic'
               ? 'border-green-500 text-white'
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -395,7 +526,7 @@ export default function TestFormPage() {
             setActiveTab('questions');
             loadProblemBank();
           }}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
             activeTab === 'questions'
               ? 'border-green-500 text-white'
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -407,8 +538,21 @@ export default function TestFormPage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab('form')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
+            activeTab === 'form'
+              ? 'border-green-500 text-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>Candidate Form</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('proctoring')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
             activeTab === 'proctoring'
               ? 'border-green-500 text-white'
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -421,7 +565,7 @@ export default function TestFormPage() {
         <button
           type="button"
           onClick={() => setActiveTab('settings')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
             activeTab === 'settings'
               ? 'border-green-500 text-white'
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -435,7 +579,7 @@ export default function TestFormPage() {
           <button
             type="button"
             onClick={() => setActiveTab('activity')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 shrink-0 cursor-pointer ${
               activeTab === 'activity'
                 ? 'border-green-500 text-green-400'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'
@@ -501,8 +645,8 @@ export default function TestFormPage() {
                       onChange={(e) => setForm({ ...form, status: e.target.value as any })}
                       className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-white/[0.08] text-white text-sm focus:outline-none focus:border-green-500/50 transition"
                     >
-                      <option value="draft">Draft (Private)</option>
                       <option value="active">Active (Open to Candidates)</option>
+                      <option value="draft">Draft (Private)</option>
                       <option value="archived">Archived</option>
                     </select>
                   </div>
@@ -540,7 +684,6 @@ export default function TestFormPage() {
           {/* TAB: Questions */}
           {activeTab === 'questions' && (
             <div className="space-y-6">
-              {/* Added Questions List */}
               <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
                   <div>
@@ -556,7 +699,7 @@ export default function TestFormPage() {
                       loadProblemBank();
                       setShowProblemPicker(true);
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold shadow-md transition cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Browse Question Bank</span>
@@ -617,7 +760,7 @@ export default function TestFormPage() {
                           <button
                             type="button"
                             onClick={() => removeQuestion(idx)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition"
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
                             title="Remove question"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -629,11 +772,10 @@ export default function TestFormPage() {
                 )}
               </div>
 
-              {/* Problem Bank Browser / Picker Modal */}
+              {/* Problem Bank Browser Modal */}
               {showProblemPicker && (
                 <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
                   <div className="bg-[#0c0c0e] border border-white/[0.12] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
-                    {/* Modal Header */}
                     <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-bold text-white">Select Problems from Bank</h3>
@@ -644,13 +786,12 @@ export default function TestFormPage() {
                       <button
                         type="button"
                         onClick={() => setShowProblemPicker(false)}
-                        className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition"
+                        className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition cursor-pointer"
                       >
                         Done
                       </button>
                     </div>
 
-                    {/* Filter bar */}
                     <div className="p-4 border-b border-white/[0.06] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950">
                       <div className="flex items-center gap-1.5 overflow-x-auto">
                         {(['all', 'easy', 'medium', 'hard'] as const).map((diff) => (
@@ -658,7 +799,7 @@ export default function TestFormPage() {
                             key={diff}
                             type="button"
                             onClick={() => setDifficultyFilter(diff)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition shrink-0 ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition shrink-0 cursor-pointer ${
                               difficultyFilter === diff
                                 ? 'bg-white/[0.12] text-white'
                                 : 'text-zinc-500 hover:text-zinc-300'
@@ -681,7 +822,6 @@ export default function TestFormPage() {
                       </div>
                     </div>
 
-                    {/* Problems List */}
                     <div className="flex-1 overflow-y-auto p-4 divide-y divide-white/[0.06]">
                       {loadingProblems ? (
                         <div className="py-16 text-center text-zinc-500 text-xs flex items-center justify-center gap-2">
@@ -743,7 +883,7 @@ export default function TestFormPage() {
                                   <button
                                     type="button"
                                     onClick={() => addProblemFromBank(prob)}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-green-500 hover:text-black text-white text-xs font-bold border border-white/[0.1] transition"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-green-500 hover:text-black text-white text-xs font-bold border border-white/[0.1] transition cursor-pointer"
                                   >
                                     <Plus className="w-3.5 h-3.5" />
                                     <span>Add Problem</span>
@@ -761,6 +901,95 @@ export default function TestFormPage() {
             </div>
           )}
 
+          {/* TAB: Candidate Registration Form Config */}
+          {activeTab === 'form' && (
+            <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-white">Candidate Registration Form</h2>
+                <p className="text-xs text-zinc-400">
+                  Select what information candidates must provide before starting this assessment.
+                </p>
+              </div>
+
+              {/* Mandatory fixed fields banner */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/[0.06] flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-white">Always Collected (Mandatory)</span>
+                  <p className="text-[11px] text-zinc-400">Full Name and Email Address are always required for authentication.</p>
+                </div>
+                <span className="text-[10px] uppercase font-bold text-green-400 px-2 py-0.5 rounded bg-green-500/10 border border-green-500/20">
+                  Default Core
+                </span>
+              </div>
+
+              {/* Configurable dynamic fields checklist */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                  Additional Candidate Fields
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {registrationFieldsList.map(({ key, label, description, icon: Icon }) => {
+                    const fieldConfig = form.registrationForm[key] || { enabled: false, required: false };
+                    const isEnabled = fieldConfig.enabled;
+                    const isReq = fieldConfig.required;
+
+                    return (
+                      <div
+                        key={key}
+                        className={`p-4 rounded-2xl border transition ${
+                          isEnabled
+                            ? 'bg-green-500/[0.03] border-green-500/30'
+                            : 'bg-zinc-900/40 border-white/[0.06]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-lg bg-zinc-900 border border-white/[0.08]">
+                              <Icon className={`w-4 h-4 ${isEnabled ? 'text-green-400' : 'text-zinc-500'}`} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-white">{label}</h4>
+                              <p className="text-[11px] text-zinc-500">{description}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                          {/* Toggle: Ask this field */}
+                          <label className="inline-flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isEnabled}
+                              onChange={(e) => updateRegistrationField(key, 'enabled', e.target.checked)}
+                              className="w-4 h-4 rounded accent-green-500 cursor-pointer"
+                            />
+                            <span className="text-zinc-300 text-[11px] font-semibold">Ask in form</span>
+                          </label>
+
+                          {/* Toggle: Make required */}
+                          {isEnabled && (
+                            <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isReq}
+                                onChange={(e) => updateRegistrationField(key, 'required', e.target.checked)}
+                                className="w-3.5 h-3.5 rounded accent-amber-500 cursor-pointer"
+                              />
+                              <span className={`text-[11px] font-bold ${isReq ? 'text-amber-400' : 'text-zinc-500'}`}>
+                                Mandatory *
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB: Proctoring Settings */}
           {activeTab === 'proctoring' && (
             <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl p-6 space-y-6">
@@ -772,7 +1001,6 @@ export default function TestFormPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Camera */}
                 <div
                   className={`p-5 rounded-2xl border transition ${
                     form.proctoring.requireCamera
@@ -799,7 +1027,6 @@ export default function TestFormPage() {
                   </div>
                 </div>
 
-                {/* Microphone */}
                 <div
                   className={`p-5 rounded-2xl border transition ${
                     form.proctoring.requireMic
@@ -826,7 +1053,6 @@ export default function TestFormPage() {
                   </div>
                 </div>
 
-                {/* Fullscreen */}
                 <div
                   className={`p-5 rounded-2xl border transition ${
                     form.proctoring.requireFullScreen
@@ -853,7 +1079,6 @@ export default function TestFormPage() {
                   </div>
                 </div>
 
-                {/* Copy Paste Block */}
                 <div
                   className={`p-5 rounded-2xl border transition ${
                     form.proctoring.disableCopyPaste
@@ -880,7 +1105,6 @@ export default function TestFormPage() {
                   </div>
                 </div>
 
-                {/* Tab Switch Detection */}
                 <div
                   className={`p-5 rounded-2xl border transition md:col-span-2 ${
                     form.proctoring.preventTabSwitch
@@ -968,14 +1192,14 @@ export default function TestFormPage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
             <Link
               href="/company/tests"
-              className="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition"
+              className="px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300 transition cursor-pointer"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
             >
               {saving ? (
                 <>
@@ -994,7 +1218,6 @@ export default function TestFormPage() {
       ) : (
         /* TAB: Live Activity & Candidates */
         <div className="space-y-6">
-          {/* Real-time stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-5 rounded-2xl bg-[#0c0c0e] border border-white/[0.08]">
               <div className="flex items-center justify-between mb-2">
@@ -1045,22 +1268,21 @@ export default function TestFormPage() {
             </div>
           </div>
 
-          {/* Candidate attempts table */}
           <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-white/[0.08] flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Live Candidate Attempts
+                  Candidate Attempts & Form Records
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Auto-refreshes every 10 seconds.
+                  Live data auto-refreshes every 10 seconds.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={loadLiveActivity}
                 disabled={activityLoading}
-                className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 transition"
+                className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 transition cursor-pointer"
                 title="Refresh Live Data"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${activityLoading ? 'animate-spin text-green-400' : ''}`} />
@@ -1093,8 +1315,8 @@ export default function TestFormPage() {
                             {att.status}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-500 mt-0.5">
-                          {att.candidate.email} {att.candidate.rollNumber ? `· ID: ${att.candidate.rollNumber}` : ''}
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          {att.candidate.email}
                         </p>
                       </div>
 
@@ -1112,6 +1334,79 @@ export default function TestFormPage() {
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Candidate Registration Form Details */}
+                    <div className="flex flex-wrap gap-3 text-[11px] text-zinc-400 bg-zinc-950 p-3 rounded-xl border border-white/[0.04]">
+                      {att.candidate.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-zinc-500" />
+                          <span>{att.candidate.phone}</span>
+                        </span>
+                      )}
+                      {att.candidate.rollNumber && (
+                        <span className="flex items-center gap-1">
+                          <FileBadge className="w-3 h-3 text-zinc-500" />
+                          <span>ID: {att.candidate.rollNumber}</span>
+                        </span>
+                      )}
+                      {att.candidate.college && (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="w-3 h-3 text-zinc-500" />
+                          <span>{att.candidate.college}</span>
+                        </span>
+                      )}
+                      {att.candidate.degree && (
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-3 h-3 text-zinc-500" />
+                          <span>{att.candidate.degree}</span>
+                        </span>
+                      )}
+                      {att.candidate.graduationYear && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-zinc-500" />
+                          <span>Batch: {att.candidate.graduationYear}</span>
+                        </span>
+                      )}
+                      {att.candidate.experience && (
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="w-3 h-3 text-zinc-500" />
+                          <span>Exp: {att.candidate.experience}</span>
+                        </span>
+                      )}
+                      {att.candidate.github && (
+                        <a
+                          href={att.candidate.github}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-green-400 hover:text-green-300"
+                        >
+                          <Github className="w-3 h-3" />
+                          <span>GitHub</span>
+                        </a>
+                      )}
+                      {att.candidate.linkedin && (
+                        <a
+                          href={att.candidate.linkedin}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                        >
+                          <Linkedin className="w-3 h-3" />
+                          <span>LinkedIn</span>
+                        </a>
+                      )}
+                      {att.candidate.resumeUrl && (
+                        <a
+                          href={att.candidate.resumeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-amber-400 hover:text-amber-300"
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>Resume</span>
+                        </a>
+                      )}
                     </div>
 
                     {/* Candidate feedback pill */}
