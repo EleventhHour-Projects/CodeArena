@@ -154,7 +154,7 @@ export async function POST(
         return NextResponse.json({ error: 'Attempt is closed' }, { status: 409 });
       }
       // Save or update an answer for a question
-      const { problemId, code, language, status, score, execCodeId } = body;
+      const { problemId, code, language, status, score, passedTestCases, totalTestCases, execCodeId } = body;
       const existingIdx = attempt.answers.findIndex((a) => a.problemId === problemId);
       if (existingIdx >= 0) {
         attempt.answers[existingIdx] = {
@@ -163,6 +163,8 @@ export async function POST(
           language: language ?? attempt.answers[existingIdx].language,
           status: status ?? attempt.answers[existingIdx].status,
           score: score !== undefined ? score : attempt.answers[existingIdx].score,
+          passedTestCases: passedTestCases !== undefined ? passedTestCases : attempt.answers[existingIdx].passedTestCases,
+          totalTestCases: totalTestCases !== undefined ? totalTestCases : attempt.answers[existingIdx].totalTestCases,
           submittedAt: new Date(),
           execCodeId: execCodeId ?? attempt.answers[existingIdx].execCodeId,
         };
@@ -173,6 +175,8 @@ export async function POST(
           language: language || 'cpp',
           status: status || 'Pending',
           score: score || 0,
+          passedTestCases: passedTestCases || 0,
+          totalTestCases: totalTestCases || 0,
           submittedAt: new Date(),
           execCodeId,
         });

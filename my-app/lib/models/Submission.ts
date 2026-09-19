@@ -24,6 +24,8 @@ const submissionSchema = new mongoose.Schema<Submission>({
         expectedOutput: { type: String, required: false },
         errorMsg: { type: String, required: false },
         isHidden: { type: Boolean, required: false, default: false },
+        passedCount: { type: Number, required: false, default: 0 },
+        totalCount: { type: Number, required: false, default: 0 },
     },
 })
 

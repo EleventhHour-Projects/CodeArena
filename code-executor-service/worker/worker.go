@@ -113,6 +113,8 @@ type runnerPayload struct {
 
 type runnerResult struct {
 	Passed      bool   `json:"passed"`
+	PassedCount int    `json:"passed_count"`
+	TotalCount  int    `json:"total_count"`
 	TotalTimeMs int    `json:"total_time_ms"`
 	Error       string `json:"error"`
 	TestCase    string `json:"testcase"`
@@ -136,7 +138,9 @@ try:
     testcases = data["testcases"]
 
     total_ns = 0
-    res = {"passed": True, "total_time_ms": 0, "error": "", "testcase": "", "actual": "", "expected": "", "is_hidden": False}
+    passed_count = 0
+    total_count = len(testcases)
+    res = {"passed": True, "passed_count": 0, "total_count": total_count, "total_time_ms": 0, "error": "", "testcase": "", "actual": "", "expected": "", "is_hidden": False}
 
     for tc in testcases:
         tc_in = tc["input"] + "\n"
@@ -190,6 +194,7 @@ try:
                     res["expected"] = ""
                 break
             else:
+                passed_count += 1
                 if not is_hidden:
                     res["actual"] = actual
 
@@ -216,6 +221,8 @@ try:
                 res["actual"] = ""
             break
 
+    res["passed_count"] = passed_count
+    res["total_count"] = total_count
     res["total_time_ms"] = int(total_ns / 1000000)
     print(json.dumps(res))
 except Exception as e:
@@ -307,12 +314,16 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 						ActualOutput:   res.Actual,
 						ExpectedOutput: res.Expected,
 						IsHidden:       res.IsHidden,
+						PassedCount:    res.PassedCount,
+						TotalCount:     res.TotalCount,
 					}
 				} else {
 					failedInfo = FailedInfo{
 						isFailed:     false,
 						ActualOutput: res.Actual,
 						IsHidden:     false,
+						PassedCount:  res.PassedCount,
+						TotalCount:   res.TotalCount,
 					}
 				}
 
@@ -338,6 +349,9 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 		}
 	}
 
+	passedCountSeq := 0
+	totalCountSeq := len(seqCases)
+
 	for _, tc := range seqCases {
 		ectx, cancel := context.WithTimeout(ctx, time.Second*3)
 		start := time.Now()
@@ -356,6 +370,8 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 				ErrorMessage: "Time Limit Exceeded (>3s)",
 				TestCase:     tcInput,
 				IsHidden:     tc.IsHidden,
+				PassedCount:  passedCountSeq,
+				TotalCount:   totalCountSeq,
 			}
 			break
 		}
@@ -398,13 +414,21 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 				ActualOutput:   actualOut,
 				ExpectedOutput: expOut,
 				IsHidden:       tc.IsHidden,
+				PassedCount:    passedCountSeq,
+				TotalCount:     totalCountSeq,
 			}
 			break
+		} else {
+			passedCountSeq++
 		}
 	}
 
 	if !failedInfo.isFailed {
-		failedInfo = FailedInfo{isFailed: false}
+		failedInfo = FailedInfo{
+			isFailed:    false,
+			PassedCount: passedCountSeq,
+			TotalCount:  totalCountSeq,
+		}
 	}
 
 	memory := 0

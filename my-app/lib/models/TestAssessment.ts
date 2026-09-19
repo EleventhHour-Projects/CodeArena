@@ -34,6 +34,15 @@ export interface IRegistrationFormConfig {
   experience: IRegistrationFieldConfig;
 }
 
+export interface IInvitedCandidate {
+  email: string;
+  name?: string;
+  token: string;
+  inviteSent: boolean;
+  inviteSentAt?: Date;
+  status?: 'pending' | 'started' | 'completed';
+}
+
 export interface ITestAssessment extends Document {
   companyId: mongoose.Types.ObjectId;
   title: string;
@@ -46,10 +55,20 @@ export interface ITestAssessment extends Document {
   questions: ITestQuestion[];
   proctoring: IProctoringConfig;
   registrationForm: IRegistrationFormConfig;
+  invitedCandidates: IInvitedCandidate[];
   status: 'draft' | 'active' | 'archived';
   createdAt: Date;
   updatedAt: Date;
 }
+
+const InvitedCandidateSchema = new Schema<IInvitedCandidate>({
+  email: { type: String, required: true, trim: true, lowercase: true },
+  name: { type: String, default: '' },
+  token: { type: String, required: true },
+  inviteSent: { type: Boolean, default: false },
+  inviteSentAt: { type: Date },
+  status: { type: String, enum: ['pending', 'started', 'completed'], default: 'pending' },
+});
 
 const TestQuestionSchema = new Schema<ITestQuestion>({
   problemId: { type: Number, required: true },
@@ -101,6 +120,7 @@ const TestAssessmentSchema: Schema<ITestAssessment> = new Schema(
     questions: { type: [TestQuestionSchema], default: [] },
     proctoring: { type: ProctoringConfigSchema, default: () => ({}) },
     registrationForm: { type: RegistrationFormConfigSchema, default: () => ({}) },
+    invitedCandidates: { type: [InvitedCandidateSchema], default: [] },
     status: { type: String, enum: ['draft', 'active', 'archived'], default: 'draft' },
   },
   { timestamps: true }

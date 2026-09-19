@@ -56,6 +56,8 @@ export async function GET(
                     errorMsg: execCode.result?.errorMsg,
                     expected_output: execCode.result?.expectedOutput,
                     is_hidden: execCode.result?.isHidden,
+                    passed_count: execCode.result?.passedCount,
+                    total_count: execCode.result?.totalCount,
                 };
                 
                 await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
@@ -87,6 +89,8 @@ export async function GET(
             errorMsg: submission.result?.errorMsg,
             expected_output: submission.result?.expectedOutput,
             is_hidden: submission.result?.isHidden,
+            passed_count: submission.result?.passedCount,
+            total_count: submission.result?.totalCount,
         };
 
         // Complete/terminal submissions are largely immutable, cache for longer (e.g., 5 mins)

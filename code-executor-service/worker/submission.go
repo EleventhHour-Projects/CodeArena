@@ -16,6 +16,8 @@ type FailedInfo struct {
 	ActualOutput   string
 	ExpectedOutput string
 	IsHidden       bool
+	PassedCount    int
+	TotalCount     int
 }
 
 // SaveSubmissionResult is a function that saves the result of a code submission to the MongoDB database, including the execution time, memory used, and whether the submission passed or failed based on the test cases
@@ -54,6 +56,8 @@ func SaveSubmissionResult(task *utils.CodeConfig, timeElapsed time.Duration, mem
 		ActualOutput:         actualOutput,
 		ExpectedOutput:       expectedOutput,
 		IsHidden:             failed.IsHidden,
+		PassedCount:          failed.PassedCount,
+		TotalCount:           failed.TotalCount,
 	}
 
 	event := utils.EVENTTYPESUBMITPASS

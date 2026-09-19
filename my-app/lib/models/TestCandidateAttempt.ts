@@ -13,6 +13,8 @@ export interface IAnswer {
   submittedAt: Date;
   status?: 'Accepted' | 'Rejected' | 'Pending';
   score: number;
+  passedTestCases?: number;
+  totalTestCases?: number;
   execCodeId?: string;
 }
 
@@ -68,6 +70,8 @@ const AnswerSchema = new Schema<IAnswer>({
   submittedAt: { type: Date, default: Date.now },
   status: { type: String, enum: ['Accepted', 'Rejected', 'Pending'] },
   score: { type: Number, default: 0 },
+  passedTestCases: { type: Number, default: 0 },
+  totalTestCases: { type: Number, default: 0 },
   execCodeId: { type: String },
 });
 
