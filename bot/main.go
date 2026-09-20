@@ -574,6 +574,9 @@ func main() {
 	http.HandleFunc("/api/logs", logsHandler)
 	http.HandleFunc("/api/auto-spawn", autoSpawnHandler)
 	http.HandleFunc("/api/config", configHandler)
+	autoSpawnMu.Lock()
+	autoSpawnEasyBot = true
+	autoSpawnMu.Unlock()
 
 	go autoSpawnWorker()
 
