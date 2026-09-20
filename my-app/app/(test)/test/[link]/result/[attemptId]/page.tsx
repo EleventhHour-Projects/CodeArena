@@ -10,7 +10,6 @@ import {
   FileCode2,
   Clock,
   ShieldCheck,
-  Star,
   ArrowRight,
   ExternalLink,
   Award,
@@ -93,7 +92,6 @@ export default function TestResultPage() {
   const { attempt, test, company } = data;
   const isTerminated = attempt.status === 'terminated';
   const solvedCount = attempt.answers.filter((a) => a.status === 'Accepted').length;
-  const percent = attempt.maxScore > 0 ? Math.round((attempt.totalScore / attempt.maxScore) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans flex flex-col items-center justify-center p-6 sm:p-10 relative">
@@ -150,25 +148,15 @@ export default function TestResultPage() {
           </p>
         </div>
 
-        {/* Score Card */}
-        <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-white/[0.06] text-center">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Total Score</span>
-            <span className="text-xl font-black text-white">
-              {attempt.totalScore} <span className="text-xs text-zinc-500 font-normal">/ {attempt.maxScore}</span>
+        {/* Score Card — shows solved count only, no raw score exposed to candidate */}
+        <div className="flex justify-center p-5 rounded-2xl bg-zinc-900/60 border border-white/[0.06]">
+          <div className="text-center">
+            <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Questions Solved</span>
+            <span className="text-3xl font-black text-green-400">
+              {solvedCount}
+              <span className="text-base text-zinc-500 font-normal"> / {test.questions.length}</span>
             </span>
-          </div>
-
-          <div>
-            <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Solved</span>
-            <span className="text-xl font-black text-green-400">
-              {solvedCount} <span className="text-xs text-zinc-500 font-normal">/ {test.questions.length}</span>
-            </span>
-          </div>
-
-          <div>
-            <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Performance</span>
-            <span className="text-xl font-black text-white">{percent}%</span>
+            <p className="text-[11px] text-zinc-500 mt-1">test cases accepted</p>
           </div>
         </div>
 
@@ -193,17 +181,8 @@ export default function TestResultPage() {
 
           {attempt.feedback && (
             <div className="flex justify-between py-1 items-center">
-              <span className="text-zinc-500">Your Rating</span>
-              <div className="flex items-center text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${
-                      i < attempt.feedback!.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-700'
-                    }`}
-                  />
-                ))}
-              </div>
+              <span className="text-zinc-500">Feedback Rating</span>
+              <span className="text-zinc-300 font-semibold">{attempt.feedback.rating} / 5 ⭐</span>
             </div>
           )}
         </div>

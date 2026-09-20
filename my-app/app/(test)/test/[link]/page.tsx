@@ -79,7 +79,7 @@ interface CompanyInfo {
   email?: string;
 }
 
-type Stage = 'loading' | 'upcoming' | 'ended' | 'info' | 'register' | 'precheck' | 'error';
+type Stage = 'loading' | 'upcoming' | 'ended' | 'info' | 'register' | 'precheck' | 'error' | 'already_attempted';
 
 export default function TestLandingPage() {
   const params = useParams();
@@ -179,6 +179,12 @@ export default function TestLandingPage() {
             email: data.invitedCandidate.email || prev.email,
             name: data.invitedCandidate.name || prev.name,
           }));
+        }
+
+        // Block re-attempt for invite links
+        if (data.alreadyAttempted) {
+          setStage('already_attempted');
+          return;
         }
 
         if (data.timeStatus === 'upcoming') {
@@ -370,7 +376,57 @@ export default function TestLandingPage() {
     );
   }
 
-  // 2. Error State
+  // 2.5. Already Attempted State
+  if (stage === 'already_attempted') {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex items-center justify-center p-6">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 40% at 50% 30%, rgba(59,130,246,0.08) 0%, transparent 70%)',
+          }}
+        />
+        <div className="max-w-md w-full bg-[#0c0c0e] border border-white/[0.08] rounded-3xl p-8 text-center space-y-5 relative z-10">
+          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-8 h-8 text-blue-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold text-white">Already Submitted</h2>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              You have already completed this assessment. Each invite link can only be used once.
+            </p>
+            {invitedCandidate && (
+              <p className="text-xs text-zinc-500 mt-1">
+                Submitted as <span className="text-zinc-300 font-semibold">{invitedCandidate.email}</span>
+              </p>
+            )}
+          </div>
+          <div className="pt-2 p-4 rounded-2xl bg-zinc-900/60 border border-white/[0.06] text-xs text-zinc-400 text-left space-y-1">
+            <p className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
+              Your answers have been recorded and submitted to the organization.
+            </p>
+            <p className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
+              No further submissions are accepted for this invite link.
+            </p>
+          </div>
+          <div className="pt-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-bold text-white transition"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Return to CodeArena</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Error State
   if (stage === 'error') {
     return (
       <div className="min-h-screen bg-[#09090b] text-zinc-100 flex items-center justify-center p-6">
