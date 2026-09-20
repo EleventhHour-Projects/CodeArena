@@ -50,6 +50,7 @@ import {
   UserPlus,
   CheckSquare,
   Square,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -247,6 +248,7 @@ function TestFormContent() {
 
   // Live Activity state
   const [activityLoading, setActivityLoading] = useState(false);
+  const [filterViolationsOnly, setFilterViolationsOnly] = useState(false);
   const [activityData, setActivityData] = useState<{
     stats: {
       totalCandidates: number;
@@ -1918,33 +1920,147 @@ function TestFormContent() {
           </div>
 
           <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-2xl overflow-hidden">
-            <div className="p-5 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="p-5 border-b border-white/[0.08] flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Candidate Attempts & Form Records
+                  Candidate Attempts &amp; Form Records
                 </h3>
                 <p className="text-xs text-zinc-400 mt-0.5">
                   Live data auto-refreshes every 10 seconds.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={loadLiveActivity}
-                disabled={activityLoading}
-                className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 transition cursor-pointer"
-                title="Refresh Live Data"
-              >
-                <RotateCcw className={`w-3.5 h-3.5 ${activityLoading ? 'animate-spin text-green-400' : ''}`} />
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Violations filter toggle */}
+                <button
+                  type="button"
+                  onClick={() => setFilterViolationsOnly((v) => !v)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                    filterViolationsOnly
+                      ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                      : 'bg-white/[0.05] text-zinc-400 border-white/[0.08] hover:bg-white/[0.1]'
+                  }`}
+                  title={filterViolationsOnly ? 'Show all candidates' : 'Show only candidates with violations'}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {filterViolationsOnly ? 'Violations Only (ON)' : 'Filter: Violations'}
+                </button>
+
+                {/* Export CSV button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activityData?.attempts?.length) {
+                      toast.info('No candidate data to export.');
+                      return;
+                    }
+
+                    // Sort: score DESC, then time taken ASC
+                    const sorted = [...activityData.attempts]
+                      .filter((a) => !filterViolationsOnly || a.violations.length > 0)
+                      .sort((a, b) => {
+                        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+                        const timeA = a.startedAt && a.submittedAt
+                          ? new Date(a.submittedAt).getTime() - new Date(a.startedAt).getTime()
+                          : Infinity;
+                        const timeB = b.startedAt && b.submittedAt
+                          ? new Date(b.submittedAt).getTime() - new Date(b.startedAt).getTime()
+                          : Infinity;
+                        return timeA - timeB;
+                      });
+
+                    const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                    const headers = [
+                      'Rank', 'Name', 'Email', 'Roll No', 'Phone', 'College', 'Degree',
+                      'Grad Year', 'Experience', 'GitHub', 'LinkedIn', 'Resume',
+                      'Score', 'Max Score', 'Questions Solved', 'Total Questions',
+                      'Time Taken (mins)', 'Violations', 'Status', 'Started At', 'Submitted At',
+                    ];
+
+                    const rows = sorted.map((att, idx) => {
+                      const solvedCount = att.answers.filter((a) => a.status === 'Accepted').length;
+                      const timeMins = att.startedAt && att.submittedAt
+                        ? Math.round((new Date(att.submittedAt).getTime() - new Date(att.startedAt).getTime()) / 60000)
+                        : '';
+                      return [
+                        idx + 1,
+                        escape(att.candidate.name),
+                        escape(att.candidate.email),
+                        escape(att.candidate.rollNumber),
+                        escape(att.candidate.phone),
+                        escape(att.candidate.college),
+                        escape(att.candidate.degree),
+                        escape(att.candidate.graduationYear),
+                        escape(att.candidate.experience),
+                        escape(att.candidate.github),
+                        escape(att.candidate.linkedin),
+                        escape(att.candidate.resumeUrl),
+                        att.totalScore,
+                        att.maxScore,
+                        solvedCount,
+                        att.answers.length,
+                        timeMins,
+                        att.violations.length,
+                        att.status,
+                        att.startedAt ? new Date(att.startedAt).toLocaleString() : '',
+                        att.submittedAt ? new Date(att.submittedAt).toLocaleString() : '',
+                      ].join(',');
+                    });
+
+                    const csv = [headers.join(','), ...rows].join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `candidates_${id}_${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success('CSV exported successfully.');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 text-xs font-bold transition cursor-pointer"
+                  title="Export candidates as CSV"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export CSV
+                </button>
+
+                {/* Refresh button */}
+                <button
+                  type="button"
+                  onClick={loadLiveActivity}
+                  disabled={activityLoading}
+                  className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 transition cursor-pointer"
+                  title="Refresh Live Data"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${activityLoading ? 'animate-spin text-green-400' : ''}`} />
+                </button>
+              </div>
             </div>
 
             {activityData?.attempts.length === 0 ? (
               <div className="py-16 text-center text-zinc-500 text-xs">
                 No candidates have registered for this assessment yet.
               </div>
-            ) : (
+            ) : (() => {
+              const displayedAttempts = [...(activityData?.attempts || [])]
+                .filter((a) => !filterViolationsOnly || a.violations.length > 0)
+                .sort((a, b) => {
+                  if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+                  const timeA = a.startedAt && a.submittedAt
+                    ? new Date(a.submittedAt).getTime() - new Date(a.startedAt).getTime()
+                    : Infinity;
+                  const timeB = b.startedAt && b.submittedAt
+                    ? new Date(b.submittedAt).getTime() - new Date(b.startedAt).getTime()
+                    : Infinity;
+                  return timeA - timeB;
+                });
+
+              return displayedAttempts.length === 0 ? (
+                <div className="py-16 text-center text-zinc-500 text-xs">
+                  No candidates match the current filter.
+                </div>
+              ) : (
               <div className="divide-y divide-white/[0.06]">
-                {activityData?.attempts.map((att) => (
+                {displayedAttempts.map((att) => (
                   <div key={att.id} className="p-5 space-y-3 hover:bg-white/[0.015] transition">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
@@ -2194,7 +2310,8 @@ function TestFormContent() {
                   </div>
                 ))}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

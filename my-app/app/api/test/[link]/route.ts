@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import TestAssessment from '@/lib/models/TestAssessment';
 import Company from '@/lib/models/Company';
+import TestCandidateAttempt from '@/lib/models/TestCandidateAttempt';
 
 // GET /api/test/[link] — public endpoint: get test info by link UUID or ID
 export async function GET(request: Request, { params }: { params: Promise<{ link: string }> }) {
@@ -60,6 +61,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
 
     // Check if token matches an invited candidate
     let invitedCandidate = null;
+    let alreadyAttempted = false;
     if (token && Array.isArray((test as any).invitedCandidates)) {
       const found = (test as any).invitedCandidates.find((c: any) => c.token === token);
       if (found) {
@@ -69,6 +71,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
           token: found.token,
           status: found.status || 'pending',
         };
+
+        // Check if this candidate has already completed the assessment
+        const existingAttempt = await TestCandidateAttempt.findOne({
+          testId: test._id,
+          'candidate.email': found.email.toLowerCase(),
+          status: { $in: ['submitted', 'terminated'] },
+        }).lean();
+
+        if (existingAttempt) {
+          alreadyAttempted = true;
+        }
       }
     }
 
@@ -78,6 +91,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
       startsInSeconds,
       endsInSeconds,
       invitedCandidate,
+      alreadyAttempted,
       isDraft: test.status === 'draft',
       test: {
         id: test._id.toString(),

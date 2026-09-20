@@ -114,6 +114,7 @@ export default function TestAttemptPage() {
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<any>(null);
+  const [isCustomRun, setIsCustomRun] = useState(false); // tracks if last run was custom input
 
   // Proctoring Violations
   const [tabSwitches, setTabSwitches] = useState(0);
@@ -387,7 +388,7 @@ export default function TestAttemptPage() {
   );
 
   // Polling helper for code execution
-  const pollExecution = (execId: string, type: 'Run' | 'Submit', probId: number) => {
+  const pollExecution = (execId: string, type: 'Run' | 'Submit', probId: number, isCustom = false) => {
     let attempts = 0;
     const maxAttempts = 80;
 
@@ -416,9 +417,11 @@ export default function TestAttemptPage() {
             passed_count: passedTc,
             total_count: totalTc,
             score_earned: earned,
+            is_custom_run: isCustom,
           };
 
           setExecutionResult(enhancedResult);
+          setIsCustomRun(isCustom);
           setBottomTab('output');
 
           if (type === 'Submit') {
@@ -426,13 +429,13 @@ export default function TestAttemptPage() {
             if (isAcc) {
               setSolvedMap((prev) => ({ ...prev, [probId]: true }));
               setScoresMap((prev) => ({ ...prev, [probId]: earned }));
-              toast.success(`Question Accepted! (All ${totalTc}/${totalTc} Passed) +${earned} pts`);
+              toast.success(`Question Accepted! Passed all ${totalTc}/${totalTc} test cases.`);
             } else if (earned > 0) {
               setScoresMap((prev) => ({ ...prev, [probId]: earned }));
-              toast.warning(`Partial Result: Passed ${passedTc}/${totalTc} Test Cases (+${earned}/${maxPts} pts)`);
+              toast.warning(`Partial: Passed ${passedTc}/${totalTc} test cases.`);
             } else {
               setScoresMap((prev) => ({ ...prev, [probId]: 0 }));
-              toast.error(`Submission Result: ${data.status} (0/${totalTc} Passed)`);
+              toast.error(`${data.status} — Passed 0/${totalTc} test cases.`);
             }
 
             // Record answer on server with partial test cases
@@ -452,7 +455,12 @@ export default function TestAttemptPage() {
               }),
             });
           } else {
-            toast.info(`Run Completed: ${data.status}`);
+            // Run (sample or custom)
+            if (isCustom) {
+              toast.info(`Custom run complete.`);
+            } else {
+              toast.info(`Run completed: ${data.status}`);
+            }
           }
           return;
         }
@@ -507,6 +515,7 @@ export default function TestAttemptPage() {
     setExecutionResult(null);
     setIsConsoleCollapsed(false);
     setBottomTab('output');
+    setIsCustomRun(useCustomInput);
 
     const testcasesToRun = useCustomInput
       ? [{ input: customInput, output: '' }]
@@ -533,7 +542,7 @@ export default function TestAttemptPage() {
       const data = await res.json();
       if (data.success && data.executionCode) {
         const execId = data.executionCode._id || data.executionCode.id;
-        pollExecution(execId, 'Run', activeQuestion.problemId);
+        pollExecution(execId, 'Run', activeQuestion.problemId, useCustomInput);
       } else {
         setIsExecuting(false);
         toast.error(data.error || 'Failed to initiate execution');
@@ -1213,22 +1222,19 @@ export default function TestAttemptPage() {
                                   : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                               }`}
                             >
-                              {executionResult.status === 'Accepted'
+                              {executionResult.is_custom_run
+                                ? (executionResult.status === 'Accepted' ? 'Run OK' : executionResult.status)
+                                : executionResult.status === 'Accepted'
                                 ? 'Accepted'
                                 : executionResult.score_earned > 0
                                 ? 'Partially Accepted'
                                 : executionResult.status}
                             </span>
 
-                            {executionResult.total_count !== undefined && executionResult.total_count > 0 && (
+                            {/* Show test-case count only for non-custom runs */}
+                            {!executionResult.is_custom_run && executionResult.total_count !== undefined && executionResult.total_count > 0 && (
                               <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 border border-white/[0.08] text-zinc-200">
                                 Passed {executionResult.passed_count ?? 0} / {executionResult.total_count} Test Cases
-                              </span>
-                            )}
-
-                            {executionResult.score_earned !== undefined && (
-                              <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                                Score: {executionResult.score_earned} / {activeQuestion?.points || 10} pts
                               </span>
                             )}
 
@@ -1246,23 +1252,25 @@ export default function TestAttemptPage() {
                           </div>
                         )}
 
-                        {executionResult.actual_output !== undefined && (
+                        {/* Always show output for custom runs; show for other runs when available */}
+                        {(executionResult.is_custom_run || executionResult.actual_output !== undefined) && (
                           <div>
                             <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
-                              Your Program Output:
+                              {executionResult.is_custom_run ? 'Your Program Output (Custom Input):' : 'Your Program Output:'}
                             </span>
-                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-200 overflow-x-auto">
+                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-200 overflow-x-auto whitespace-pre-wrap">
                               {executionResult.actual_output || '(Empty Output)'}
                             </pre>
                           </div>
                         )}
 
-                        {executionResult.expected_output !== undefined && executionResult.expected_output && (
+                        {/* Expected output only shown for non-custom runs */}
+                        {!executionResult.is_custom_run && executionResult.expected_output !== undefined && executionResult.expected_output && (
                           <div>
                             <span className="text-[10px] text-zinc-500 block mb-1 font-semibold uppercase">
                               Expected Output:
                             </span>
-                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-400 overflow-x-auto">
+                            <pre className="p-3 rounded-xl bg-zinc-950 border border-white/[0.04] font-mono text-xs text-zinc-400 overflow-x-auto whitespace-pre-wrap">
                               {executionResult.expected_output}
                             </pre>
                           </div>
