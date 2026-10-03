@@ -10,44 +10,49 @@ import (
 	"time"
 )
 
-// KeepXWorkers adjusts the number of active worker goroutines to match the specified count,
-// allowing for dynamic scaling of worker resources based on the current workload in the code execution service.
-// It uses a scaling mutex to ensure that multiple scaling operations do not conflict.
+// KeepXWorkers adjusts the number of active worker goroutines to match the specified count (n).
+// Scaling up is parallelized for rapid ramp-up, while scaling down emits exact stop signals without flooding the channel.
 func KeepXWorkers(n int) {
-	utils.WorkerPoolData.ScalingMuLock() // Using a helper for cleaner code or direct lock
+	utils.WorkerPoolData.ScalingMuLock()
 	defer utils.WorkerPoolData.ScalingMuUnlock()
 
-	for {
-		currentWorkers := utils.WorkerPoolData.GetCount()
-		if currentWorkers == n {
-			break
-		}
+	currentWorkers := utils.WorkerPoolData.GetCount()
+	if currentWorkers == n {
+		return
+	}
 
-		if currentWorkers < n {
-			// Spawn one worker and re-check
+	if currentWorkers < n {
+		needed := n - currentWorkers
+		for i := 0; i < needed; i++ {
 			worker.SpawnWorkerFailed(utils.WorkerCTX)
-			// Wait a tiny bit for the worker to increment the count
-			time.Sleep(time.Millisecond * 100)
-		} else if currentWorkers > n {
-			// Stop one worker and re-check
-			p := true
-			utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
-			// Sleep to allow the worker to receive the signal and decrement the count
-			time.Sleep(time.Second * 1)
 		}
+		// Allow a brief buffer for workers to initialize
+		time.Sleep(150 * time.Millisecond)
+	} else if currentWorkers > n {
+		excess := currentWorkers - n
+		p := true
+		// Send exactly 'excess' stop signals without looping or over-killing workers
+		for i := 0; i < excess; i++ {
+			utils.WorkerPoolData.AddTask(utils.CodeConfig{StopSignal: &p})
+		}
+		// Brief pause so stop signals are ingested by free workers
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-// Auto continuously monitors the workload of the code execution service and automatically adjusts
-// the number of active worker goroutines based on the number of tasks processed in a given time period.
+// Auto continuously monitors the workload and automatically scales workers up or down.
+// It accounts for both task arrival rate and queue backlog, with cooldown protection against scale-down thrashing.
 func Auto() {
 	const (
 		minWorkers     = 4
 		maxWorkers     = 100
-		tasksPerWorker = 10 // 1 container per 10 tasks
-		checkInterval  = 10 * time.Second
-		disabledSleep  = 1 * time.Minute
+		checkInterval  = 5 * time.Second
+		disabledSleep  = 15 * time.Second
+		cooldownCycles = 4 // 4 cycles * 5s = 20s sustained low load required before scale-down
 	)
+
+	lowLoadCycles := 0
+	lastCount := utils.TaskInfo.GetTotalTasksSubmitted()
 
 	for {
 		if !utils.WorkerPoolData.GetAuto() {
@@ -55,31 +60,52 @@ func Auto() {
 			continue
 		}
 
-		initialCount := utils.TaskInfo.GetTotalTasksSubmitted()
-
 		time.Sleep(checkInterval)
 
 		if !utils.WorkerPoolData.GetAuto() {
 			continue
 		}
 
-		finalCount := utils.TaskInfo.GetTotalTasksSubmitted()
-		tasksInPeriod := finalCount - initialCount
+		currentCount := utils.TaskInfo.GetTotalTasksSubmitted()
+		tasksInPeriod := currentCount - lastCount
+		lastCount = currentCount
 
-		// 1 worker per 10 tasks
-		target := tasksInPeriod / tasksPerWorker
+		queueLength := utils.WorkerPoolData.GetChannelLength()
+		currentWorkers := utils.WorkerPoolData.GetCount()
 
-		// Minimum workers
+		// 1. Demand based on incoming arrival rate (e.g. tasks in last 5s)
+		// Assuming 1 worker can process ~1 task/sec, in 5s each worker processes ~5 tasks.
+		rateWorkers := (tasksInPeriod + 4) / 4
+
+		// 2. Demand based on current queue backlog (to drain queued tasks swiftly)
+		backlogWorkers := (queueLength + 2) / 2
+
+		target := rateWorkers
+		if backlogWorkers > target {
+			target = backlogWorkers
+		}
+
 		if target < minWorkers {
 			target = minWorkers
 		}
-
-		// Maximum workers
 		if target > maxWorkers {
 			target = maxWorkers
 		}
 
-		KeepXWorkers(target)
+		if target > currentWorkers {
+			// SCALE UP: Immediate and proactive
+			lowLoadCycles = 0
+			KeepXWorkers(target)
+		} else if target < currentWorkers {
+			// SCALE DOWN: Conservative with cooldown to prevent oscillation/sawtooth
+			lowLoadCycles++
+			if lowLoadCycles >= cooldownCycles && queueLength == 0 {
+				lowLoadCycles = 0
+				KeepXWorkers(target)
+			}
+		} else {
+			lowLoadCycles = 0
+		}
 	}
 }
 

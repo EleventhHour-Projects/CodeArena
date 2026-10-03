@@ -438,7 +438,6 @@ func RunTask(ctx context.Context, cli *client.Client, containerID string, task *
 }
 
 func worker(ctx context.Context) {
-	utils.WorkerPoolData.Increment()
 	containerName := fmt.Sprintf("code-executor-worker-%d-%v", time.Now().UnixNano(), utils.RandomString(6))
 	apiClient, err := client.NewClientWithOpts(
 		client.FromEnv,
@@ -449,6 +448,7 @@ func worker(ctx context.Context) {
 		return
 	}
 	defer apiClient.Close()
+
 	PidL := int64(64)
 	t := true
 	imageName := utils.ExecutionImage()
@@ -474,22 +474,28 @@ func worker(ctx context.Context) {
 		fmt.Println(utils.Red+"Error creating container L129 :"+utils.Reset, err)
 		return
 	}
-	defer utils.WorkerPoolData.UnregisterWorker(resp.ID)
-	utils.WorkerPoolData.RegisterWorker(resp.ID)
 
-	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
 	if _, err := apiClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		utils.WorkerPoolData.Decrement()
 		KillContainerByID(ctx, containerName)
 		SpawnWorkerFailed(ctx)
 		return
 	}
+
+	// Register and increment count only once container is running
+	utils.WorkerPoolData.Increment()
+	utils.WorkerPoolData.RegisterWorker(resp.ID)
+	defer func() {
+		utils.WorkerPoolData.UnregisterWorker(resp.ID)
+		utils.WorkerPoolData.Decrement()
+		KillContainerByID(ctx, containerName)
+	}()
+
+	fmt.Println(utils.Green+"Worker started - Active Workers:"+utils.Reset, utils.WorkerPoolData.GetCount(), utils.Green+"Container ID:"+utils.Reset, containerName)
+
 	for {
 		task := utils.WorkerPoolData.GetTask()
 		if task.StopSignal != nil && *task.StopSignal {
 			fmt.Println(utils.Yellow+"Worker received stop signal, shutting down container:"+utils.Reset, containerName)
-			KillContainerByID(ctx, containerName)
-			utils.WorkerPoolData.Decrement()
 			return
 		}
 		fmt.Println("Worker received task:", task.TaskID)
@@ -510,33 +516,31 @@ func worker(ctx context.Context) {
 		// Register the current task for tracking
 		utils.WorkerPoolData.SetActiveTask(resp.ID, &task)
 
-		// 3 seconds is more reasonable for compilation + multiple test cases
-		runCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-
+		runCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		err := RunTask(runCtx, apiClient, resp.ID, &task)
+		cancel()
+
 		if err != nil {
 			fmt.Println(utils.Red+"Worker failed task:"+utils.Reset, task.TaskID, "Error:", err)
-			KillContainerByID(ctx, containerName)
-			utils.WorkerPoolData.Decrement()
 
-			// Check if this was an intentional cleanup by AutoClean
-			if utils.WorkerPoolData.IsWorkerRegistered(resp.ID) {
-				fmt.Println("Natural failure - spawning replacement and re-queuing task")
-				SpawnWorkerFailed(ctx)
-				utils.WorkerPoolData.AddTask(task)
-			} else {
-				fmt.Println("Worker was cleaned externally, task recovery handled by cleaner")
+			// Record failure result so the client / battle does not hang indefinitely
+			failedInfo := FailedInfo{
+				isFailed:     true,
+				ErrorMessage: fmt.Sprintf("Execution Error: %v", err),
 			}
+			SaveSubmissionResult(&task, 0, 0, &failedInfo)
 
 			// Clean up active task registration
 			utils.WorkerPoolData.ClearActiveTask(resp.ID)
 
-			cancel() // cancel context before breaking
-			break
-		} else {
-			fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
-			utils.WorkerPoolData.ClearActiveTask(resp.ID)
+			// Spawn replacement worker if this was a natural worker crash
+			if utils.WorkerPoolData.IsWorkerRegistered(resp.ID) {
+				SpawnWorkerFailed(ctx)
+			}
+			return
 		}
-		cancel() // Manual cancel to avoid defer leak in loop
+
+		fmt.Println("Worker completed task:", task.TaskID, "by worker:", containerName)
+		utils.WorkerPoolData.ClearActiveTask(resp.ID)
 	}
 }
