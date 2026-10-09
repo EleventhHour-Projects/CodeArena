@@ -6,7 +6,7 @@ require (
 	github.com/google/go-github/v84 v84.0.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
-	github.com/moby/moby/api v1.56.0
+	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.0
 	github.com/nottechdm/notnet v1.0.4
 	github.com/redis/go-redis/v9 v9.22.0
