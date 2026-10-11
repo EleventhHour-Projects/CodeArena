@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, Play, X, Video } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Play, X, Video, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AnnouncementBanner() {
@@ -22,61 +15,92 @@ export function AnnouncementBanner() {
 
   return (
     <>
-      <div className="w-full bg-amber-500/10 border-b border-amber-500/25 text-foreground py-2.5 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-center gap-2.5 md:gap-4 text-xs sm:text-sm z-40 relative shrink-0">
-        <div className="flex items-center gap-2 text-center md:text-left">
-          <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-          </span>
-          <span className="font-semibold text-amber-300 tracking-wide uppercase text-[11px] sm:text-xs">
-            Notice:
-          </span>
-          <span className="text-muted-foreground leading-snug">
-            We apologize for the inconvenience. CodeArena backend is currently down as we don't have funds to continue our GCP subscription, and our distributed architecture requires a dedicated VM.
-          </span>
-        </div>
-
-        <Button
-          onClick={() => setVideoOpen(true)}
-          size="sm"
-          className="h-7 px-3 text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded-lg shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          Play Video
-        </Button>
-      </div>
-
-      <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-2xl shadow-2xl">
-          <div className="p-4 sm:p-5 border-b border-zinc-800/80 flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-zinc-100">
-                <Video className="w-4 h-4 text-amber-400" />
-                CodeArena Architecture & Battle Demo
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-400 mt-0.5">
-                Overview of our distributed microservices, VM execution environment, and 1v1 algorithmic arena.
-              </DialogDescription>
-            </div>
+      {/* Announcement Bar */}
+      <div className="w-full bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-amber-950/60 border-b border-amber-500/20 text-foreground py-2 pl-16 sm:pl-20 pr-4 sm:pr-8 flex items-center justify-center z-40 relative shrink-0">
+        <div className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+          {/* Left: Notice pill + text */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25 shrink-0 whitespace-nowrap">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Notice
+            </span>
+            <span className="text-xs sm:text-sm text-amber-200/70 leading-snug truncate">
+              CodeArena backend is currently down — GCP credits exhausted. Our distributed architecture requires a dedicated VM.
+            </span>
           </div>
 
-          <div className="relative bg-black w-full aspect-video flex items-center justify-center">
-            {videoOpen && (
+          {/* Right: Play button */}
+          <button
+            onClick={() => setVideoOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all duration-150 active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
+          >
+            <Play className="w-3 h-3 fill-current" />
+            Watch Demo
+          </button>
+        </div>
+      </div>
+
+      {/* Fullscreen-ish Video Modal */}
+      {videoOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setVideoOpen(false);
+          }}
+        >
+          <div className="relative w-[96vw] max-w-[1400px] bg-zinc-950 rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.8)] border border-zinc-800/60 flex flex-col"
+            style={{ height: "90vh" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/70 shrink-0 bg-zinc-950/80 backdrop-blur-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/25">
+                  <Video className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-100 leading-tight">
+                    CodeArena — Architecture & Battle Demo
+                  </h2>
+                  <p className="text-[10px] text-zinc-500 leading-tight mt-0.5">
+                    Distributed microservices · VM execution · 1v1 algorithmic arena
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setVideoOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Video */}
+            <div className="flex-1 bg-black flex items-center justify-center overflow-hidden min-h-0">
               <video
                 controls
                 autoPlay
                 playsInline
-                className="w-full h-full max-h-[75vh] object-contain rounded-b-2xl"
+                className="w-full h-full object-contain"
               >
                 <source src="/codeareanvid.mov" type="video/mp4" />
                 <source src="/codeareanvid.mov" type="video/quicktime" />
                 <source src="/codeareanvid.mov" />
                 Your browser does not support playing this video.
               </video>
-            )}
+            </div>
+
+            {/* Footer info bar */}
+            <div className="flex items-center gap-2 px-5 py-2.5 border-t border-zinc-800/70 shrink-0 bg-zinc-950/60">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
+              <span className="text-[11px] text-zinc-500">
+                The backend will be restored once we secure VM infrastructure funding. Thank you for your patience.
+              </span>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
