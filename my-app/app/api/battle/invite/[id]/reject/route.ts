@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/dbConnect";
 import { UserModel } from "@/lib/models/User";
 import BattleInviteModel from "@/lib/models/BattleInvite";
+import { EXECUTOR_SERVICE_URL } from "@/lib/config";
 
 export async function POST(
     req: NextRequest,
@@ -71,7 +72,7 @@ export async function POST(
 
         // Notify Go backend to remove from SSE store immediately
         try {
-            await fetch("http://34.131.239.188:6969/api/invites/delete", {
+            await fetch(`${EXECUTOR_SERVICE_URL}/api/invites/delete`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

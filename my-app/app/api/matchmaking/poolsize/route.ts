@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { EXECUTOR_SERVICE_URL } from "@/lib/config";
 
 export async function GET() {
     try {
-        const response = await fetch("http://34.131.239.188:6969/api/poolsize", {
+        const response = await fetch(`${EXECUTOR_SERVICE_URL}/api/poolsize`, {
             method: "GET",
         });
 

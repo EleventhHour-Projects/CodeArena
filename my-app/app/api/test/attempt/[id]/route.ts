@@ -5,6 +5,7 @@ import dbConnect from '@/lib/dbConnect';
 import TestAssessment from '@/lib/models/TestAssessment';
 import TestCandidateAttempt from '@/lib/models/TestCandidateAttempt';
 import Company from '@/lib/models/Company';
+import { getQuestionsDir } from '@/lib/problems/getQuestionsDir';
 
 export async function GET(
   _request: Request,
@@ -23,7 +24,7 @@ export async function GET(
     const company = await Company.findById(test.companyId).select('name logo website description').lean();
 
     // Enrich questions with full descriptions and non-hidden sample testcases
-    const questionsDir = path.join(process.cwd(), '..', 'questions');
+    const questionsDir = getQuestionsDir();
 
     const enrichedQuestions = await Promise.all(
       test.questions.map(async (q) => {

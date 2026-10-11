@@ -117,7 +117,8 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   useEffect(() => {
     if (mode !== "private" || status !== "waiting" || !inviteId || !userId || !sseToken) return;
 
-    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_MATCHMAKING_HTTP_URL || "http://localhost:6970";
+    const sseUrl = `${baseUrl}/sse/invites?userId=${userId}&token=${sseToken}`;
     const source = new EventSource(sseUrl);
 
     // Shared check function
@@ -225,7 +226,8 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         return;
       }
 
-      const wsUrl = `wss://matchmake.codearena.pro/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
+      const wsBase = process.env.NEXT_PUBLIC_MATCHMAKING_WSS_URL || "ws://localhost:6970";
+      const wsUrl = `${wsBase}/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 

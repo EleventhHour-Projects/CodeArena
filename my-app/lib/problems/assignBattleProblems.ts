@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getQuestionsDir } from './getQuestionsDir';
 type BattleProblem = {
     difficulty: "easy" | "medium" | "hard";
     id: number;
@@ -31,23 +32,11 @@ export const assignBattleProblems = (difficulty: string): BattleProblem[] => {
     const fetchRandomProblems = (level: "easy" | "medium" | "hard", count: number): BattleProblem[] => {
         if (count === 0) return [];
         
-        // Try multiple potential relative paths for the questions folder
-        const potentialPaths = [
-            path.resolve(process.cwd(), '..', 'questions', level),
-            path.resolve(process.cwd(), 'questions', level),
-            path.join(process.cwd(), '../questions', level)
-        ];
+        const baseDir = getQuestionsDir();
+        const questionsDir = path.resolve(baseDir, level);
 
-        let questionsDir = "";
-        for (const p of potentialPaths) {
-            if (fs.existsSync(p)) {
-                questionsDir = p;
-                break;
-            }
-        }
-
-        if (!questionsDir) {
-            console.error(`ERROR: Questions directory not found for ${level}. Checked:`, potentialPaths);
+        if (!fs.existsSync(questionsDir)) {
+            console.error(`ERROR: Questions directory not found for ${level}: ${questionsDir}`);
             return [];
         }
 

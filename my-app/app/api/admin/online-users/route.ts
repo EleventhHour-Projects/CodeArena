@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { UserModel as User } from '@/lib/models/User';
+import { EXECUTOR_SERVICE_URL } from '@/lib/config';
 
 export async function GET() {
   try {
     await dbConnect();
     
     // 1. Fetch online user IDs from the executor service
-    const res = await fetch('http://34.131.239.188:6969/api/internal/online-users', {
+    const res = await fetch(`${EXECUTOR_SERVICE_URL}/api/internal/online-users`, {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',

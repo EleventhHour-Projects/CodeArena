@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/dbConnect";
 import { UserModel } from "@/lib/models/User";
+import { EXECUTOR_SERVICE_URL } from "@/lib/config";
 
 export async function GET(req: NextRequest) {
     try {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
         if (!me) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 
         // Fetch SSE Token from executor service for invites
-        const tokenRes = await fetch("http://34.131.239.188:6969/api/invites/sse-token", {
+        const tokenRes = await fetch(`${EXECUTOR_SERVICE_URL}/api/invites/sse-token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

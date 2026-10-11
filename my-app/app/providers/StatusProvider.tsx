@@ -71,7 +71,8 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!userId || !sseToken) return;
 
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_MATCHMAKING_HTTP_URL || "http://localhost:6970";
+    const sseUrl = `${baseUrl}/sse/friends?userId=${userId}&token=${sseToken}`;
     const source = new EventSource(sseUrl);
 
     source.addEventListener("friends_update", (e) => {
@@ -112,7 +113,8 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!userId || !inviteToken) return;
 
-    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${inviteToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_MATCHMAKING_HTTP_URL || "http://localhost:6970";
+    const sseUrl = `${baseUrl}/sse/invites?userId=${userId}&token=${inviteToken}`;
     const source = new EventSource(sseUrl);
 
     source.addEventListener("invite_update", (e) => {

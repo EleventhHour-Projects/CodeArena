@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { EXECUTOR_SERVICE_URL } from '@/lib/config';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const res = await fetch('http://34.131.239.188:6969/api/internal/merge', {
+    const res = await fetch(`${EXECUTOR_SERVICE_URL}/api/internal/merge`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

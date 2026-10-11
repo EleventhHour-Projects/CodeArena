@@ -7,6 +7,7 @@ import BattleInviteModel from "@/lib/models/BattleInvite";
 import BattleModel from "@/lib/models/Battle";
 import { assignBattleProblems } from "@/lib/problems/assignBattleProblems";
 import { isUserBanned } from "@/lib/auth/userStatus";
+import { EXECUTOR_SERVICE_URL } from "@/lib/config";
 
 export async function POST(
     req: NextRequest,
@@ -163,7 +164,7 @@ export async function POST(
 
         // Notify Go backend to remove from SSE store immediately
         try {
-            await fetch("http://34.131.239.188:6969/api/invites/delete", {
+            await fetch(`${EXECUTOR_SERVICE_URL}/api/invites/delete`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

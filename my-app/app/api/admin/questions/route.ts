@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getQuestionsDir } from '@/lib/problems/getQuestionsDir';
 
 export async function GET() {
   try {
-    const questionsDir = path.join(process.cwd(), '..', 'questions');
+    const questionsDir = getQuestionsDir();
     const difficulties = ['easy', 'medium', 'hard'];
     
     let allJsonFiles: { path: string, fileName: string }[] = [];

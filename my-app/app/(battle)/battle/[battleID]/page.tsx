@@ -113,8 +113,8 @@ export default function BattlePage({ params }: PageProps) {
     if (!session?.user || !battleID) return;
     const currentUserId = (session.user as any).id;
     
-    // Connect to backend server running Socket.IO (on port 3000 locally)
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    // Connect to backend server running Socket.IO (port 6767)
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:6767";
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 

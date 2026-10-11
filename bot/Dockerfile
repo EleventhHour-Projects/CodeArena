@@ -32,9 +32,10 @@ EXPOSE 8000
 
 # Set default environment variables (can be overridden at runtime)
 ENV PORT=8000
-ENV BACKEND_URL=http://34.131.239.188:6969
-ENV APP_URL=http://localhost:3000
-ENV SOCKET_BASE_URL=wss://wss.codearena.pro
+ENV BACKEND_URL=http://executor-service:6969
+ENV APP_URL=http://frontend-service:3000
+ENV MATCHMAKING_WSS_URL=ws://executor-service:6970
+ENV BATTLE_WSS_URL=ws://express-server:6767
 
 # Run the binary
 CMD ["./bot-service"]

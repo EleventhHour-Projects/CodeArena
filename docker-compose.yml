@@ -11,6 +11,7 @@ services:
     environment:
       - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - INTERNAL_KEY=ArthurYouAreLikeABrotherToMeSaidJohn
     depends_on:
       - redis
 
@@ -31,8 +32,12 @@ services:
       - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - WSSIP=http://express-server:6767/internal/event
+      - INTERNAL_KEY=ArthurYouAreLikeABrotherToMeSaidJohn
+      - QUESTIONS_DIR=/questions
+      - EXECUTION_IMAGE=multi-lang-runner:latest
     depends_on:
       - redis
+
   frontend-service:
     build:
       context: ./my-app
@@ -48,6 +53,11 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - BOT_SERVICE_URL=http://bot-service:8000
+      - EXECUTOR_SERVICE_URL=http://executor-service:6969
+      - QUESTIONS_DIR=/questions
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:6767
+      - NEXT_PUBLIC_MATCHMAKING_WSS_URL=ws://localhost:6970
+      - NEXT_PUBLIC_MATCHMAKING_HTTP_URL=http://localhost:6970
     depends_on:
       - redis
       - express-server
@@ -62,7 +72,7 @@ services:
     environment:
       - BACKEND_URL=http://executor-service:6969
       - APP_URL=http://frontend-service:3000
-      - MATCHMAKING_WSS_URL=wss://matchmake.codearena.pro
+      - MATCHMAKING_WSS_URL=ws://executor-service:6970
       - BATTLE_WSS_URL=ws://express-server:6767
     depends_on:
       - frontend-service
@@ -74,3 +84,6 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
     command: redis-server --requirepass ${REDIS_PASSWORD}
+
+# MongoDB is provided by MongoDB Atlas (cloud).
+# Set MONGODB_URI / MONGO_URI in the respective .env files.

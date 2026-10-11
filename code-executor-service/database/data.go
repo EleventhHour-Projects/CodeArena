@@ -60,7 +60,19 @@ var (
 )
 
 func findQuestionsDir(sub string) string {
+	if envDir := os.Getenv("QUESTIONS_DIR"); envDir != "" {
+		p := filepath.Join(envDir, strings.TrimPrefix(sub, "questions/"))
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+		if _, err := os.Stat(envDir); err == nil {
+			return envDir
+		}
+	}
 	candidates := []string{
+		filepath.Join("/questions", strings.TrimPrefix(sub, "questions/")),
+		filepath.Join("/questions", sub),
+		"/questions",
 		filepath.Join("..", sub),
 		filepath.Join("..", "..", sub),
 		filepath.Join(".", sub),

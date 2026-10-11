@@ -31,7 +31,7 @@ COPY --from=builder /app/main .
 # Copy .env if needed (though environment variables are preferred in Docker)
 COPY --from=builder /app/.env .
 
-# Expose port (as per api/service.go)
-EXPOSE 6969
+# Expose API and Matchmaking/SSE ports
+EXPOSE 6969 6970
 
 CMD ["./main"]

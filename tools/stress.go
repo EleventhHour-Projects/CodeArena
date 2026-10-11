@@ -41,10 +41,10 @@ func getRandomCode() string {
 }
 
 func main() {
-	targetURL := flag.String("url", "https://codearena.pro/api/battle/exec-code", "Target API endpoint")
-	reqPerMin := flag.Int("rate", 400, "Target request rate (requests per minute)")
-	duration := flag.Duration("d", 5*time.Minute, "Test duration (e.g., 5m, 10m)")
-	battleID := flag.String("battle-id", "6ac106815b434915c19c5447", "Battle ID")
+	targetURL := flag.String("url", "http://localhost:3000/api/battle/exec-code", "Target API endpoint")
+	reqPerMin := flag.Int("rate", 24000, "Target request rate (requests per minute)")
+	duration := flag.Duration("d", 30*time.Second, "Test duration (e.g., 5m, 10m)")
+	battleID := flag.String("battle-id", "6ac8bc3794ede47bab95d287", "Battle ID")
 	p1ID := flag.String("p1", "69de72c58961bbd5a5c37278", "Player 1 User ID")
 	p2ID := flag.String("p2", "69be1dd7d348f17baed6c0a3", "Player 2 User ID")
 	problemID := flag.Int("problem-id", 301, "Problem ID")
@@ -74,15 +74,15 @@ func main() {
 	sem := make(chan struct{}, *concurrency)
 
 	var (
-		totalSent   uint64
-		http2xx     uint64
-		http4xx     uint64
-		http5xx     uint64
-		netErrors   uint64
-		totalLatNs  uint64
-		minLatNs    uint64 = ^uint64(0)
-		maxLatNs    uint64
-		wg          sync.WaitGroup
+		totalSent  uint64
+		http2xx    uint64
+		http4xx    uint64
+		http5xx    uint64
+		netErrors  uint64
+		totalLatNs uint64
+		minLatNs   uint64 = ^uint64(0)
+		maxLatNs   uint64
+		wg         sync.WaitGroup
 	)
 
 	interval := time.Duration(float64(time.Minute) / float64(*reqPerMin))

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getQuestionsDir } from '@/lib/problems/getQuestionsDir';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Problem ID and difficulty are required' }, { status: 400 });
     }
 
-    const questionsDir = path.join(process.cwd(), '..', 'questions');
+    const questionsDir = getQuestionsDir();
     const filePath = path.join(questionsDir, difficulty.toLowerCase(), `${problemId}.json`);
 
     // Check if file exists

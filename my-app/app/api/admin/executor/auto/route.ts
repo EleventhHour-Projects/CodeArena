@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { EXECUTOR_SERVICE_URL } from '@/lib/config';
 
 export async function GET() {
   try {
-    const res = await fetch('http://34.131.239.188:6969/api/internal/auto', {
+    const res = await fetch(`${EXECUTOR_SERVICE_URL}/api/internal/auto`, {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
@@ -29,7 +30,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const res = await fetch('http://34.131.239.188:6969/api/internal/auto', {
+    const res = await fetch(`${EXECUTOR_SERVICE_URL}/api/internal/auto`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

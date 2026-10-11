@@ -7,6 +7,7 @@ import { UserModel } from "@/lib/models/User";
 import SubmissionModel from "@/lib/models/Submission";
 import fs from "fs/promises";
 import path from "path";
+import { getQuestionsDir } from "@/lib/problems/getQuestionsDir";
 
 export async function GET(
     req: NextRequest,
@@ -48,9 +49,9 @@ export async function GET(
         console.log(`Found ${submissions.length} submissions for battle ${id}. Statuses:`, submissions.map(s => s.status));
 
         // Fetch problem details from local JSON files
+        const questionsDir = getQuestionsDir();
         const problemsData = await Promise.all(
             battle.problems.map(async (probRef: any) => {
-                const questionsDir = path.join(process.cwd(), "..", "questions");
                 const filePath = path.join(questionsDir, probRef.difficulty, `${probRef.id}.json`);
                 try {
                     const content = await fs.readFile(filePath, "utf-8");

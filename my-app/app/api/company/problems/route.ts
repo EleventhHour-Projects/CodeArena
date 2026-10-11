@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import fs from 'fs/promises';
 import path from 'path';
+import { getQuestionsDir } from '@/lib/problems/getQuestionsDir';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'super-secret-admin-key-code-arena'
@@ -26,7 +27,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const questionsDir = path.join(process.cwd(), '..', 'questions');
+    const questionsDir = getQuestionsDir();
     const difficulties = ['easy', 'medium', 'hard'];
 
     let allJsonFiles: { path: string; fileName: string; difficulty: string }[] = [];

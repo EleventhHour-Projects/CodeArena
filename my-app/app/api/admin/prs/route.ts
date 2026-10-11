@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { EXECUTOR_SERVICE_URL } from '@/lib/config';
 
 export async function GET() {
   try {
-    const res = await fetch('http://34.131.239.188:6969/api/internal/prs', {
+    const res = await fetch(`${EXECUTOR_SERVICE_URL}/api/internal/prs`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

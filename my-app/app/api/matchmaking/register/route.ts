@@ -5,6 +5,8 @@ import dbConnect from "@/lib/dbConnect";
 import { UserModel } from "@/lib/models/User";
 import { isUserBanned } from "@/lib/auth/userStatus";
 
+import { EXECUTOR_SERVICE_URL } from "@/lib/config";
+
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Call the Go matchmaking service
-        const response = await fetch("http://34.131.239.188:6969/api/matchmaking/register", {
+        const response = await fetch(`${EXECUTOR_SERVICE_URL}/api/matchmaking/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
