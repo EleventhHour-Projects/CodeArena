@@ -19,7 +19,7 @@ function HomeContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"private" | "arena">("arena");
   const [loading, setLoading] = useState(false);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [challengeUsername, setChallengeUsername] = useState("");
   const mounted = useMounted();
 

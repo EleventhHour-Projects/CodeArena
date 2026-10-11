@@ -15,7 +15,7 @@ export function AnnouncementBanner() {
   return (
     <>
       {/* Announcement Bar — same layout structure as original */}
-      <div className="w-full bg-amber-500/10 border-b border-amber-500/25 text-foreground py-2.5 px-4 sm:px-8 flex flex-col md:flex-row items-center justify-center gap-2.5 md:gap-4 text-xs sm:text-sm z-40 relative shrink-0">
+      <div className="w-full bg-amber-500/10 border-b border-amber-500/25 text-foreground py-2.5 pl-12 pr-4 sm:pl-14 sm:pr-8 flex flex-col md:flex-row items-center justify-center gap-2.5 md:gap-4 text-xs sm:text-sm z-40 relative shrink-0">
         <div className="flex items-center gap-2 text-center md:text-left">
           {/* Pulsing dot */}
           <span className="relative flex h-2.5 w-2.5 shrink-0">
