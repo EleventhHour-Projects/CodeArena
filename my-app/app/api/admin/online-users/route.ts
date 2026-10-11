@@ -6,8 +6,13 @@ export async function GET() {
   try {
     await dbConnect();
     
+    const executorUrl = process.env.EXECUTOR_SERVICE_URL;
+    if (!executorUrl) {
+      return NextResponse.json([]);
+    }
+
     // 1. Fetch online user IDs from the executor service
-    const res = await fetch('http://34.131.239.188:6969/api/internal/online-users', {
+    const res = await fetch(`${executorUrl}/api/internal/online-users`, {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
@@ -16,8 +21,7 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to fetch online user IDs from executor: ${res.status} ${errorText}`);
+      return NextResponse.json([]);
     }
 
     const onlineUserIds: string[] = await res.json();

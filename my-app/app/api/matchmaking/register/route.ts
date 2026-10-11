@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { 
                     success: false, 
-                    error: `You are banned from joining the arena. ${banStatus.expires ? `Expires: ${banStatus.expires.toLocaleString()}` : 'This is a permanent ban.'}` 
+                    error: `You are banned from joining the arena. ${banStatus.expires ? `Expires: ${banStatus.expires?.toLocaleString()}` : 'This is a permanent ban.'}` 
                 },
                 { status: 403 }
             );
@@ -42,22 +42,14 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Call the Go matchmaking service
-        const response = await fetch("http://34.131.239.188:6969/api/matchmaking/register", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ user_id: userId, difficulty: difficulty || "medium" }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            return NextResponse.json({ success: false, error: errorData || "Failed to register for matchmaking" }, { status: response.status });
-        }
-
-        const data = await response.json();
-        return NextResponse.json({ success: true, ...data });
+        // Backend VM is offline
+        return NextResponse.json(
+            { 
+                success: false, 
+                error: "Matchmaking service is currently offline. The backend VM is down due to Google Cloud credit limits." 
+            }, 
+            { status: 503 }
+        );
 
     } catch (error) {
         console.error("Matchmaking registration error:", error);

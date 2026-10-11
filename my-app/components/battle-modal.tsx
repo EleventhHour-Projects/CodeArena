@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { Loader2, User, Trophy, Play, XCircle, Swords, Zap, Shield, Target } from "lucide-react";
+import { Loader2, User, Trophy, Play, XCircle, Swords, Zap, Shield, Target, AlertTriangle, Video } from "lucide-react";
 import { playBattleJoinSound } from "@/lib/utils";
 
 interface BattleModalProps {
@@ -35,6 +35,7 @@ export const BattleModal: React.FC<BattleModalProps> = ({
 
   const [mode, setMode] = useState<"private" | "arena">(initialMode);
   const [difficulty, setDifficulty] = useState<string>("medium");
+  const [demoVideoOpen, setDemoVideoOpen] = useState(false);
 
   // States
   const [opponentUsername, setOpponentUsername] = useState(initialOpponent);
@@ -59,221 +60,23 @@ export const BattleModal: React.FC<BattleModalProps> = ({
       } else {
         setMode(initialMode);
       }
-      fetchSseToken();
     } else {
-      // RESET ALL POLLING/SSE STATES WHEN CLOSED
       setStatus("idle");
       setInviteId(null);
     }
   }, [open, initialOpponent, initialMode]);
 
-  const fetchSseToken = async () => {
-    try {
-      const res = await fetch("/api/battle/invitations/sse-token");
-      const data = await res.json();
-      if (data.success) {
-        setSseToken(data.sseToken);
-        if (data.userId) setUserId(data.userId);
-      }
-    } catch (err) {
-      console.error("Failed to fetch invite SSE token:", err);
-    }
-  };
-
-  // Private: Send Invite
+  // Private: Send Invite - Disabled while backend VM is offline
   const handleSendInvite = async () => {
-    if (!opponentUsername.trim()) {
-      toast.error("Enter a username.");
-      return;
-    }
-    setStatus("sending");
-    try {
-      const res = await fetch("/api/battle/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          opponentUsername: opponentUsername.trim(),
-          difficulty,
-          type: "1v1"
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.message || "Invite failed.");
-        setStatus("idle");
-        return;
-      }
-      toast.success("Invite sent.");
-      setInviteId(data.inviteId);
-      setStatus("waiting");
-      setTimeLeft(45);
-    } catch (err) {
-      toast.error("Error sending invite.");
-      setStatus("idle");
-    }
+    toast.error("Battle invite service is offline. The backend VM is down due to Google Cloud credit limits.");
   };
 
-  // Private: SSE + Polling Status Check
-  useEffect(() => {
-    if (mode !== "private" || status !== "waiting" || !inviteId || !userId || !sseToken) return;
-
-    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${sseToken}`;
-    const source = new EventSource(sseUrl);
-
-    // Shared check function
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`/api/battle/invite/${inviteId}`);
-        const data = await res.json();
-        
-        if (data.success) {
-          if (data.status === "Accepted" && data.battleId) {
-            playBattleJoinSound();
-            router.push(`/battle/${data.battleId}`);
-            onOpenChange(false);
-            return true;
-          } else if (data.status === "Rejected") {
-            toast.error("Invite rejected by opponent.");
-            setStatus("idle");
-            return true;
-          } else if (data.status === "Expired") {
-            toast.error("Invite expired.");
-            setStatus("idle");
-            return true;
-          }
-        } else if (res.status === 404) {
-          setStatus("idle");
-          return true;
-        }
-      } catch (err) {
-        console.error("Error checking invite status:", err);
-      }
-      return false;
-    };
-
-    // SSE Signal Trigger
-    source.addEventListener("invite_update", () => {
-      checkStatus();
-    });
-
-    // Backup Polling (every 2 seconds)
-    const pollInterval = setInterval(async () => {
-      const shouldStop = await checkStatus();
-      if (shouldStop) {
-        clearInterval(pollInterval);
-        source.close();
-      }
-    }, 2000);
-
-    source.onerror = () => {
-      source.close();
-      fetchSseToken();
-    };
-
-    return () => {
-      source.close();
-      clearInterval(pollInterval);
-    };
-  }, [mode, status, inviteId, userId, sseToken, router, onOpenChange]);
-
-  // Arena: Pool Size Polling
-  useEffect(() => {
-    if (status !== "searching") return;
-    const fetchPoolSize = async () => {
-      try {
-        const res = await fetch("/api/matchmaking/poolsize");
-        const data = await res.json();
-        if (data.success) {
-          setPoolSize(data[difficulty] || 0);
-        }
-      } catch (err) { }
-    };
-
-    fetchPoolSize();
-    const interval = setInterval(fetchPoolSize, 3000);
-    return () => clearInterval(interval);
-  }, [status, difficulty]);
-
-  // Arena: Search
-  const fetchOpponentPhoto = async (username: string): Promise<string | null> => {
-    try {
-      const res = await fetch(`/api/users/public/${encodeURIComponent(username)}`, { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || !data?.success) return null;
-      return data.image ?? null;
-    } catch {
-      return null;
-    }
-  };
-
+  // Arena: Search - Disabled while backend VM is offline
   const startArenaSearch = async () => {
-    if (!session?.user) {
-      toast.error("Login to play.");
-      return;
-    }
-    setStatus("searching");
-    try {
-      const resp = await fetch("/api/matchmaking/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ difficulty }),
-      });
-      const data = await resp.json();
-      if (!data.success) {
-        toast.error(data.error || "Matchmaking error.");
-        setStatus("idle");
-        return;
-      }
-
-      const wsUrl = `wss://matchmake.codearena.pro/wss/matchmaking?token=${data.token}&username=${(session.user as any).username || session.user.name}`;
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
-
-      socket.onmessage = async (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.user && msg.rating !== undefined) {
-          const imageFromWs = msg.image ?? msg.avatar ?? msg.profilePhoto ?? null;
-          const imageFromDb = imageFromWs ? null : await fetchOpponentPhoto(msg.user);
-
-          setArenaOpponent({
-            username: msg.user,
-            rating: msg.rating,
-            image: imageFromWs ?? imageFromDb,
-          });
-          setStatus("found");
-        } else if (msg.action === "battle_begin") {
-          setStatus("starting");
-          playBattleJoinSound();
-          router.push(`/battle/${msg.battleId}`);
-          onOpenChange(false);
-        } else if (msg.action === "match_rejected") {
-          toast.info("Match rejected.");
-          setStatus("searching");
-        }
-      };
-
-      socket.onclose = () => {
-        setStatus((prev) => {
-          if (prev === "searching" || prev === "found") {
-            toast.error("Matchmaking connection closed.");
-            return "idle";
-          }
-          return prev;
-        });
-        setSearchTime(0);
-        setPoolSize(0);
-      };
-
-    } catch (err) {
-      setStatus("idle");
-    }
+    toast.error("Matchmaking is currently offline. The backend VM is down due to Google Cloud credit limits.");
   };
 
   const stopArenaSearch = () => {
-    if (socketRef.current) {
-      socketRef.current.onclose = null;
-      socketRef.current.close();
-    }
     setStatus("idle");
     setSearchTime(0);
     setPoolSize(0);
@@ -332,8 +135,9 @@ export const BattleModal: React.FC<BattleModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-950 text-white border-zinc-800 p-6 rounded-3xl">
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-950 text-white border-zinc-800 p-6 rounded-3xl">
         <DialogHeader className="mb-6">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Swords className="w-5 h-5 text-green-500" />
@@ -364,6 +168,25 @@ export const BattleModal: React.FC<BattleModalProps> = ({
             </button>
           </div>
         )}
+
+        {/* Offline Notice Banner */}
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex flex-col gap-2.5">
+          <div className="flex items-center gap-2 font-semibold text-xs text-amber-300">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+            Backend VM Currently Offline
+          </div>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            We apologize for the inconvenience. Our backend is offline as we don't have funds to continue our GCP subscription, and our distributed architecture requires dedicated VMs. Real-time matchmaking and battle invites are paused.
+          </p>
+          <Button
+            onClick={() => setDemoVideoOpen(true)}
+            size="sm"
+            className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            Watch Video Demo
+          </Button>
+        </div>
 
         <div className="space-y-6">
           {(status === "idle" || status === "sending") && (
@@ -400,18 +223,19 @@ export const BattleModal: React.FC<BattleModalProps> = ({
                   </div>
                   <Button
                     onClick={handleSendInvite}
-                    disabled={status === "sending" || !opponentUsername}
-                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12 rounded-xl"
+                    disabled={true}
+                    className="w-full bg-zinc-800 hover:bg-zinc-800 text-zinc-400 font-bold h-12 rounded-xl cursor-not-allowed"
                   >
-                    {status === "sending" ? "Sending..." : "Send Invite"}
+                    Invite Service Offline
                   </Button>
                 </div>
               ) : (
                 <Button
                   onClick={startArenaSearch}
-                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12 rounded-xl mt-4"
+                  disabled={true}
+                  className="w-full bg-zinc-800 hover:bg-zinc-800 text-zinc-400 font-bold h-12 rounded-xl mt-4 cursor-not-allowed"
                 >
-                  Enter Arena
+                  Matchmaking Offline
                 </Button>
               )}
             </>
@@ -497,5 +321,38 @@ export const BattleModal: React.FC<BattleModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={demoVideoOpen} onOpenChange={setDemoVideoOpen}>
+      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-2xl shadow-2xl">
+        <div className="p-4 sm:p-5 border-b border-zinc-800/80 flex items-center justify-between">
+          <div>
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-zinc-100">
+              <Video className="w-4 h-4 text-amber-400" />
+              CodeArena Platform & Battle Demo
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400 mt-0.5">
+              Live algorithmic battle walkthrough and system architecture overview.
+            </DialogDescription>
+          </div>
+        </div>
+
+        <div className="relative bg-black w-full aspect-video flex items-center justify-center">
+          {demoVideoOpen && (
+            <video
+              controls
+              autoPlay
+              playsInline
+              className="w-full h-full max-h-[75vh] object-contain rounded-b-2xl"
+            >
+              <source src="/codeareanvid.mov" type="video/mp4" />
+              <source src="/codeareanvid.mov" type="video/quicktime" />
+              <source src="/codeareanvid.mov" />
+              Your browser does not support playing this video.
+            </video>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };

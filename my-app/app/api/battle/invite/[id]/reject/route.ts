@@ -69,19 +69,7 @@ export async function POST(
         invite.status = "Rejected";
         await invite.save();
 
-        // Notify Go backend to remove from SSE store immediately
-        try {
-            await fetch("http://34.131.239.188:6969/api/invites/delete", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Internal-Key": process.env.INTERNAL_KEY || "",
-                },
-                body: JSON.stringify({ userId: curUser._id.toString(), removeId: inviteId }),
-            });
-        } catch (err) {
-            console.error("Failed to notify Go backend of invite rejection:", err);
-        }
+        // Backend VM is offline, no need to notify Go SSE store
 
         return NextResponse.json(
             { success: true, message: "Invite rejected successfully" },

@@ -17,6 +17,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Backend VM is down
+        return NextResponse.json(
+            { success: false, message: "Battle invite service is currently offline as the backend VM is down." },
+            { status: 503 }
+        );
+
         const body = await req.json();
         const { opponentUsername, difficulty } = body;
 
@@ -44,7 +50,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { 
                     success: false, 
-                    message: `You are banned from sending invites. ${banStatus.expires ? `Expires: ${banStatus.expires.toLocaleString()}` : 'This is a permanent ban.'}` 
+                    message: `You are banned from sending invites. ${banStatus.expires ? `Expires: ${banStatus.expires?.toLocaleString()}` : 'This is a permanent ban.'}` 
                 },
                 { status: 403 }
             );

@@ -4,7 +4,12 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
 
-    const response = await fetch('http://34.131.239.188:6969/api/admin/problem', {
+    const executorUrl = process.env.EXECUTOR_SERVICE_URL;
+    if (!executorUrl) {
+      return NextResponse.json({ error: 'Executor service is currently offline' }, { status: 503 });
+    }
+
+    const response = await fetch(`${executorUrl}/api/admin/problem`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

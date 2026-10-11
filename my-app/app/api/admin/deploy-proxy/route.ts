@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEPLOY_SERVER_BASE_URL = "http://34.131.239.188:8080";
+const DEPLOY_SERVER_BASE_URL = process.env.DEPLOY_SERVER_BASE_URL || "";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

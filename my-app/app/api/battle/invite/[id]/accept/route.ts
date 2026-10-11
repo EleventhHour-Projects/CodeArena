@@ -24,6 +24,12 @@ export async function POST(
             );
         }
 
+        // Backend VM is down
+        return NextResponse.json(
+            { success: false, message: "Battle service is currently offline as the backend VM is down." },
+            { status: 503 }
+        );
+
         if (!inviteId) {
             return NextResponse.json(
                 { success: false, message: "Invite ID is required" },
@@ -68,7 +74,7 @@ export async function POST(
             return NextResponse.json(
                 { 
                     success: false, 
-                    message: `You are banned from joining the arena. ${banStatus.expires ? `Expires: ${banStatus.expires.toLocaleString()}` : 'This is a permanent ban.'}` 
+                    message: `You are banned from joining the arena. ${banStatus.expires ? `Expires: ${banStatus.expires?.toLocaleString()}` : 'This is a permanent ban.'}` 
                 },
                 { status: 403 }
             );
@@ -161,19 +167,7 @@ export async function POST(
         invite.status = "Accepted";
         await invite.save();
 
-        // Notify Go backend to remove from SSE store immediately
-        try {
-            await fetch("http://34.131.239.188:6969/api/invites/delete", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Internal-Key": process.env.INTERNAL_KEY || "",
-                },
-                body: JSON.stringify({ userId: curUser._id.toString(), removeId: inviteId }),
-            });
-        } catch (err) {
-            console.error("Failed to notify Go backend of invite acceptance:", err);
-        }
+        // Backend VM is offline, no need to notify Go SSE store
 
         return NextResponse.json(
             { success: true, message: "Battle accepted successfully", battleId: battle._id },

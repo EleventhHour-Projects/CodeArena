@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const res = await fetch('http://34.131.239.188:6969/api/internal/spawn', {
+    const executorUrl = process.env.EXECUTOR_SERVICE_URL;
+    if (!executorUrl) {
+      return NextResponse.json({ error: 'Executor service is currently offline' }, { status: 503 });
+    }
+
+    const res = await fetch(`${executorUrl}/api/internal/spawn`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

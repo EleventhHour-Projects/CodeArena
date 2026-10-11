@@ -37,98 +37,10 @@ export function StatusProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session]);
 
-  const fetchTokens = useCallback(async () => {
-    try {
-      // Fetch Friends SSE Token
-      const resF = await fetch("/api/friends/sse-token");
-      const dataF = await resF.json();
-      if (dataF.success) {
-        setSseToken(dataF.sseToken);
-        if (dataF.userId && !userId) setUserId(dataF.userId);
-      }
-
-      // Fetch Invite SSE Token
-      const resI = await fetch("/api/battle/invitations/sse-token");
-      const dataI = await resI.json();
-      if (dataI.success) {
-        setInviteToken(dataI.sseToken);
-      }
-    } catch (err) {
-      console.error("Failed to fetch SSE tokens:", err);
-      setIsFriendsSseLoaded(true);
-    }
-  }, [userId]);
-
+  // Backend VM is offline: skip SSE connections and mark friends loaded immediately
   useEffect(() => {
-    if (session) {
-      fetchTokens();
-      const id = setInterval(fetchTokens, 9 * 60 * 1000);
-      return () => clearInterval(id);
-    }
-  }, [session, fetchTokens]);
-
-  // SSE Presence Connection (Friends)
-  useEffect(() => {
-    if (!userId || !sseToken) return;
-
-    const sseUrl = `https://matchmake.codearena.pro/sse/friends?userId=${userId}&token=${sseToken}`;
-    const source = new EventSource(sseUrl);
-
-    source.addEventListener("friends_update", (e) => {
-      try {
-        const rawData = JSON.parse(e.data);
-        const newOnline = new Set<string>();
-        const newBattles = new Map<string, string>();
-
-        if (Array.isArray(rawData)) {
-          rawData.forEach((item: any) => {
-            if (typeof item === "string") {
-              // Backward compatibility for old string array format
-              newOnline.add(item);
-            } else if (item && typeof item === "object" && item.id) {
-              // New object array format with battle status
-              newOnline.add(item.id);
-              if (item.bid) newBattles.set(item.id, item.bid);
-            }
-          });
-        }
-
-        setOnlineSet(newOnline);
-        setBattleMap(newBattles);
-        setIsFriendsSseLoaded(true);
-      } catch (err) {
-        console.error("Error parsing friends_update:", err);
-      }
-    });
-
-    source.onerror = () => {
-      setIsFriendsSseLoaded(true);
-      source.close();
-    };
-    return () => source.close();
-  }, [userId, sseToken]);
-
-  // SSE Invites Connection
-  useEffect(() => {
-    if (!userId || !inviteToken) return;
-
-    const sseUrl = `https://matchmake.codearena.pro/sse/invites?userId=${userId}&token=${inviteToken}`;
-    const source = new EventSource(sseUrl);
-
-    source.addEventListener("invite_update", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        setInviteCount(data.count || 0);
-        // Trigger a logical refresh in listening components
-        triggerRefresh();
-      } catch (err) {
-        console.error("Error parsing invite_update:", err);
-      }
-    });
-
-    source.onerror = () => source.close();
-    return () => source.close();
-  }, [userId, inviteToken, triggerRefresh]);
+    setIsFriendsSseLoaded(true);
+  }, []);
 
   return (
     <StatusContext.Provider value={{

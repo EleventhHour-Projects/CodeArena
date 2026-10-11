@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const res = await fetch('http://34.131.239.188:6969/api/internal/auto', {
+    const executorUrl = process.env.EXECUTOR_SERVICE_URL;
+    if (!executorUrl) {
+      return NextResponse.json({ error: 'Executor service is currently offline' }, { status: 503 });
+    }
+
+    const res = await fetch(`${executorUrl}/api/internal/auto`, {
       method: 'GET',
       headers: {
         'X-Internal-Key': process.env.INTERNAL_KEY || '',
@@ -28,8 +33,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const executorUrl = process.env.EXECUTOR_SERVICE_URL;
+    if (!executorUrl) {
+      return NextResponse.json({ error: 'Executor service is currently offline' }, { status: 503 });
+    }
+
     const body = await req.json();
-    const res = await fetch('http://34.131.239.188:6969/api/internal/auto', {
+    const res = await fetch(`${executorUrl}/api/internal/auto`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
