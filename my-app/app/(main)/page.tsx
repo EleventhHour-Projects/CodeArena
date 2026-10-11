@@ -60,7 +60,7 @@ function HomeContent() {
       {/* ─── LEFT PANEL (Main) ─── */}
       <div className="flex-1 flex flex-col relative w-full h-full min-w-0">
         <AnnouncementBanner />
-        <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-border/40 w-full transition-colors">
+        <main className="relative flex-1 flex flex-col items-center justify-center p-8 lg:p-16 border-r border-border/40 transition-colors overflow-hidden">
         {/* Toggle Button for Desktop */}
         <button
           onClick={() => setIsRightPanelOpen((prev) => !prev)}
