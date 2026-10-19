@@ -270,6 +270,38 @@ export default function AdminFundingPage() {
                   GitHub account queried for sponsors (Not-Dhananjay-Mishra).
                 </p>
               </div>
+
+              {/* Direct Server Runway Goal (Months) */}
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="runwayMonthsInput" className="text-xs font-semibold flex items-center justify-between">
+                  <span>Server Runway (Months)</span>
+                  <span className="text-[11px] text-emerald-400 font-medium">Directly calculates Total Collection ($)</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="runwayMonthsInput"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={runwayMonths}
+                    onChange={(e) => {
+                      const months = parseFloat(e.target.value) || 0;
+                      const goalRate = config.monthlySpendGoal > 0 ? config.monthlySpendGoal : 5;
+                      setConfig({
+                        ...config,
+                        manualTotalAmount: Math.round(months * goalRate * 100) / 100,
+                      });
+                    }}
+                    className="font-mono font-bold text-emerald-400 pr-20"
+                  />
+                  <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-semibold">
+                    months
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Setting {runwayMonths} months at ${goal}/mo sets total collection to ${(parseFloat(runwayMonths || "0") * goal).toFixed(0)} USD.
+                </p>
+              </div>
             </div>
 
             {/* Quick-Preset Buttons for Testing & Common Amounts */}
@@ -286,14 +318,14 @@ export default function AdminFundingPage() {
                     setConfig({
                       ...config,
                       monthlySpendGoal: 5,
-                      manualTotalAmount: 100,
+                      manualTotalAmount: 60,
                       manualMonthlyAmount: 5,
                       overrideApiAmounts: true,
                     })
                   }
                   className="text-xs h-7"
                 >
-                  $100 Total (20 Months Runway)
+                  12 Months Runway ($60 Total)
                 </Button>
                 <Button
                   type="button"
@@ -303,14 +335,31 @@ export default function AdminFundingPage() {
                     setConfig({
                       ...config,
                       monthlySpendGoal: 5,
-                      manualTotalAmount: 60,
+                      manualTotalAmount: 100,
                       manualMonthlyAmount: 5,
                       overrideApiAmounts: true,
                     })
                   }
                   className="text-xs h-7"
                 >
-                  $60 Total (1 Year Runway)
+                  20 Months Runway ($100 Total)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setConfig({
+                      ...config,
+                      monthlySpendGoal: 5,
+                      manualTotalAmount: 30,
+                      manualMonthlyAmount: 5,
+                      overrideApiAmounts: true,
+                    })
+                  }
+                  className="text-xs h-7"
+                >
+                  6 Months Runway ($30 Total)
                 </Button>
                 <Button
                   type="button"

@@ -165,6 +165,11 @@ export function FundingModal({
                   }}
                 />
               </div>
+              {data && data.runwayMonths > 0 && (
+                <div className="text-right text-xs text-zinc-400">
+                  Runway: <span className="text-[#65E6B8] font-medium">{data.runwayMonths} months</span>
+                </div>
+              )}
             </div>
 
             {/* 2. This Month Progress Bar */}
@@ -189,11 +194,6 @@ export function FundingModal({
                   }}
                 />
               </div>
-              {data && data.runwayMonths > 0 && (
-                <div className="text-right text-xs text-zinc-400">
-                  Runway: <span className="text-emerald-300 font-medium">{data.runwayMonths} months</span>
-                </div>
-              )}
             </div>
           </div>
 
