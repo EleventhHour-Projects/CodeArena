@@ -2,9 +2,10 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Github, Mail, Globe, ExternalLink } from "lucide-react";
+import { Github, Mail, Globe, ExternalLink, Heart } from "lucide-react";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { openFundingModal } from "@/components/modals/FundingModal";
 
 const developers = [
   {
@@ -140,6 +141,26 @@ export default function MeetDevelopersPage() {
                       {dev.email}
                     </span>
                   </motion.a>
+
+                  {dev.github === "Not-Dhananjay-Mishra" && (
+                    <motion.button
+                      whileHover={{ scale: 1.01, x: 4 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => openFundingModal()}
+                      className="group/btn relative flex items-center gap-4 px-6 py-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-300 overflow-hidden w-full text-left cursor-pointer"
+                    >
+                      <div className="absolute inset-0 bg-linear-to-r from-emerald-500/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                      <Heart className="w-6 h-6 text-emerald-400 group-hover/btn:scale-110 fill-emerald-500/20 transition-transform" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm md:text-base text-emerald-300 group-hover/btn:text-white transition-colors">
+                          Sponsor CodeArena Server
+                        </span>
+                        <span className="text-xs text-emerald-400/80">
+                          Help keep our VM online for $5/mo
+                        </span>
+                      </div>
+                    </motion.button>
+                  )}
                 </div>
               </div>
             </motion.div>

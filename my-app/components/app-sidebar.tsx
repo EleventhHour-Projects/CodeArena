@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import Link from "next/link"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { SidebarReportAction } from "@/components/SidebarReportAction"
+import { SidebarFundingAction } from "@/components/SidebarFundingAction"
 
 import {
   Sidebar,
@@ -96,6 +97,7 @@ export async function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarFundingAction />
               <SidebarReportAction />
               <ThemeToggleSidebarItem />
             </SidebarMenu>

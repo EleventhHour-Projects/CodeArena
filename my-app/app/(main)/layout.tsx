@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import Providers from "./providers";
 import { AnnouncementBanner } from "@/components/announcement-banner";
+import { FundingModal } from "@/components/modals/FundingModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default function RootLayout({
             </main>
           </SidebarProvider>
           <Toaster position="top-center" richColors />
+          <FundingModal />
         </Providers>
       </body>
     </html>

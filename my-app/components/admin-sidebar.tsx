@@ -19,6 +19,7 @@ import {
   Award,
   Bot,
   Building2,
+  Coins,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -78,6 +79,7 @@ const adminNavItems = [
   { title: "Console", url: "/admin/console", icon: Terminal, imgIcon: null },
   { title: "Replays", url: "/admin/replays", icon: Film, imgIcon: null },
   { title: "Rating", url: "/admin/rating", icon: Award, imgIcon: null },
+  { title: "Funding Settings", url: "/admin/funding", icon: Coins, imgIcon: null },
 ];
 
 export function AdminSidebar() {
