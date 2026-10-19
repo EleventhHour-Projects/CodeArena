@@ -24,6 +24,27 @@ interface FundingModalProps {
   onClose?: () => void;
 }
 
+const DEFAULT_DEV_SPONSORS = [
+  {
+    login: "Not-Dhananjay-Mishra",
+    name: "Dhananjay Mishra",
+    is_anonymous: false,
+    avatar_url: "https://github.com/Not-Dhananjay-Mishra.png",
+    profile_url: "https://github.com/Not-Dhananjay-Mishra",
+    created_at: new Date().toISOString(),
+    active: true,
+  },
+  {
+    login: "ManavSharma142",
+    name: "Manav Sharma",
+    is_anonymous: false,
+    avatar_url: "https://github.com/ManavSharma142.png",
+    profile_url: "https://github.com/ManavSharma142",
+    created_at: new Date().toISOString(),
+    active: true,
+  },
+];
+
 export function FundingModal({
   isOpen: controlledIsOpen,
   onClose: controlledOnClose,
@@ -70,22 +91,26 @@ export function FundingModal({
   }, [isOpen, fetchFundingData]);
 
   const monthlyGoal = data?.monthlySpendGoal || 5;
+  const totalGoal = data?.monthlySpendGoal ? data.monthlySpendGoal * 12 : 60;
   const currentMonthly = data?.monthlyAmount || 0;
   const totalCollection = data?.totalAmount || 0;
-  
+
   // This month progress percentage
   const monthPercent = Math.min(
     100,
     Math.round((currentMonthly / monthlyGoal) * 100)
   );
 
-  // Total collection progress relative to monthly goal (or 100% if >= monthly goal)
+  // Total collection progress relative to 12-month limit ($60)
   const totalPercent = Math.min(
     100,
-    Math.round((totalCollection / monthlyGoal) * 100)
+    Math.round((totalCollection / totalGoal) * 100)
   );
 
-  const sponsors = data?.sponsors || [];
+  const sponsors =
+    data?.sponsors && data.sponsors.length > 0
+      ? data.sponsors
+      : DEFAULT_DEV_SPONSORS;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -113,7 +138,7 @@ export function FundingModal({
               <Heart className="w-6 h-6 text-emerald-400 fill-emerald-500/20" />
               <span>Support CodeArena</span>
             </DialogTitle>
-            <p className="text-emerald-400 font-medium text-sm sm:text-base">
+            <p className="text-zinc-400 font-medium text-sm sm:text-base">
               CodeArena required ${monthlyGoal} per month to keep servers running...
             </p>
           </div>
@@ -123,15 +148,15 @@ export function FundingModal({
             {/* 1. Total Collection Progress Bar */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm sm:text-base font-semibold">
-                <span className="text-emerald-400">
+                <span className="text-[#65E6B8]">
                   Total Collection:{" "}
                   <span className="text-white">${totalCollection.toFixed(0)}</span>
                 </span>
-                <span className="text-emerald-400">${monthlyGoal}</span>
+                <span className="text-[#65E6B8]">${totalGoal} (12m)</span>
               </div>
               <div className="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  className="h-full bg-[#65E6B8] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(
                       100,
@@ -145,17 +170,17 @@ export function FundingModal({
             {/* 2. This Month Progress Bar */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm sm:text-base font-semibold">
-                <span className="text-emerald-400">
+                <span className="text-[#65E6B8]">
                   This Month &mdash;{" "}
                   <span className="text-white">${currentMonthly.toFixed(0)}</span>
                 </span>
-                <span className="text-emerald-400 text-xs sm:text-sm font-medium">
+                <span className="text-[#65E6B8] text-xs sm:text-sm font-medium">
                   {monthPercent}% of ${monthlyGoal} goal
                 </span>
               </div>
               <div className="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  className="h-full bg-[#65E6B8] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(
                       100,
