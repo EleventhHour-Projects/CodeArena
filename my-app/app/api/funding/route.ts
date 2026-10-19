@@ -3,7 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import FundingConfig from "@/lib/models/FundingConfig";
 
 const DEPLOY_SERVER_BASE_URL = process.env.DEPLOY_SERVER_BASE_URL || "http://localhost:8080";
-const DEFAULT_MAINTAINER = "antfu";
+const DEFAULT_MAINTAINER = "Not-Dhananjay-Mishra";
 const DEFAULT_MONTHLY_GOAL = 5; // $5.00/mo server spend
 
 export interface PublicSponsor {
