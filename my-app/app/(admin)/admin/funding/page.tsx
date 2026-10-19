@@ -14,6 +14,8 @@ import {
   Clock,
   Layers,
   Sparkles,
+  Trash2,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +43,37 @@ export default function AdminFundingPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cacheUsername, setCacheUsername] = useState("");
+  const [cacheResetting, setCacheResetting] = useState(false);
+  const [cacheResult, setCacheResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleCacheReset = async (usernameOverride?: string) => {
+    setCacheResetting(true);
+    setCacheResult(null);
+    try {
+      const url = usernameOverride
+        ? `/api/admin/funding/cache-reset?username=${encodeURIComponent(usernameOverride)}`
+        : "/api/admin/funding/cache-reset";
+      const res = await fetch(url, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        const cleared = data.result?.entries_cleared ?? data.result?.cleared ?? "?";
+        setCacheResult({ success: true, message: `Cache cleared! ${cleared} entries removed.` });
+        toast.success(`Sponsor cache reset (${cleared} entries cleared)`);
+      } else {
+        setCacheResult({ success: false, message: data.error || "Reset failed" });
+        toast.error(data.error || "Cache reset failed");
+      }
+    } catch (err: any) {
+      const msg = err.message || "Network error";
+      setCacheResult({ success: false, message: msg });
+      toast.error(msg);
+    } finally {
+      setCacheResetting(false);
+    }
+  };
 
   const fetchConfig = async () => {
     setLoading(true);
@@ -336,6 +369,49 @@ export default function AdminFundingPage() {
               placeholder="e.g. We are raising $5/month to cover our dedicated GCP VM..."
               className="text-sm"
             />
+          </div>
+
+          {/* Section 3: Cache Reset */}
+          <div className="p-6 rounded-2xl bg-card border border-border/60 shadow-xs space-y-4">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-rose-400" />
+              Sponsor API Cache Reset
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Force-clear the sponsor API cache so fresh data is fetched on the next request.
+              You can reset all usernames at once, or target a specific one.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                value={cacheUsername}
+                onChange={(e) => setCacheUsername(e.target.value)}
+                placeholder="Username to reset (leave blank for all)"
+                className="font-mono text-sm flex-1"
+                disabled={cacheResetting}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={cacheResetting}
+                onClick={() => handleCacheReset(cacheUsername.trim() || undefined)}
+                className="gap-2 border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/60 shrink-0"
+              >
+                <Trash2 className={`w-4 h-4 ${cacheResetting ? "animate-spin" : ""}`} />
+                {cacheResetting ? "Resetting..." : cacheUsername.trim() ? `Reset "${cacheUsername.trim()}"` : "Reset All Cache"}
+              </Button>
+            </div>
+
+            {cacheResult && (
+              <div className={`text-xs px-3 py-2 rounded-lg border ${
+                cacheResult.success
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+              }`}>
+                {cacheResult.message}
+              </div>
+            )}
           </div>
         </form>
 
