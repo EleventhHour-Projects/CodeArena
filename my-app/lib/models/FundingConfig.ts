@@ -4,6 +4,7 @@ export interface IFundingConfig extends Document {
   monthlySpendGoal: number; // in USD (default 5)
   manualTotalAmount: number; // in USD (default 0 or override amount)
   manualMonthlyAmount: number; // in USD (default 0 or override amount)
+  runwayMonths?: number; // independent runway in months
   overrideApiAmounts: boolean; // if true, replaces API amounts with manual amounts
   maintainerUsername: string; // GitHub maintainer to query (default: Not-Dhananjay-Mishra)
   customNotice?: string;
@@ -28,6 +29,11 @@ const FundingConfigSchema: Schema<IFundingConfig> = new Schema(
     manualMonthlyAmount: {
       type: Number,
       required: true,
+      default: 0,
+      min: 0,
+    },
+    runwayMonths: {
+      type: Number,
       default: 0,
       min: 0,
     },

@@ -25,6 +25,7 @@ interface AdminFundingConfig {
   monthlySpendGoal: number;
   manualTotalAmount: number;
   manualMonthlyAmount: number;
+  runwayMonths: number;
   overrideApiAmounts: boolean;
   maintainerUsername: string;
   customNotice: string;
@@ -36,6 +37,7 @@ export default function AdminFundingPage() {
     monthlySpendGoal: 5,
     manualTotalAmount: 0,
     manualMonthlyAmount: 0,
+    runwayMonths: 0,
     overrideApiAmounts: false,
     maintainerUsername: "Not-Dhananjay-Mishra",
     customNotice: "",
@@ -125,7 +127,7 @@ export default function AdminFundingPage() {
   const goal = config.monthlySpendGoal > 0 ? config.monthlySpendGoal : 5;
   const total = config.manualTotalAmount;
   const monthly = config.manualMonthlyAmount;
-  const runwayMonths = (total / goal).toFixed(1);
+  const displayRunway = config.runwayMonths > 0 ? config.runwayMonths : Number((total / goal).toFixed(1));
   const percentFunded = Math.min(100, Math.round((monthly / goal) * 100));
 
   return (
@@ -271,11 +273,11 @@ export default function AdminFundingPage() {
                 </p>
               </div>
 
-              {/* Direct Server Runway Goal (Months) */}
+              {/* Direct Server Runway (Months) */}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="runwayMonthsInput" className="text-xs font-semibold flex items-center justify-between">
                   <span>Server Runway (Months)</span>
-                  <span className="text-[11px] text-emerald-400 font-medium">Directly calculates Total Collection ($)</span>
+                  <span className="text-[11px] text-muted-foreground font-normal">Independently modified field</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -283,15 +285,13 @@ export default function AdminFundingPage() {
                     type="number"
                     step="0.5"
                     min="0"
-                    value={runwayMonths}
-                    onChange={(e) => {
-                      const months = parseFloat(e.target.value) || 0;
-                      const goalRate = config.monthlySpendGoal > 0 ? config.monthlySpendGoal : 5;
+                    value={config.runwayMonths}
+                    onChange={(e) =>
                       setConfig({
                         ...config,
-                        manualTotalAmount: Math.round(months * goalRate * 100) / 100,
-                      });
-                    }}
+                        runwayMonths: parseFloat(e.target.value) || 0,
+                      })
+                    }
                     className="font-mono font-bold text-emerald-400 pr-20"
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-semibold">
@@ -299,7 +299,7 @@ export default function AdminFundingPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Setting {runwayMonths} months at ${goal}/mo sets total collection to ${(parseFloat(runwayMonths || "0") * goal).toFixed(0)} USD.
+                  Modifying this does not change Total Collection ($) or Monthly Rate ($).
                 </p>
               </div>
             </div>
@@ -480,14 +480,16 @@ export default function AdminFundingPage() {
             {/* Metric: Survival Runway */}
             <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800/80">
               <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-                <span>Calculated Runway</span>
+                <span>Active Runway</span>
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
               </div>
               <div className="text-3xl font-black text-emerald-400 tracking-tight">
-                {runwayMonths} Months
+                {displayRunway} Months
               </div>
               <p className="text-[11px] text-zinc-400 mt-1 leading-snug">
-                Based on ${total.toFixed(2)} total collection at ${goal.toFixed(2)}/mo burn rate.
+                {config.runwayMonths > 0
+                  ? `Manual runway set to ${config.runwayMonths} months.`
+                  : `Calculated from $${total.toFixed(2)} at $${goal.toFixed(2)}/mo.`}
               </p>
             </div>
 

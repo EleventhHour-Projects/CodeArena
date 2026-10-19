@@ -24,6 +24,7 @@ export async function GET() {
         monthlySpendGoal: config.monthlySpendGoal,
         manualTotalAmount: config.manualTotalAmount,
         manualMonthlyAmount: config.manualMonthlyAmount,
+        runwayMonths: config.runwayMonths || 0,
         overrideApiAmounts: config.overrideApiAmounts,
         maintainerUsername: config.maintainerUsername,
         customNotice: config.customNotice || "",
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       monthlySpendGoal,
       manualTotalAmount,
       manualMonthlyAmount,
+      runwayMonths,
       overrideApiAmounts,
       maintainerUsername,
       customNotice,
@@ -62,6 +64,9 @@ export async function POST(req: Request) {
     }
     if (typeof manualMonthlyAmount === "number" && manualMonthlyAmount >= 0) {
       updateData.manualMonthlyAmount = manualMonthlyAmount;
+    }
+    if (typeof runwayMonths === "number" && runwayMonths >= 0) {
+      updateData.runwayMonths = runwayMonths;
     }
     if (typeof overrideApiAmounts === "boolean") {
       updateData.overrideApiAmounts = overrideApiAmounts;
@@ -86,6 +91,7 @@ export async function POST(req: Request) {
         monthlySpendGoal: config.monthlySpendGoal,
         manualTotalAmount: config.manualTotalAmount,
         manualMonthlyAmount: config.manualMonthlyAmount,
+        runwayMonths: config.runwayMonths || 0,
         overrideApiAmounts: config.overrideApiAmounts,
         maintainerUsername: config.maintainerUsername,
         customNotice: config.customNotice || "",

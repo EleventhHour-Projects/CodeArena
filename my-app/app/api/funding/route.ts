@@ -40,6 +40,7 @@ export async function GET() {
     let monthlySpendGoal = DEFAULT_MONTHLY_GOAL;
     let manualTotalAmount = 0;
     let manualMonthlyAmount = 0;
+    let configuredRunway = 0;
     let overrideApiAmounts = false;
     let maintainerUsername = DEFAULT_MAINTAINER;
     let customNotice = "";
@@ -51,6 +52,7 @@ export async function GET() {
         monthlySpendGoal = config.monthlySpendGoal || DEFAULT_MONTHLY_GOAL;
         manualTotalAmount = config.manualTotalAmount || 0;
         manualMonthlyAmount = config.manualMonthlyAmount || 0;
+        configuredRunway = typeof config.runwayMonths === "number" ? config.runwayMonths : 0;
         overrideApiAmounts = !!config.overrideApiAmounts;
         maintainerUsername = config.maintainerUsername?.trim() || DEFAULT_MAINTAINER;
         customNotice = config.customNotice || "";
@@ -100,11 +102,11 @@ export async function GET() {
     const isMonthlyGoalMet = monthlyAmount >= monthlySpendGoal;
 
     // Runway calculation:
-    // e.g. If total collection is $100 and monthly spend is $5:
-    // 100 / 5 = 20 months!
-    const runwayMonths = monthlySpendGoal > 0
+    // If admin set runwayMonths directly, use it; otherwise fallback to totalAmount / monthlySpendGoal
+    const calculatedRunway = monthlySpendGoal > 0
       ? Number((totalAmount / monthlySpendGoal).toFixed(1))
       : 0;
+    const runwayMonths = configuredRunway > 0 ? configuredRunway : calculatedRunway;
 
     // 4. Parse Sponsors & Handle Anonymous case (empty username "")
     const rawSponsors = Array.isArray(listData?.sponsors) ? listData.sponsors : [];
